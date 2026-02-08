@@ -152,6 +152,13 @@ def signup():
         session['user_type'] = 'email'
         flash('Account created successfully!', 'success')
 
+        # Redirect to child profile setup if profile is incomplete
+        is_profile_complete = session.get('profile_complete', False)
+        has_basic_info = session.get('child_name') and session.get('child_age')
+
+        if not is_profile_complete or not has_basic_info:
+            return redirect(url_for('child_profile_step1'))
+
         return redirect(next_url)
 
     return render_template('signup.html', next_url=next_url)
@@ -162,6 +169,10 @@ def auth_google():
     """Initiate Google OAuth flow."""
     if session.get('logged_in'):
         return redirect(url_for('dashboard'))
+
+    # Save the next URL to session for redirect after login
+    next_url = request.args.get('next', '/dashboard')
+    session['next_url'] = next_url
 
     flow = get_google_oauth_flow()
     authorization_url, state = flow.authorization_url(
@@ -213,6 +224,14 @@ def auth_google_callback():
             }
 
             flash(f'Welcome, {user_info.get("name")}!', 'success')
+
+            # Redirect to child profile setup if profile is incomplete
+            # Check both individual fields AND the profile_complete flag
+            is_profile_complete = session.get('profile_complete', False)
+            has_basic_info = session.get('child_name') and session.get('child_age')
+
+            if not is_profile_complete or not has_basic_info:
+                return redirect(url_for('child_profile_step1'))
 
             # Redirect to intended URL or dashboard
             next_url = session.pop('next_url', None)
