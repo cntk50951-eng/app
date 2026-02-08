@@ -4,7 +4,7 @@ Flask-based web application for personalized primary school interview preparatio
 """
 
 import os
-import json
+import sys
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_dotenv import DotEnv
@@ -14,7 +14,7 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 import requests
 
-# Load environment variables from .env file
+# Load environment variables from .env file FIRST
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -24,18 +24,49 @@ app = Flask(__name__)
 # Configure secret key - use environment variable or generate fallback
 app.secret_key = os.getenv('SECRET_KEY') or os.urandom(32).hex()
 
-# Initialize DotEnv for environment variables
+# Initialize DotEnv for environment variables (this reads from .env file)
 env = DotEnv()
 env.init_app(app, verbose_mode=False)
 
-# Import database module
-from db.database import (
-    create_user, get_user_by_email, get_user_by_google_id, get_user_by_id,
-    create_child_profile, get_child_profile_by_user_id, get_child_profile_by_id,
-    set_user_interests, get_user_interests,
-    set_target_schools, get_target_schools,
-    create_complete_profile
-)
+# Force reload environment variables from system/Render
+os.environ.update(os.environ)
+
+# Database URL - must be read from environment
+DATABASE_URL = os.getenv('DATABASE_URL', '')
+
+if not DATABASE_URL:
+    print("WARNING: DATABASE_URL environment variable is not set!")
+    print("Database operations will fail until DATABASE_URL is configured.")
+    print("Please set DATABASE_URL in your environment or .env file.")
+
+
+def get_db_functions():
+    """Lazy import database functions."""
+    try:
+        from db.database import (
+            create_user, get_user_by_email, get_user_by_google_id, get_user_by_id,
+            create_child_profile, get_child_profile_by_user_id,
+            set_user_interests, get_user_interests,
+            set_target_schools, get_target_schools,
+            create_complete_profile
+        )
+        return {
+            'create_user': create_user,
+            'get_user_by_email': get_user_by_email,
+            'get_user_by_google_id': get_user_by_google_id,
+            'get_user_by_id': get_user_by_id,
+            'create_child_profile': create_child_profile,
+            'get_child_profile_by_user_id': get_child_profile_by_user_id,
+            'set_user_interests': set_user_interests,
+            'get_user_interests': get_user_interests,
+            'set_target_schools': set_target_schools,
+            'get_target_schools': get_target_schools,
+            'create_complete_profile': create_complete_profile
+        }
+    except Exception as e:
+        print(f"Error importing database functions: {e}")
+        return None
+
 
 # Configure OAuth
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'  # Force HTTPS in production
@@ -101,8 +132,12 @@ def get_user_info(access_token):
 
 def load_user_session(user_id):
     """Load user and profile data from database into session."""
+    db = get_db_functions()
+    if not db:
+        return False
+
     # Get user from database
-    user = get_user_by_id(user_id)
+    user = db['get_user_by_id'](user_id)
     if not user:
         return False
 
@@ -115,7 +150,7 @@ def load_user_session(user_id):
     session['user_type'] = user['user_type']
 
     # Get child profile
-    profile = get_child_profile_by_user_id(user_id)
+    profile = db['get_child_profile_by_user_id'](user_id)
     if profile:
         session['profile_id'] = profile['id']
         session['child_name'] = profile['child_name']
@@ -124,11 +159,11 @@ def load_user_session(user_id):
         session['profile_complete'] = profile['profile_complete']
 
         # Get interests
-        interests = get_user_interests(profile['id'])
+        interests = db['get_user_interests'](profile['id'])
         session['child_interests'] = [i['id'] for i in interests]
 
         # Get target schools
-        schools = get_target_schools(profile['id'])
+        schools = db['get_target_schools'](profile['id'])
         session['target_schools'] = [s['id'] for s in schools]
 
     return True
@@ -190,15 +225,21 @@ def signup():
             flash('Passwords do not match', 'error')
             return render_template('signup.html')
 
+        # Get database functions
+        db = get_db_functions()
+        if not db:
+            flash('Database is not configured. Please contact support.', 'error')
+            return render_template('signup.html')
+
         # Check if user already exists
-        existing_user = get_user_by_email(email)
+        existing_user = db['get_user_by_email'](email)
         if existing_user:
             # User exists, load their session
             load_user_session(existing_user['id'])
             flash('Welcome back!', 'success')
         else:
             # Create new user in database
-            user = create_user(
+            user = db['create_user'](
                 email=email,
                 name=email.split('@')[0],
                 user_type='email'
@@ -257,17 +298,23 @@ def auth_google_callback():
             google_id = user_info.get('id')
             email = user_info.get('email')
 
+            # Get database functions
+            db = get_db_functions()
+            if not db:
+                flash('Database is not configured. Please contact support.', 'error')
+                return redirect(url_for('login'))
+
             # Check if user already exists
-            existing_user = get_user_by_email(email)
+            existing_user = db['get_user_by_email'](email)
             if existing_user:
                 # User exists, load their session
                 load_user_session(existing_user['id'])
-            elif get_user_by_google_id(google_id):
+            elif db['get_user_by_google_id'](google_id):
                 # User exists with Google ID, load session
-                load_user_session(get_user_by_google_id(google_id)['id'])
+                load_user_session(db['get_user_by_google_id'](google_id)['id'])
             else:
                 # Create new user in database
-                user = create_user(
+                user = db['create_user'](
                     email=email,
                     name=user_info.get('name'),
                     picture=user_info.get('picture'),
@@ -310,8 +357,9 @@ def logout():
 @login_required
 def child_profile_step1():
     """Child profile creation - Step 1: Basic Info."""
+    db = get_db_functions()
     user_id = session.get('user_id')
-    profile = get_child_profile_by_user_id(user_id)
+    profile = db['get_child_profile_by_user_id'](user_id) if db else None
 
     # Pre-fill data if profile exists
     initial_data = {}
@@ -329,7 +377,7 @@ def child_profile_step1():
 
         if profile:
             # Update existing profile
-            profile = create_child_profile(
+            profile = db['create_child_profile'](
                 user_id=user_id,
                 child_name=child_name,
                 child_age=child_age,
@@ -337,7 +385,7 @@ def child_profile_step1():
             )
         else:
             # Create new profile
-            profile = create_child_profile(
+            profile = db['create_child_profile'](
                 user_id=user_id,
                 child_name=child_name,
                 child_age=child_age,
@@ -384,13 +432,11 @@ def child_profile_step2():
     if request.method == 'POST':
         selected_interests = request.form.getlist('interests')
 
-        # Save to database
-        if profile_id:
-            set_user_interests(profile_id, selected_interests)
+        db = get_db_functions()
+        if db and profile_id:
+            db['set_user_interests'](profile_id, selected_interests)
 
-        # Update session
         session['child_interests'] = selected_interests
-
         flash('Interests saved!', 'success')
         return redirect(url_for('child_profile_step3'))
 
@@ -414,11 +460,10 @@ def child_profile_step3():
     if request.method == 'POST':
         target_schools = request.form.getlist('target_schools')
 
-        # Save to database
-        if profile_id:
-            set_target_schools(profile_id, target_schools)
+        db = get_db_functions()
+        if db and profile_id:
+            db['set_target_schools'](profile_id, target_schools)
 
-        # Update session
         session['target_schools'] = target_schools
         session['profile_complete'] = True
 
@@ -545,4 +590,6 @@ def get_user():
 
 
 if __name__ == '__main__':
+    print("Starting AI Tutor application...")
+    print(f"Database configured: {bool(DATABASE_URL)}")
     app.run(host='0.0.0.0', port=5000, debug=True)
