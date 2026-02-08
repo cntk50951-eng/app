@@ -134,8 +134,8 @@ p {
 }
 
 .btn-secondary {
-    background: white var(--text-primary;
-    color:);
+    background: white;
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
 }
 
