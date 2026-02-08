@@ -14,11 +14,18 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 import requests
 
-# Load environment variables
-env = DotEnv()
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# Configure secret key - use environment variable or generate fallback
+app.secret_key = os.getenv('SECRET_KEY') or os.urandom(32).hex()
+
+# Initialize DotEnv for environment variables
+env = DotEnv()
 env.init_app(app, verbose_mode=False)
 
 # Configure OAuth
