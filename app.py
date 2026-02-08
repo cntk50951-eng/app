@@ -232,19 +232,34 @@ def signup():
             return render_template('signup.html')
 
         # Check if user already exists
-        existing_user = db['get_user_by_email'](email)
-        if existing_user:
-            # User exists, load their session
-            load_user_session(existing_user['id'])
-            flash('Welcome back!', 'success')
-        else:
+        user = db['get_user_by_email'](email)
+
+        if not user:
             # Create new user in database
             user = db['create_user'](
                 email=email,
                 name=email.split('@')[0],
                 user_type='email'
             )
-            load_user_session(user['id'])
+
+        # Directly set session values
+        session['logged_in'] = True
+        session['user_id'] = user['id']
+        session['email'] = user['email']
+        session['name'] = user.get('name')
+        session['picture'] = user.get('picture')
+        session['user_type'] = user['user_type']
+
+        # Check for child profile
+        profile = db['get_child_profile_by_user_id'](user['id'])
+        if profile:
+            session['profile_id'] = profile['id']
+            session['child_name'] = profile['child_name']
+            session['child_age'] = profile['child_age']
+            session['child_gender'] = profile.get('child_gender')
+            session['profile_complete'] = profile['profile_complete']
+
+        flash('Welcome back!' if profile else 'Account created successfully!', 'success')
 
         # Redirect to child profile setup if profile is incomplete
         if not session.get('profile_complete'):
@@ -297,6 +312,8 @@ def auth_google_callback():
         if user_info:
             google_id = user_info.get('id')
             email = user_info.get('email')
+            name = user_info.get('name')
+            picture = user_info.get('picture')
 
             # Get database functions
             db = get_db_functions()
@@ -305,25 +322,46 @@ def auth_google_callback():
                 return redirect(url_for('login'))
 
             # Check if user already exists
-            existing_user = db['get_user_by_email'](email)
-            if existing_user:
-                # User exists, load their session
-                load_user_session(existing_user['id'])
-            elif db['get_user_by_google_id'](google_id):
-                # User exists with Google ID, load session
-                load_user_session(db['get_user_by_google_id'](google_id)['id'])
-            else:
+            user = db['get_user_by_email'](email)
+            if not user:
+                user = db['get_user_by_google_id'](google_id)
+
+            if not user:
                 # Create new user in database
                 user = db['create_user'](
                     email=email,
-                    name=user_info.get('name'),
-                    picture=user_info.get('picture'),
+                    name=name,
+                    picture=picture,
                     user_type='google',
                     google_id=google_id
                 )
-                load_user_session(user['id'])
 
-            flash(f'Welcome, {session.get("name")}!', 'success')
+            # Directly set session values
+            session['logged_in'] = True
+            session['user_id'] = user['id']
+            session['email'] = user['email']
+            session['name'] = user.get('name')
+            session['picture'] = user.get('picture')
+            session['user_type'] = user['user_type']
+
+            # Check for child profile
+            profile = db['get_child_profile_by_user_id'](user['id'])
+            if profile:
+                session['profile_id'] = profile['id']
+                session['child_name'] = profile['child_name']
+                session['child_age'] = profile['child_age']
+                session['child_gender'] = profile.get('child_gender')
+                session['profile_complete'] = profile['profile_complete']
+
+                # Get interests
+                interests = db['get_user_interests'](profile['id'])
+                session['child_interests'] = [i['id'] for i in interests]
+
+                # Get target schools
+                schools = db['get_target_schools'](profile['id'])
+                session['target_schools'] = [s['id'] for s in schools]
+
+            flash(f'Welcome, {name}!', 'success')
 
             # Redirect to child profile setup if profile is incomplete
             if not session.get('profile_complete'):
