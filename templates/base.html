@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}AI Tutor{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bottom Navigation -->
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('child_profile_step1') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+            <span class="material-symbols-outlined">person</span>
+            <span>畫像</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="material-symbols-outlined">settings</span>
+            <span>設定</span>
+        </a>
+    </nav>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        // Common JavaScript functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle back buttons
+            const backButtons = document.querySelectorAll('.btn-back');
+            backButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (document.referrer && document.referrer.includes(window.location.origin)) {
+                        history.back();
+                    } else {
+                        window.location.href = this.dataset.href || '/';
+                    }
+                });
+            });
+        });
+    </script>
+    {% endblock %}
+</body>
+</html>

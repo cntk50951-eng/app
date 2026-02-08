@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Target Schools - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .header-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex: 1;
+            text-align: center;
+            padding-right: 3rem;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            padding-bottom: 8rem;
+            overflow-y: auto;
+        }
+
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .progress-percent {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--border-color);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .section-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .search-box {
+            position: sticky;
+            top: 4.5rem;
+            z-index: 5;
+            background: white;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--background-light);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-100);
+            background: white;
+        }
+
+        .section-header {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .schools-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .school-card {
+            position: relative;
+            padding: 1rem;
+            border-radius: var(--radius-xl);
+            border: 2px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .school-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .school-info {
+            flex: 1;
+        }
+
+        .school-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .school-card:hover .school-name {
+            color: var(--primary);
+        }
+
+        .school-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .school-tag {
+            padding: 0.25rem 0.625rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .school-tag.type {
+            background: var(--background-light);
+            color: var(--text-secondary);
+        }
+
+        .school-tag.gender {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .school-card.selected .school-tag.gender {
+            background: var(--primary);
+            color: white;
+        }
+
+        .school-check {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .school-card.selected .school-check {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .not-found-hint {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+            z-index: 20;
+        }
+
+        .btn-complete {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-complete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 148, 246, 0.3);
+        }
+
+        @media (min-width: 480px) {
+            .container {
+                max-width: 480px;
+                margin: 2rem auto;
+                border-radius: var(--radius-xl);
+                overflow: hidden;
+                box-shadow: var(--shadow-2xl);
+                min-height: auto;
+            }
+
+            .page-container {
+                min-height: calc(100vh - 4rem);
+            }
+
+            .footer {
+                width: calc(100% - 2rem);
+                left: auto;
+                right: 1rem;
+                transform: none;
+            }
+        }
+
+        @supports (padding: max(0px)) {
+            .footer {
+                padding-bottom: calc(max(1.5rem, env(safe-area-inset-bottom)) + 0.5rem);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-container">
+            <!-- Header -->
+            <header class="header">
+                <button class="back-btn" onclick="history.back()">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h1 class="header-title">Create Profile</h1>
+            </header>
+
+            <!-- Content -->
+            <main class="content">
+                <div class="progress-section">
+                    <div class="progress-info">
+                        <span class="progress-label">Step 3 of 3</span>
+                        <span class="progress-percent">100%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Target Schools</h2>
+                <p class="section-subtitle">
+                    Select the primary schools you are aiming for. This helps us tailor the preparation roadmap.
+                </p>
+
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">
+                            <span class="material-symbols-outlined" style="font-size: 1.25rem;">search</span>
+                        </span>
+                        <input type="text" class="search-input" placeholder="Search Hong Kong schools...">
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('child_profile_step3') }}" id="schools-form">
+                    <input type="hidden" name="target_schools" id="selected-schools" value="">
+
+                    <h3 class="section-header">Popular Choices</h3>
+
+                    <div class="schools-list">
+                        <div class="school-card" data-school="spcc" onclick="toggleSchool('spcc')">
+                            <div class="school-top">
+                                <div class="school-info">
+                                    <h4 class="school-name">St. Paul's Co-educational College</h4>
+                                    <div class="school-tags">
+                                        <span class="school-tag type">Direct Subsidy</span>
+                                        <span class="school-tag gender">Co-ed</span>
+                                    </div>
+                                </div>
+                                <div class="school-check">
+                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="school-card" data-school="dbs" onclick="toggleSchool('dbs')">
+                            <div class="school-top">
+                                <div class="school-info">
+                                    <h4 class="school-name">Diocesan Boys' School Primary Division</h4>
+                                    <div class="school-tags">
+                                        <span class="school-tag type">Direct Subsidy</span>
+                                        <span class="school-tag gender">Boys</span>
+                                    </div>
+                                </div>
+                                <div class="school-check">
+                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="school-card" data-school="dgs" onclick="toggleSchool('dgs')">
+                            <div class="school-top">
+                                <div class="school-info">
+                                    <h4 class="school-name">Diocesan Girls' Junior School</h4>
+                                    <div class="school-tags">
+                                        <span class="school-tag type">Private</span>
+                                        <span class="school-tag gender">Girls</span>
+                                    </div>
+                                </div>
+                                <div class="school-check">
+                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="school-card" data-school="lasalle" onclick="toggleSchool('lasalle')">
+                            <div class="school-top">
+                                <div class="school-info">
+                                    <h4 class="school-name">La Salle Primary School</h4>
+                                    <div class="school-tags">
+                                        <span class="school-tag type">Aided</span>
+                                        <span class="school-tag gender">Boys</span>
+                                    </div>
+                                </div>
+                                <div class="school-check">
+                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="not-found-hint">Can't find your school? Try searching above.</p>
+                </form>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <button class="btn-complete" onclick="submitForm()">
+                    Complete
+                    <span class="material-symbols-outlined">check_circle</span>
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        let selectedSchools = new Set();
+
+        function toggleSchool(schoolId) {
+            const card = document.querySelector(`.school-card[data-school="${schoolId}"]`);
+            const checkIcon = card.querySelector('.school-check .material-symbols-outlined');
+
+            if (selectedSchools.has(schoolId)) {
+                selectedSchools.delete(schoolId);
+                card.classList.remove('selected');
+                checkIcon.style.display = 'none';
+            } else {
+                selectedSchools.add(schoolId);
+                card.classList.add('selected');
+                checkIcon.style.display = 'block';
+            }
+        }
+
+        function submitForm() {
+            if (selectedSchools.size > 0) {
+                document.getElementById('selected-schools').value = Array.from(selectedSchools).join(',');
+            }
+            document.getElementById('schools-form').submit();
+        }
+    </script>
+</body>
+</html>

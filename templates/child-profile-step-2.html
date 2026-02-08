@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Interests Selection - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 0.75rem 1rem;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .header-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .spacer {
+            width: 2.5rem;
+        }
+
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .progress-percent {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--border-color);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .content {
+            flex: 1;
+            padding: 1.25rem;
+            padding-bottom: 8rem;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .section-subtitle {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .selection-count {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .interest-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-radius: var(--radius-xl);
+            border: 2px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .interest-card:hover {
+            border-color: var(--primary);
+            transform: scale(0.98);
+        }
+
+        .interest-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .interest-card.selected .interest-icon {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .interest-top {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .interest-icon {
+            font-size: 2rem;
+            filter: grayscale(0.2);
+            transition: filter 0.2s ease;
+        }
+
+        .interest-card:hover .interest-icon {
+            filter: grayscale(0);
+        }
+
+        .interest-check {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .interest-card.selected .interest-check {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .interest-card.selected .interest-check .material-symbols-outlined {
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .interest-name {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .scroll-hint {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .scroll-hint span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.25rem;
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+            z-index: 20;
+        }
+
+        .footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-skip {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .btn-skip:hover {
+            color: var(--text-primary);
+        }
+
+        .btn-next {
+            flex: 1;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 148, 246, 0.3);
+        }
+
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media (min-width: 480px) {
+            .container {
+                max-width: 480px;
+                margin: 2rem auto;
+                border-radius: var(--radius-xl);
+                overflow: hidden;
+                box-shadow: var(--shadow-2xl);
+                min-height: auto;
+            }
+
+            .page-container {
+                min-height: calc(100vh - 4rem);
+            }
+
+            .footer {
+                width: calc(100% - 2rem);
+                left: auto;
+                right: 1rem;
+                transform: none;
+            }
+        }
+
+        @supports (padding: max(0px)) {
+            .footer {
+                padding-bottom: calc(max(1.5rem, env(safe-area-inset-bottom)) + 0.5rem);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-container">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-top">
+                    <button class="back-btn" onclick="history.back()">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <span class="header-title">Profile Setup</span>
+                    <div class="spacer"></div>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-info">
+                        <span class="progress-label">Step 2 of 3</span>
+                        <span class="progress-percent">66%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 66%;"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <main class="content">
+                <h1 class="section-title">佢最鍾意咩？</h1>
+                <p class="section-subtitle">
+                    Select up to 5 interests to help us tailor the perfect learning plan for your child.
+                    <span class="selection-count" id="selection-count">(0/5 selected)</span>
+                </p>
+
+                <form method="POST" action="{{ url_for('child_profile_step2') }}" id="interests-form">
+                    <input type="hidden" name="interests" id="selected-interests" value="">
+
+                    <div class="interests-grid">
+                        {% for interest in interests %}
+                        <div class="interest-card" data-interest="{{ interest.id }}" onclick="toggleInterest('{{ interest.id }}')">
+                            <div class="interest-top">
+                                <span class="interest-icon">{{ interest.emoji }}</span>
+                                <div class="interest-check">
+                                    <span class="material-symbols-outlined" style="display: none;">check</span>
+                                </div>
+                            </div>
+                            <span class="interest-name">{{ interest.name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="scroll-hint">
+                        <span>Scroll to see more interests</span>
+                    </div>
+                </form>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <div class="footer-actions">
+                    <button class="btn-skip" onclick="document.getElementById('interests-form').submit()">
+                        Skip
+                    </button>
+                    <button class="btn-next" id="btn-next" onclick="submitForm()" disabled>
+                        Next
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        const MAX_SELECTIONS = 5;
+        let selectedInterests = new Set();
+
+        function toggleInterest(interestId) {
+            const card = document.querySelector(`.interest-card[data-interest="${interestId}"]`);
+            const checkIcon = card.querySelector('.interest-check .material-symbols-outlined');
+
+            if (selectedInterests.has(interestId)) {
+                selectedInterests.delete(interestId);
+                card.classList.remove('selected');
+                checkIcon.style.display = 'none';
+            } else {
+                if (selectedInterests.size < MAX_SELECTIONS) {
+                    selectedInterests.add(interestId);
+                    card.classList.add('selected');
+                    checkIcon.style.display = 'block';
+                }
+            }
+
+            updateUI();
+        }
+
+        function updateUI() {
+            const count = selectedInterests.size;
+            document.getElementById('selection-count').textContent = `(${count}/5 selected)`;
+
+            const btnNext = document.getElementById('btn-next');
+            btnNext.disabled = count === 0;
+        }
+
+        function submitForm() {
+            if (selectedInterests.size > 0) {
+                document.getElementById('selected-interests').value = Array.from(selectedInterests).join(',');
+            }
+            document.getElementById('interests-form').submit();
+        }
+
+        // Initialize
+        updateUI();
+    </script>
+</body>
+</html>

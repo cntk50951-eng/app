@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Welcome - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blob-1 {
+            position: absolute;
+            top: -10%;
+            right: -15%;
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, rgba(30, 148, 246, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .blob-2 {
+            position: absolute;
+            bottom: 20%;
+            left: -20%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(30, 148, 246, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
+        .header {
+            padding: 3rem 1.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .lang-switch {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .hero-section {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .hero-title .highlight {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .hero-image {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto 2rem;
+            display: block;
+        }
+
+        .features-section {
+            padding: 0 1.5rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .feature-card {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .feature-icon {
+            width: 3rem;
+            height: 3rem;
+            background: var(--primary-50);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .feature-icon .material-symbols-outlined {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .feature-content h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-content p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .cta-section {
+            padding: 1.5rem;
+            background: white;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn-get-started {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-get-started:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 148, 246, 0.3);
+        }
+
+        .btn-get-started:active {
+            transform: translateY(0);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .login-link a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        @media (min-width: 480px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .container {
+                max-width: 480px;
+                margin: 2rem auto;
+                border-radius: var(--radius-xl);
+                overflow: hidden;
+                box-shadow: var(--shadow-2xl);
+            }
+
+            .page-container {
+                min-height: calc(100vh - 4rem);
+                border-radius: var(--radius-xl);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="blob-1"></div>
+        <div class="blob-2"></div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="material-symbols-outlined">school</span>
+                </div>
+                <span class="logo-text">AI Tutor</span>
+            </div>
+            <button class="lang-switch">
+                <span>繁體中文</span>
+                <span class="material-symbols-outlined" style="font-size: 1rem;">expand_more</span>
+            </button>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <h1 class="hero-title">Ace Your <span class="highlight">Interviews</span></h1>
+            <p class="hero-subtitle">Personalized AI tutor for your child's primary school journey. Master interview skills with tailored practice.</p>
+
+            <!-- Hero Illustration (placeholder) -->
+            <div class="hero-image">
+                <svg viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="320" height="200" fill="transparent"/>
+                    <!-- Tablet -->
+                    <rect x="60" y="40" width="200" height="140" rx="12" fill="#1e94f6" opacity="0.1"/>
+                    <rect x="65" y="45" width="190" height="130" rx="10" fill="white" stroke="#1e94f6" stroke-width="2"/>
+                    <!-- Screen content -->
+                    <rect x="75" y="60" width="120" height="8" rx="4" fill="#1e94f6" opacity="0.3"/>
+                    <rect x="75" y="75" width="80" height="6" rx="3" fill="#94a3b8"/>
+                    <!-- Character -->
+                    <circle cx="240" cy="110" r="35" fill="#1e94f6" opacity="0.2"/>
+                    <circle cx="240" cy="100" r="20" fill="#1e94f6" opacity="0.4"/>
+                    <!-- Decorations -->
+                    <circle cx="90" cy="150" r="15" fill="#f59e0b" opacity="0.2"/>
+                    <rect x="270" y="60" width="30" height="30" rx="6" fill="#22c55e" opacity="0.2"/>
+                    <circle cx="100" cy="120" r="8" fill="#ef4444" opacity="0.2"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-symbols-outlined">timer</span>
+                </div>
+                <div class="feature-content">
+                    <h3>2-minute Setup</h3>
+                    <p>Quick profile creation with your child's details</p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </div>
+                <div class="feature-content">
+                    <h3>AI-Powered Content</h3>
+                    <p>Personalized questions based on interests</p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-symbols-outlined">record_voice_over</span>
+                </div>
+                <div class="feature-content">
+                    <h3>Native Voice</h3>
+                    <p>Cantonese & Mandarin TTS support</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <a href="{{ url_for('login') }}" class="btn-get-started">
+                <span>Get Started</span>
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+            <p class="login-link">
+                Already have an account? <a href="{{ url_for('login') }}">Log In</a>
+            </p>
+        </section>
+    </div>
+</body>
+</html>

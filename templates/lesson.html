@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Lesson - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: white;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex: 1;
+            text-align: center;
+            padding-right: 2.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 8rem;
+        }
+
+        .audio-section {
+            padding: 1rem;
+        }
+
+        .audio-card {
+            padding: 1.25rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .audio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .audio-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .audio-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .audio-type {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.25rem;
+        }
+
+        .lang-toggle {
+            display: flex;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+            padding: 0.25rem;
+        }
+
+        .lang-option {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+        }
+
+        .lang-option.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .play-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .waveform {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.125rem;
+            height: 2rem;
+            opacity: 0.7;
+        }
+
+        .wave-bar {
+            width: 0.25rem;
+            background: var(--primary);
+            border-radius: 999px;
+            transition: height 0.2s ease;
+        }
+
+        .wave-bar:nth-child(1) { height: 0.75rem; }
+        .wave-bar:nth-child(2) { height: 1.25rem; }
+        .wave-bar:nth-child(3) { height: 1rem; }
+        .wave-bar:nth-child(4) { height: 1.75rem; }
+        .wave-bar:nth-child(5) { height: 1.25rem; }
+        .wave-bar:nth-child(6) { height: 0.75rem; }
+        .wave-bar:nth-child(7) { height: 1rem; }
+        .wave-bar:nth-child(8) { height: 1.5rem; }
+        .wave-bar:nth-child(9) { height: 1rem; }
+        .wave-bar:nth-child(10) { height: 0.75rem; }
+        .wave-bar:nth-child(11) { height: 0.5rem; background: var(--border-color); }
+        .wave-bar:nth-child(12) { height: 1rem; background: var(--border-color); }
+        .wave-bar:nth-child(13) { height: 1.5rem; background: var(--border-color); }
+        .wave-bar:nth-child(14) { height: 0.75rem; background: var(--border-color); }
+        .wave-bar:nth-child(15) { height: 0.5rem; background: var(--border-color); }
+        .wave-bar:nth-child(16) { height: 1rem; background: var(--border-color); }
+        .wave-bar:nth-child(17) { height: 0.5rem; background: var(--border-color); }
+        .wave-bar:nth-child(18) { height: 0.5rem; background: var(--border-color); }
+        .wave-bar:nth-child(19) { height: 1rem; background: var(--border-color); }
+        .wave-bar:nth-child(20) { height: 1.5rem; background: var(--border-color); }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .section-title {
+            padding: 1rem 1.5rem 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .accordions {
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .accordion {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .accordion-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .accordion-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .accordion-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .accordion-toggle {
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .accordion.open .accordion-toggle {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .accordion.open .accordion-content {
+            max-height: 500px;
+            padding-bottom: 1.25rem;
+        }
+
+        .accordion-inner {
+            padding-left: 2.75rem;
+        }
+
+        .accordion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .accordion-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .accordion-list .bullet {
+            width: 0.375rem;
+            height: 0.375rem;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-top: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .script-box {
+            padding: 0.75rem;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+            border-left: 4px solid #22c55e;
+            font-style: italic;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .question-item {
+            padding: 0.75rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 0.5rem;
+        }
+
+        .question-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .question-text {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .answer-block {
+            position: relative;
+            padding-left: 1rem;
+            border-left: 2px solid #a855f7;
+            margin-top: 0.75rem;
+        }
+
+        .answer-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #a855f7;
+            margin-bottom: 0.25rem;
+        }
+
+        .answer-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.25rem;
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+            z-index: 20;
+        }
+
+        .footer-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.875rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 0.875rem;
+            background: white;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--background-light);
+        }
+
+        .btn-secondary .material-symbols-outlined {
+            color: var(--primary);
+        }
+
+        @supports (padding: max(0px)) {
+            .footer {
+                padding-bottom: calc(max(1.5rem, env(safe-area-inset-bottom)) + 0.5rem);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-btn" onclick="history.back()">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h1 class="page-title">{{ topic.title }}</h1>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Audio Player Section -->
+            <section class="audio-section">
+                <div class="audio-card">
+                    <div class="audio-header">
+                        <div class="audio-title">
+                            <span class="audio-label">Audio Lesson</span>
+                            <span class="audio-type">Model Answer</span>
+                        </div>
+                        <div class="lang-toggle">
+                            <button class="lang-option active">Cantonese</button>
+                            <button class="lang-option">Mandarin</button>
+                        </div>
+                    </div>
+                    <div class="audio-player">
+                        <button class="play-btn" onclick="togglePlay()">
+                            <span class="material-symbols-outlined" id="play-icon">play_arrow</span>
+                        </button>
+                        <div class="waveform">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">0:14</span>
+                        <span>1:30</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lesson Content Header -->
+            <h2 class="section-title">Lesson Content</h2>
+
+            <!-- Accordions -->
+            <div class="accordions">
+                <!-- Teaching Goals -->
+                <div class="accordion open">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title-group">
+                            <div class="accordion-icon" style="background: var(--primary-50); color: var(--primary);">
+                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">flag</span>
+                            </div>
+                            <span class="accordion-title">Teaching Goals</span>
+                        </div>
+                        <span class="material-symbols-outlined accordion-toggle">expand_more</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <ul class="accordion-list">
+                                <li>
+                                    <span class="bullet"></span>
+                                    <span>Express name and age clearly.</span>
+                                </li>
+                                <li>
+                                    <span class="bullet"></span>
+                                    <span>Demonstrate confidence and proper posture.</span>
+                                </li>
+                                <li>
+                                    <span class="bullet"></span>
+                                    <span>Maintain consistent eye contact with the interviewer.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parent's Script -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title-group">
+                            <div class="accordion-icon" style="background: #dcfce7; color: #22c55e;">
+                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">record_voice_over</span>
+                            </div>
+                            <span class="accordion-title">Parent's Script</span>
+                        </div>
+                        <span class="material-symbols-outlined accordion-toggle">expand_more</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <div class="script-box">
+                                "Let's practice saying hello to the principal. Remember to smile and speak loudly enough so they can hear you clearly. Imagine I am the principal now."
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Questions -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title-group">
+                            <div class="accordion-icon" style="background: #fef3c7; color: #f59e0b;">
+                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">help</span>
+                            </div>
+                            <span class="accordion-title">Sample Questions</span>
+                        </div>
+                        <span class="material-symbols-outlined accordion-toggle">expand_more</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <div class="question-item">
+                                <p class="question-text">Q1: What is your name?</p>
+                            </div>
+                            <div class="question-item">
+                                <p class="question-text">Q2: How old are you?</p>
+                            </div>
+                            <div class="question-item">
+                                <p class="question-text">Q3: Which kindergarten do you go to?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Answers -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title-group">
+                            <div class="accordion-icon" style="background: #f3e8ff; color: #a855f7;">
+                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">lightbulb</span>
+                            </div>
+                            <span class="accordion-title">Model Answers</span>
+                        </div>
+                        <span class="material-symbols-outlined accordion-toggle">expand_more</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <div class="answer-block">
+                                <p class="answer-label">Standard</p>
+                                <p class="answer-text">"Good morning Principal! My name is Chan Siu Ming. I am 5 years old. I study at Sunshine Kindergarten."</p>
+                            </div>
+                            <div class="answer-block" style="margin-top: 1rem;">
+                                <p class="answer-label">Advanced (Expressive)</p>
+                                <p class="answer-text">"Hello! I am Chan Siu Ming, but you can call me Ming. I really enjoy reading books about dinosaurs. It's nice to meet you!"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-actions">
+                <button class="btn-primary">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Mark as Complete
+                </button>
+                <button class="btn-secondary">
+                    <span class="material-symbols-outlined">autorenew</span>
+                    Regenerate Content
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function toggleAccordion(header) {
+            const accordion = header.parentElement;
+            const wasOpen = accordion.classList.contains('open');
+
+            // Close all accordions
+            document.querySelectorAll('.accordion').forEach(acc => {
+                acc.classList.remove('open');
+            });
+
+            // Open clicked accordion if it wasn't open
+            if (!wasOpen) {
+                accordion.classList.add('open');
+            }
+        }
+
+        let isPlaying = false;
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const icon = document.getElementById('play-icon');
+            icon.textContent = isPlaying ? 'pause' : 'play_arrow';
+
+            if (isPlaying) {
+                animateWaveform();
+            }
+        }
+
+        function animateWaveform() {
+            const bars = document.querySelectorAll('.wave-bar');
+            let time = 0;
+
+            if (!isPlaying) return;
+
+            const interval = setInterval(() => {
+                if (!isPlaying) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                time++;
+                bars.forEach((bar, index) => {
+                    const baseHeight = parseFloat(getComputedStyle(bar).height);
+                    const height = baseHeight + Math.sin(time * 0.5 + index * 0.3) * 0.3;
+                    bar.style.height = Math.max(0.25, Math.min(2, height)) + 'rem';
+                });
+            }, 100);
+        }
+    </script>
+</body>
+</html>
