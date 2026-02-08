@@ -376,16 +376,16 @@
                 <form method="POST" action="{{ url_for('child_profile_step3') }}" id="schools-form">
                     <input type="hidden" name="target_schools" id="selected-schools" value="">
 
-                    <h3 class="section-header">Popular Choices</h3>
+                    <h3 class="section-header">School Types</h3>
 
                     <div class="schools-list">
-                        <div class="school-card" data-school="spcc" onclick="toggleSchool('spcc')">
+                        {% for school_type in school_types %}
+                        <div class="school-card" data-school="{{ school_type.id }}" onclick="toggleSchool('{{ school_type.id }}')">
                             <div class="school-top">
                                 <div class="school-info">
-                                    <h4 class="school-name">St. Paul's Co-educational College</h4>
+                                    <h4 class="school-name">{{ school_type.name_zh }}</h4>
                                     <div class="school-tags">
-                                        <span class="school-tag type">Direct Subsidy</span>
-                                        <span class="school-tag gender">Co-ed</span>
+                                        <span class="school-tag type">{{ school_type.examples }}</span>
                                     </div>
                                 </div>
                                 <div class="school-check">
@@ -393,54 +393,10 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="school-card" data-school="dbs" onclick="toggleSchool('dbs')">
-                            <div class="school-top">
-                                <div class="school-info">
-                                    <h4 class="school-name">Diocesan Boys' School Primary Division</h4>
-                                    <div class="school-tags">
-                                        <span class="school-tag type">Direct Subsidy</span>
-                                        <span class="school-tag gender">Boys</span>
-                                    </div>
-                                </div>
-                                <div class="school-check">
-                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="school-card" data-school="dgs" onclick="toggleSchool('dgs')">
-                            <div class="school-top">
-                                <div class="school-info">
-                                    <h4 class="school-name">Diocesan Girls' Junior School</h4>
-                                    <div class="school-tags">
-                                        <span class="school-tag type">Private</span>
-                                        <span class="school-tag gender">Girls</span>
-                                    </div>
-                                </div>
-                                <div class="school-check">
-                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="school-card" data-school="lasalle" onclick="toggleSchool('lasalle')">
-                            <div class="school-top">
-                                <div class="school-info">
-                                    <h4 class="school-name">La Salle Primary School</h4>
-                                    <div class="school-tags">
-                                        <span class="school-tag type">Aided</span>
-                                        <span class="school-tag gender">Boys</span>
-                                    </div>
-                                </div>
-                                <div class="school-check">
-                                    <span class="material-symbols-outlined" style="display: none; font-size: 1rem;">check</span>
-                                </div>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
 
-                    <p class="not-found-hint">Can't find your school? Try searching above.</p>
+                    <p class="not-found-hint">Select at least one school type to continue.</p>
                 </form>
             </main>
 
@@ -455,7 +411,21 @@
     </div>
 
     <script>
-        let selectedSchools = new Set();
+        let selectedSchools = new Set({{ selected_schools | default([]) | tojson }});
+
+        // Initialize UI on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            selectedSchools.forEach(schoolId => {
+                const card = document.querySelector(`.school-card[data-school="${schoolId}"]`);
+                if (card) {
+                    card.classList.add('selected');
+                    const checkIcon = card.querySelector('.school-check .material-symbols-outlined');
+                    if (checkIcon) {
+                        checkIcon.style.display = 'block';
+                    }
+                }
+            });
+        });
 
         function toggleSchool(schoolId) {
             const card = document.querySelector(`.school-card[data-school="${schoolId}"]`);

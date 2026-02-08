@@ -388,7 +388,22 @@
 
     <script>
         const MAX_SELECTIONS = 5;
-        let selectedInterests = new Set();
+        let selectedInterests = new Set({{ selected_interests | default([]) | tojson }});
+
+        // Initialize UI on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            selectedInterests.forEach(interestId => {
+                const card = document.querySelector(`.interest-card[data-interest="${interestId}"]`);
+                if (card) {
+                    card.classList.add('selected');
+                    const checkIcon = card.querySelector('.interest-check .material-symbols-outlined');
+                    if (checkIcon) {
+                        checkIcon.style.display = 'block';
+                    }
+                }
+            });
+            updateUI();
+        });
 
         function toggleInterest(interestId) {
             const card = document.querySelector(`.interest-card[data-interest="${interestId}"]`);

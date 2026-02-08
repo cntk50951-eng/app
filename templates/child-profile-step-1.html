@@ -312,6 +312,7 @@
                                name="child_name"
                                class="form-input"
                                placeholder="e.g., 小明"
+                               value="{{ initial_data.child_name | default('') }}"
                                required
                                minlength="1"
                                maxlength="50">
@@ -322,9 +323,9 @@
                         <label class="form-label" for="child_age">Age Group</label>
                         <select id="child_age" name="child_age" class="age-select" required>
                             <option value="">Select age group</option>
-                            <option value="K1">K1 (低班)</option>
-                            <option value="K2">K2 (高班)</option>
-                            <option value="K3">K3 (學前班)</option>
+                            <option value="K1" {% if initial_data.child_age == 'K1' %}selected{% endif %}>K1 (低班)</option>
+                            <option value="K2" {% if initial_data.child_age == 'K2' %}selected{% endif %}>K2 (高班)</option>
+                            <option value="K3" {% if initial_data.child_age == 'K3' %}selected{% endif %}>K3 (學前班)</option>
                         </select>
                     </div>
 
@@ -332,21 +333,21 @@
                         <label class="form-label">Gender</label>
                         <div class="gender-options">
                             <div class="gender-option">
-                                <input type="radio" id="gender_male" name="child_gender" value="male">
+                                <input type="radio" id="gender_male" name="child_gender" value="male" {% if initial_data.child_gender == 'male' %}checked{% endif %}>
                                 <label for="gender_male">
                                     <span class="material-symbols-outlined">male</span>
                                     Boy
                                 </label>
                             </div>
                             <div class="gender-option">
-                                <input type="radio" id="gender_female" name="child_gender" value="female">
+                                <input type="radio" id="gender_female" name="child_gender" value="female" {% if initial_data.child_gender == 'female' %}checked{% endif %}>
                                 <label for="gender_female">
                                     <span class="material-symbols-outlined">female</span>
                                     Girl
                                 </label>
                             </div>
                             <div class="gender-option">
-                                <input type="radio" id="gender_other" name="child_gender" value="other">
+                                <input type="radio" id="gender_other" name="child_gender" value="other" {% if initial_data.child_gender == 'other' %}checked{% endif %}>
                                 <label for="gender_other">
                                     <span class="material-symbols-outlined">person</span>
                                     Prefer not to say

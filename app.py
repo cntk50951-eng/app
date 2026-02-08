@@ -28,6 +28,15 @@ app.secret_key = os.getenv('SECRET_KEY') or os.urandom(32).hex()
 env = DotEnv()
 env.init_app(app, verbose_mode=False)
 
+# Import database module
+from db.database import (
+    create_user, get_user_by_email, get_user_by_google_id, get_user_by_id,
+    create_child_profile, get_child_profile_by_user_id, get_child_profile_by_id,
+    set_user_interests, get_user_interests,
+    set_target_schools, get_target_schools,
+    create_complete_profile
+)
+
 # Configure OAuth
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'  # Force HTTPS in production
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -90,6 +99,41 @@ def get_user_info(access_token):
     return None
 
 
+def load_user_session(user_id):
+    """Load user and profile data from database into session."""
+    # Get user from database
+    user = get_user_by_id(user_id)
+    if not user:
+        return False
+
+    # Store user info in session
+    session['logged_in'] = True
+    session['user_id'] = user['id']
+    session['email'] = user['email']
+    session['name'] = user.get('name')
+    session['picture'] = user.get('picture')
+    session['user_type'] = user['user_type']
+
+    # Get child profile
+    profile = get_child_profile_by_user_id(user_id)
+    if profile:
+        session['profile_id'] = profile['id']
+        session['child_name'] = profile['child_name']
+        session['child_age'] = profile['child_age']
+        session['child_gender'] = profile.get('child_gender')
+        session['profile_complete'] = profile['profile_complete']
+
+        # Get interests
+        interests = get_user_interests(profile['id'])
+        session['child_interests'] = [i['id'] for i in interests]
+
+        # Get target schools
+        schools = get_target_schools(profile['id'])
+        session['target_schools'] = [s['id'] for s in schools]
+
+    return True
+
+
 @app.before_request
 def require_login():
     """Check if user is logged in for protected routes."""
@@ -146,17 +190,23 @@ def signup():
             flash('Passwords do not match', 'error')
             return render_template('signup.html')
 
-        # TODO: Save user to database
-        session['logged_in'] = True
-        session['email'] = email
-        session['user_type'] = 'email'
-        flash('Account created successfully!', 'success')
+        # Check if user already exists
+        existing_user = get_user_by_email(email)
+        if existing_user:
+            # User exists, load their session
+            load_user_session(existing_user['id'])
+            flash('Welcome back!', 'success')
+        else:
+            # Create new user in database
+            user = create_user(
+                email=email,
+                name=email.split('@')[0],
+                user_type='email'
+            )
+            load_user_session(user['id'])
 
         # Redirect to child profile setup if profile is incomplete
-        is_profile_complete = session.get('profile_complete', False)
-        has_basic_info = session.get('child_name') and session.get('child_age')
-
-        if not is_profile_complete or not has_basic_info:
+        if not session.get('profile_complete'):
             return redirect(url_for('child_profile_step1'))
 
         return redirect(next_url)
@@ -204,33 +254,32 @@ def auth_google_callback():
         user_info = get_user_info(access_token)
 
         if user_info:
-            # Store user info in session
-            session['logged_in'] = True
-            session['access_token'] = access_token
-            session['user_id'] = user_info.get('id')
-            session['email'] = user_info.get('email')
-            session['name'] = user_info.get('name')
-            session['picture'] = user_info.get('picture')
-            session['user_type'] = 'google'
+            google_id = user_info.get('id')
+            email = user_info.get('email')
 
-            # Store credentials for API calls
-            session['credentials'] = {
-                'token': credentials.token,
-                'refresh_token': credentials.refresh_token,
-                'token_uri': credentials.token_uri,
-                'client_id': credentials.client_id,
-                'client_secret': credentials.client_secret,
-                'scopes': credentials.scopes
-            }
+            # Check if user already exists
+            existing_user = get_user_by_email(email)
+            if existing_user:
+                # User exists, load their session
+                load_user_session(existing_user['id'])
+            elif get_user_by_google_id(google_id):
+                # User exists with Google ID, load session
+                load_user_session(get_user_by_google_id(google_id)['id'])
+            else:
+                # Create new user in database
+                user = create_user(
+                    email=email,
+                    name=user_info.get('name'),
+                    picture=user_info.get('picture'),
+                    user_type='google',
+                    google_id=google_id
+                )
+                load_user_session(user['id'])
 
-            flash(f'Welcome, {user_info.get("name")}!', 'success')
+            flash(f'Welcome, {session.get("name")}!', 'success')
 
             # Redirect to child profile setup if profile is incomplete
-            # Check both individual fields AND the profile_complete flag
-            is_profile_complete = session.get('profile_complete', False)
-            has_basic_info = session.get('child_name') and session.get('child_age')
-
-            if not is_profile_complete or not has_basic_info:
+            if not session.get('profile_complete'):
                 return redirect(url_for('child_profile_step1'))
 
             # Redirect to intended URL or dashboard
@@ -261,13 +310,50 @@ def logout():
 @login_required
 def child_profile_step1():
     """Child profile creation - Step 1: Basic Info."""
+    user_id = session.get('user_id')
+    profile = get_child_profile_by_user_id(user_id)
+
+    # Pre-fill data if profile exists
+    initial_data = {}
+    if profile:
+        initial_data = {
+            'child_name': profile['child_name'],
+            'child_age': profile['child_age'],
+            'child_gender': profile.get('child_gender')
+        }
+
     if request.method == 'POST':
-        session['child_name'] = request.form.get('child_name')
-        session['child_age'] = request.form.get('child_age')
-        session['child_gender'] = request.form.get('child_gender')
+        child_name = request.form.get('child_name')
+        child_age = request.form.get('child_age')
+        child_gender = request.form.get('child_gender')
+
+        if profile:
+            # Update existing profile
+            profile = create_child_profile(
+                user_id=user_id,
+                child_name=child_name,
+                child_age=child_age,
+                child_gender=child_gender
+            )
+        else:
+            # Create new profile
+            profile = create_child_profile(
+                user_id=user_id,
+                child_name=child_name,
+                child_age=child_age,
+                child_gender=child_gender
+            )
+
+        # Update session
+        session['child_name'] = child_name
+        session['child_age'] = child_age
+        session['child_gender'] = child_gender
+        session['profile_id'] = profile['id']
+
         flash('Profile saved!', 'success')
         return redirect(url_for('child_profile_step2'))
-    return render_template('child-profile-step-1.html')
+
+    return render_template('child-profile-step-1.html', initial_data=initial_data)
 
 
 @app.route('/child-profile/step-2', methods=['GET', 'POST'])
@@ -292,12 +378,23 @@ def child_profile_step2():
         {'id': 'swimming', 'emoji': '🏊', 'name': '游泳'},
     ]
 
+    profile_id = session.get('profile_id')
+    selected_interests = session.get('child_interests', [])
+
     if request.method == 'POST':
         selected_interests = request.form.getlist('interests')
+
+        # Save to database
+        if profile_id:
+            set_user_interests(profile_id, selected_interests)
+
+        # Update session
         session['child_interests'] = selected_interests
+
         flash('Interests saved!', 'success')
         return redirect(url_for('child_profile_step3'))
-    return render_template('child-profile-step-2.html', interests=interests)
+
+    return render_template('child-profile-step-2.html', interests=interests, selected_interests=selected_interests)
 
 
 @app.route('/child-profile/step-3', methods=['GET', 'POST'])
@@ -311,19 +408,35 @@ def child_profile_step3():
         {'id': 'traditional', 'name': '傳統名校', 'examples': 'KTS/SFA'},
     ]
 
+    profile_id = session.get('profile_id')
+    selected_schools = session.get('target_schools', [])
+
     if request.method == 'POST':
         target_schools = request.form.getlist('target_schools')
+
+        # Save to database
+        if profile_id:
+            set_target_schools(profile_id, target_schools)
+
+        # Update session
         session['target_schools'] = target_schools
         session['profile_complete'] = True
+
         flash('Profile completed successfully!', 'success')
         return redirect(url_for('dashboard'))
-    return render_template('child-profile-step-3.html', school_types=school_types)
+
+    return render_template('child-profile-step-3.html', school_types=school_types, selected_schools=selected_schools)
 
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
     """Parent dashboard page."""
+    # Reload user data from database to ensure freshness
+    user_id = session.get('user_id')
+    if user_id:
+        load_user_session(user_id)
+
     return render_template('dashboard.html')
 
 
@@ -425,7 +538,9 @@ def get_user():
         'name': session.get('name'),
         'email': session.get('email'),
         'picture': session.get('picture'),
-        'profile_complete': session.get('profile_complete', False)
+        'profile_complete': session.get('profile_complete', False),
+        'child_name': session.get('child_name'),
+        'child_age': session.get('child_age')
     })
 
 
