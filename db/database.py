@@ -1,24 +1,37 @@
 """
 Database connection and utilities for AI Tutor.
-Uses SQLAlchemy for database operations.
+Uses psycopg2 for PostgreSQL database operations.
 """
 
 import os
+import sys
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
 
+# Load environment variables from .env file (for local development)
+from dotenv import load_dotenv
 load_dotenv()
 
-# Database configuration - set DATABASE_URL in environment or .env file
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Database configuration
+DATABASE_URL = os.getenv('DATABASE_URL', '')
 
 
 def get_connection():
     """Get a database connection."""
+    global DATABASE_URL
+
+    # Re-read environment variable in case it changed
+    DATABASE_URL = os.getenv('DATABASE_URL', '')
+
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL environment variable is not set")
+
     try:
         conn = psycopg2.connect(DATABASE_URL)
         return conn
+    except psycopg2.OperationalError as e:
+        print(f"Database connection error: {e}")
+        raise Exception(f"Failed to connect to database: {e}")
     except Exception as e:
         print(f"Database connection error: {e}")
         raise
@@ -198,6 +211,9 @@ def get_user_interests(profile_id):
 
 def set_user_interests(profile_id, interest_ids):
     """Set user's interests (replaces existing)."""
+    if not interest_ids:
+        return
+
     # Delete existing
     query = "DELETE FROM user_interests WHERE child_profile_id = %s;"
     execute_query(query, (profile_id,))
@@ -243,6 +259,9 @@ def get_target_schools(profile_id):
 
 def set_target_schools(profile_id, school_type_ids):
     """Set user's target schools (replaces existing)."""
+    if not school_type_ids:
+        return
+
     # Delete existing
     query = "DELETE FROM target_schools WHERE child_profile_id = %s;"
     execute_query(query, (profile_id,))
@@ -316,4 +335,9 @@ def create_complete_profile(user_data, child_data, interests=None, target_school
 
 if __name__ == '__main__':
     print("Database utilities loaded.")
-    print(f"Database URL: {DATABASE_URL[:50]}...")
+    if DATABASE_URL:
+        print(f"Database URL configured: {DATABASE_URL[:50]}...")
+    else:
+        print("WARNING: DATABASE_URL is not set!")
+        print("Please set the DATABASE_URL environment variable.")
+        sys.exit(1)
