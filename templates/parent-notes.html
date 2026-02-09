@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家長筆記 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .notes-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+        
+        .notes-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .notes-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .quick-note-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .topic-selector {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .topic-chip {
+            flex-shrink: 0;
+            padding: 0.5rem 1rem;
+            background: var(--background-light);
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .topic-chip.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .template-question {
+            background: var(--background-light);
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .template-question strong {
+            color: var(--primary-color);
+        }
+        
+        .note-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        
+        .note-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .score-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .score-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .score-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .score-emoji {
+            font-size: 1.5rem;
+            display: block;
+        }
+        
+        .history-card {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            margin-bottom: 0.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .history-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .history-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .history-topic {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .history-text {
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .history-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state .material-symbols-outlined {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="header">
+            <a href="/dashboard" class="back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <h1 class="page-title">家長筆記</h1>
+            <div style="width: 48px;"></div>
+        </header>
+
+        <main class="main-content" style="padding-bottom: 8rem;">
+            <!-- 头部 -->
+            <div class="notes-header">
+                <div class="notes-title">📝 記錄練習</div>
+                <div class="notes-subtitle">觀察小朋友既表現，留低實用建議</div>
+            </div>
+
+            <!-- 快速笔记 -->
+            <div class="quick-note-card">
+                <div class="section-title" style="margin-bottom: 1rem;">
+                    <span class="material-symbols-outlined">edit</span>
+                    新增筆記
+                </div>
+                
+                <!-- 主题选择 -->
+                <div class="topic-selector" id="topicSelector">
+                    <button class="topic-chip active" data-topic="self-introduction">自我介紹</button>
+                    <button class="topic-chip" data-topic="interests">興趣愛好</button>
+                    <button class="topic-chip" data-topic="family">家庭介紹</button>
+                    <button class="topic-chip" data-topic="observation">觀察力</button>
+                    <button class="topic-chip" data-topic="scenarios">處境題</button>
+                </div>
+                
+                <!-- 模板问题 -->
+                <div id="templateQuestions">
+                    <!-- 通过 JS 填充 -->
+                </div>
+                
+                <!-- 笔记内容 -->
+                <textarea class="note-textarea" id="noteContent" 
+                          placeholder="記錄小朋友今日既表現...&#10;&#10;例如：今日小明介紹自己好叻，主動望住鏡頭，聲音夠大聲。但係講到鍾意既嘢時詞彙有啲少，可以加多啲形容詞。"></textarea>
+                
+                <!-- 评分 -->
+                <div class="score-selector">
+                    <button class="score-btn" data-score="1">
+                        <span class="score-emoji">😟</span>
+                        需努力
+                    </button>
+                    <button class="score-btn" data-score="2">
+                        <span class="score-emoji">🙂</span>
+                        還可以
+                    </button>
+                    <button class="score-btn" data-score="3">
+                        <span class="score-emoji">😊</span>
+                        不錯
+                    </button>
+                    <button class="score-btn" data-score="4">
+                        <span class="score-emoji">😄</span>
+                        好叻
+                    </button>
+                    <button class="score-btn active" data-score="5">
+                        <span class="score-emoji">🌟</span>
+                        超棒
+                    </button>
+                </div>
+                
+                <button class="btn-primary" onclick="saveNote()">
+                    <span class="material-symbols-outlined">save</span>
+                    保存筆記
+                </button>
+            </div>
+
+            <!-- 历史记录 -->
+            <div style="padding: 0 1rem;">
+                <div class="section-title" style="margin: 1rem 0;">
+                    <span class="material-symbols-outlined">history</span>
+                    歷史記錄
+                </div>
+                
+                <div id="historyList">
+                    <!-- 通过 JS 填充 -->
+                </div>
+                
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <span class="material-symbols-outlined">note_add</span>
+                    <p>暫時未有筆記</p>
+                    <p style="font-size: 0.875rem;">記錄小朋友既練習情況，幫助追蹤進度！</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const TOPICS = {
+            'self-introduction': { emoji: '👋', name: '自我介紹' },
+            'interests': { emoji: '⭐', name: '興趣愛好' },
+            'family': { emoji: '👨‍👩‍👧', name: '家庭介紹' },
+            'observation': { emoji: '👀', name: '觀察力' },
+            'scenarios': { emoji: '🎭', name: '處境題' }
+        };
+        
+        const TEMPLATES = {
+            'self-introduction': {
+                questions: [
+                    '小朋友介紹自己時表現得點樣？',
+                    '有冇邊部分講得特別好？',
+                    '邊部分需要多啲練習？'
+                ],
+                suggestions: '可以對鏡練習，睇吓自己既表情同姿勢'
+            },
+            'interests': {
+                questions: [
+                    '小朋友點樣描述自己既興趣？',
+                    '可以唔可以講出具體例子？',
+                    '用咗咩形容詞？'
+                ],
+                suggestions: '用「因為...所以...」句式，準備多幾個興趣相關既詞彙'
+            },
+            'family': {
+                questions: [
+                    '小朋友識唔識介紹屋企人？',
+                    '可唔可以講出屋企人既特點？'
+                ],
+                suggestions: '可以影啲家庭相，等小朋友指住嚟講'
+            },
+            'observation': {
+                questions: [
+                    '小朋友有冇睇清楚張圖？',
+                    '講得出幾多樣野？',
+                    '描述既次序清唔清楚？'
+                ],
+                suggestions: '教「由左到右、由上到下」咁睇'
+            },
+            'scenarios': {
+                questions: [
+                    '小朋友識唔識處理呢個情況？',
+                    '答案合理唔合理？'
+                ],
+                suggestions: '用角色扮演既方式練習'
+            }
+        };
+        
+        let currentTopic = 'self-introduction';
+        let currentScore = 5;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTemplate(currentTopic);
+            loadHistory();
+            setupEventListeners();
+        });
+        
+        // 设置事件监听
+        function setupEventListeners() {
+            // 主题选择
+            document.querySelectorAll('.topic-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.topic-chip').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentTopic = btn.dataset.topic;
+                    loadTemplate(currentTopic);
+                });
+            });
+            
+            // 评分按钮
+            document.querySelectorAll('.score-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentScore = parseInt(btn.dataset.score);
+                });
+            });
+        }
+        
+        // 加载模板
+        function loadTemplate(topic) {
+            const template = TEMPLATES[topic] || {
+                questions: ['練習過程點樣？', '邊部分做得好？', '邊部分需要改進？'],
+                suggestions: '鼓勵小朋友'
+            };
+            
+            const container = document.getElementById('templateQuestions');
+            container.innerHTML = `
+                <div style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                    <strong>思考方向：</strong>
+                </div>
+                ${template.questions.map(q => `
+                    <div class="template-question">
+                        <strong>💡 ${q}</strong>
+                    </div>
+                `).join('')}
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #fff3cd; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                    <span style="font-size: 1rem;">📌</span> ${template.suggestions}
+                </div>
+            `;
+        }
+        
+        // 加载历史
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/notes?limit=10');
+                const data = await response.json();
+                
+                const container = document.getElementById('historyList');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (!data.notes || data.notes.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                container.innerHTML = data.notes.map(note => {
+                    const topic = TOPICS[note.topic_id] || { emoji: '📝', name: '筆記' };
+                    const scoreEmojis = ['','😟','🙂','😊','😄','🌟'];
+                    
+                    return `
+                        <div class="history-card">
+                            <div class="history-avatar">${topic.emoji}</div>
+                            <div class="history-content">
+                                <div class="history-topic">${topic.name} · ${scoreEmojis[note.score || 5]}</div>
+                                <div class="history-text">${note.content}</div>
+                                <div class="history-time">${formatTime(note.created_at)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading notes:', e);
+            }
+        }
+        
+        // 格式化时间
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return '剛剛';
+            if (diff < 3600000) return `${Math.floor(diff/60000)} 分鐘前`;
+            if (diff < 86400000) return `${Math.floor(diff/3600000)} 小時前`;
+            return date.toLocaleDateString('zh-HK');
+        }
+        
+        // 保存笔记
+        async function saveNote() {
+            const content = document.getElementById('noteContent').value.trim();
+            
+            if (!content) {
+                alert('請輸入筆記內容！');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic_id: currentTopic,
+                        content: content,
+                        score: currentScore
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('筆記已保存！✅');
+                    document.getElementById('noteContent').value = '';
+                    currentScore = 5;
+                    document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.score-btn[data-score="5"]').classList.add('active');
+                    loadHistory();
+                }
+            } catch (e) {
+                console.error('Error saving note:', e);
+                alert('保存失敗，請重試！');
+            }
+        }
+    </script>
+</body>
+</html>

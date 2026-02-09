@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編輯孩子資料 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .profile-header {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 3rem;
+        }
+        
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .profile-age-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .section-title .material-symbols-outlined {
+            color: var(--primary-color);
+        }
+        
+        .interest-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .interest-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-light);
+            border-radius: 2rem;
+            font-size: 0.875rem;
+        }
+        
+        .interest-tag.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-secondary {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            background: var(--background-light);
+            color: var(--text-secondary);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="header">
+            <a href="/dashboard" class="back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <h1 class="page-title">編輯資料</h1>
+            <div style="width: 48px;"></div>
+        </header>
+
+        <main class="main-content" style="padding-bottom: 8rem;">
+            <!-- 画像预览 -->
+            <div class="profile-header">
+                <div class="profile-avatar" id="avatarPreview">
+                    👶
+                </div>
+                <div class="profile-name" id="nameDisplay">小朋友</div>
+                <div class="profile-age-badge" id="ageDisplay">K2</div>
+            </div>
+
+            <!-- 统计 -->
+            <div class="section-card">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">analytics</span>
+                    使用統計
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="topicsCompleted">0</div>
+                        <div class="stat-label">已完成主題</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalTime">0</div>
+                        <div class="stat-label">練習時長(分鐘)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="streakDays">0</div>
+                        <div class="stat-label">連續天數</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 基本信息编辑 -->
+            <div class="section-card">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">person</span>
+                    基本資料
+                </div>
+                
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label class="form-label">小朋友暱稱</label>
+                        <input type="text" class="form-input" id="childName" 
+                               placeholder="輸入暱稱" maxlength="20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">年齡</label>
+                        <select class="form-select" id="childAge">
+                            <option value="">選擇年齡</option>
+                            <option value="K1">K1 (幼兒園低班)</option>
+                            <option value="K2">K2 (幼兒園中班)</option>
+                            <option value="K3">K3 (幼兒園高班)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">性別</label>
+                        <div class="btn-group" id="genderGroup">
+                            <button type="button" class="btn-toggle" data-value="male">男仔</button>
+                            <button type="button" class="btn-toggle" data-value="female">女仔</button>
+                            <button type="button" class="btn-toggle" data-value="other">其他/不透露</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 兴趣编辑 -->
+            <div class="section-card">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">star</span>
+                    興趣愛好
+                </div>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    選擇最多 5 個興趣 (點擊選擇/取消)
+                </p>
+                <div class="interest-tags" id="interestTags">
+                    <!-- 兴趣标签将通过 JS 填充 -->
+                </div>
+            </div>
+
+            <!-- 目标学校 -->
+            <div class="section-card">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">school</span>
+                    目標學校類型
+                </div>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    選擇想報考的學校類型 (可選多個)
+                </p>
+                <div id="schoolTypes">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="school" value="academic">
+                        <span class="checkmark"></span>
+                        <div>
+                            <strong>學術型</strong>
+                            <small>DBS / SPCC 等</small>
+                        </div>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="school" value="holistic">
+                        <span class="checkmark"></span>
+                        <div>
+                            <strong>全人型</strong>
+                            <small>英華 / TSL 等</small>
+                        </div>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="school" value="international">
+                        <span class="checkmark"></span>
+                        <div>
+                            <strong>國際型</strong>
+                            <small>CKY / 港同 等</small>
+                        </div>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="school" value="traditional">
+                        <span class="checkmark"></span>
+                        <div>
+                            <strong>傳統名校</strong>
+                            <small>KTS / SFA 等</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 按钮 -->
+            <div style="padding: 0 1rem;">
+                <button class="btn-primary" onclick="saveProfile()">
+                    <span class="material-symbols-outlined">save</span>
+                    保存更改
+                </button>
+                <button class="btn-secondary" onclick="cancelEdit()">
+                    取消
+                </button>
+            </div>
+
+            <!-- 危险操作 -->
+            <div style="padding: 1rem; text-align: center;">
+                <button onclick="deleteProfile()" style="color: var(--error-color); background: none; border: none; font-size: 0.875rem; cursor: pointer;">
+                    刪除孩子資料
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 配置
+        const INTERESTS = [
+            { id: 'dinosaurs', emoji: '🦕', name: '恐龍' },
+            { id: 'lego', emoji: '🧱', name: 'Lego' },
+            { id: 'art', emoji: '🎨', name: '畫畫' },
+            { id: 'sports', emoji: '⚽', name: '運動' },
+            { id: 'music', emoji: '🎵', name: '音樂' },
+            { id: 'reading', emoji: '📚', name: '閱讀' },
+            { id: 'science', emoji: '🔬', name: '科學' },
+            { id: 'cooking', emoji: '🍳', name: '煮飯仔' },
+            { id: 'cars', emoji: '🚗', name: '車' },
+            { id: 'planes', emoji: '✈️', name: '飛機' },
+            { id: 'animals', emoji: '🐶', name: '動物' },
+            { id: 'nature', emoji: '🌳', name: '大自然' },
+            { id: 'performing', emoji: '🎭', name: '表演' },
+            { id: 'gaming', emoji: '🎮', name: '遊戲' },
+            { id: 'swimming', emoji: '🏊', name: '游泳' }
+        ];
+        
+        let currentProfile = {};
+        let selectedInterests = [];
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+            renderInterestTags();
+            setupGenderButtons();
+        });
+        
+        // 加载画像数据
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/user');
+                const data = await response.json();
+                
+                if (data.profile_complete) {
+                    currentProfile = data;
+                    
+                    // 填充表单
+                    document.getElementById('childName').value = data.child_name || '';
+                    document.getElementById('childAge').value = data.child_age || '';
+                    selectedInterests = data.child_interests || [];
+                    document.getElementById('targetSchools').value = data.target_schools || [];
+                    
+                    // 更新显示
+                    updateDisplay();
+                }
+            } catch (e) {
+                console.error('Error loading profile:', e);
+            }
+        }
+        
+        // 更新显示
+        function updateDisplay() {
+            const name = document.getElementById('childName').value || '小朋友';
+            const age = document.getElementById('childAge').value || 'K2';
+            const gender = document.querySelector('.btn-toggle.active')?.dataset.value;
+            
+            document.getElementById('nameDisplay').textContent = name;
+            document.getElementById('ageDisplay').textContent = age;
+            document.getElementById('avatarPreview').textContent = 
+                gender === 'female' ? '👧' : '👦';
+        }
+        
+        // 渲染兴趣标签
+        function renderInterestTags() {
+            const container = document.getElementById('interestTags');
+            container.innerHTML = '';
+            
+            INTERESTS.forEach(interest => {
+                const tag = document.createElement('button');
+                tag.type = 'button';
+                tag.className = `interest-tag ${selectedInterests.includes(interest.id) ? 'selected' : ''}`;
+                tag.innerHTML = `${interest.emoji} ${interest.name}`;
+                tag.onclick = () => toggleInterest(interest.id, tag);
+                container.appendChild(tag);
+            });
+        }
+        
+        // 切换兴趣
+        function toggleInterest(id, element) {
+            if (selectedInterests.includes(id)) {
+                selectedInterests = selectedInterests.filter(i => i !== id);
+                element.classList.remove('selected');
+            } else {
+                if (selectedInterests.length >= 5) {
+                    alert('最多選擇 5 個興趣！');
+                    return;
+                }
+                selectedInterests.push(id);
+                element.classList.add('selected');
+            }
+        }
+        
+        // 设置性别按钮
+        function setupGenderButtons() {
+            document.querySelectorAll('.btn-toggle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updateDisplay();
+                });
+            });
+        }
+        
+        // 保存画像
+        async function saveProfile() {
+            const name = document.getElementById('childName').value.trim();
+            const age = document.getElementById('childAge').value;
+            const gender = document.querySelector('.btn-toggle.active')?.dataset.value;
+            const schools = Array.from(document.querySelectorAll('input[name="school"]:checked'))
+                .map(cb => cb.value);
+            
+            if (!name) {
+                alert('請輸入小朋友的暱稱！');
+                return;
+            }
+            
+            if (!age) {
+                alert('請選擇小朋友的年齡！');
+                return;
+            }
+            
+            try {
+                // 保存基本信息
+                let response = await fetch('/child-profile/step-1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `child_name=${encodeURIComponent(name)}&child_age=${age}&child_gender=${gender || ''}`
+                });
+                
+                if (response.ok) {
+                    // 保存兴趣
+                    for (const interest of selectedInterests) {
+                        await fetch('/child-profile/step-2', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `interests=${interest}`
+                        });
+                    }
+                    
+                    // 保存学校
+                    for (const school of schools) {
+                        await fetch('/child-profile/step-3', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `target_schools=${school}`
+                        });
+                    }
+                    
+                    alert('資料已保存！✅');
+                    window.location.href = '/dashboard';
+                }
+            } catch (e) {
+                console.error('Error saving profile:', e);
+                alert('保存失敗，請重試！');
+            }
+        }
+        
+        // 取消编辑
+        function cancelEdit() {
+            if (confirm('確定取消？未保存的更改將會丟失。')) {
+                window.location.href = '/dashboard';
+            }
+        }
+        
+        // 删除画像
+        function deleteProfile() {
+            if (confirm('確定要刪除孩子資料嗎？此操作無法恢復！')) {
+                if (confirm('再次確認：真的要刪除嗎？')) {
+                    alert('此功能需要管理員權限，請聯繫客服。');
+                }
+            }
+        }
+        
+        // 实时更新显示
+        document.getElementById('childName').addEventListener('input', updateDisplay);
+        document.getElementById('childAge').addEventListener('change', updateDisplay);
+    </script>
+</body>
+</html>

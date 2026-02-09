@@ -768,24 +768,24 @@
 
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <div class="nav-item active">
+            <div class="nav-item active" onclick="window.location.href='/'">
                 <span class="material-symbols-outlined filled">dashboard</span>
                 <span>Home</span>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" onclick="window.location.href='{{ url_for('lesson', topic_id='self-introduction') }}'">
                 <span class="material-symbols-outlined">school</span>
                 <span>Practice</span>
             </div>
             <div class="nav-center">
-                <button class="nav-center-btn">
-                    <span class="material-symbols-outlined">mic</span>
+                <button class="nav-center-btn" onclick="window.location.href='{{ url_for('parent_notes') }}'">
+                    <span class="material-symbols-outlined">note_add</span>
                 </button>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" onclick="window.location.href='{{ url_for('unlock_full_access') }}'">
                 <span class="material-symbols-outlined">bar_chart</span>
                 <span>Reports</span>
             </div>
-            <a href="{{ url_for('child_profile_step1') }}" class="nav-item">
+            <a href="{{ url_for('profile_edit') }}" class="nav-item">
                 <span class="material-symbols-outlined">person</span>
                 <span>Profile</span>
             </a>

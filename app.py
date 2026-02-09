@@ -658,6 +658,20 @@ def unlock_full_access():
     return render_template('unlock-full-access.html')
 
 
+@app.route('/profile/edit')
+@login_required
+def profile_edit():
+    """编辑孩子资料页面."""
+    return render_template('profile-edit.html')
+
+
+@app.route('/parent-notes')
+@login_required
+def parent_notes():
+    """家长笔记页面."""
+    return render_template('parent-notes.html')
+
+
 @app.route('/api/user')
 @login_required
 def get_user():
@@ -671,6 +685,146 @@ def get_user():
         'child_name': session.get('child_name'),
         'child_age': session.get('child_age')
     })
+
+
+@app.route('/api/user/stats')
+@login_required
+def get_user_stats():
+    """获取用户使用统计."""
+    user_id = session.get('user_id')
+    
+    # Mock 统计数据（实际应该从数据库获取）
+    stats = {
+        'topics_completed': session.get('topics_completed', 0),
+        'total_minutes': session.get('total_minutes', 0),
+        'streak_days': session.get('streak_days', 0),
+        'last_active': session.get('last_active'),
+        'topics': [
+            {
+                'id': 'self-introduction',
+                'title': '自我介紹',
+                'completed': False,
+                'last_practiced': None,
+                'score': None
+            },
+            {
+                'id': 'interests',
+                'title': '興趣愛好',
+                'completed': False,
+                'last_practiced': None,
+                'score': None
+            },
+            {
+                'id': 'family',
+                'title': '家庭介紹',
+                'completed': False,
+                'last_practiced': None,
+                'score': None
+            },
+            {
+                'id': 'observation',
+                'title': '觀察力訓練',
+                'completed': False,
+                'last_practiced': None,
+                'score': None
+            },
+            {
+                'id': 'scenarios',
+                'title': '處境題',
+                'completed': False,
+                'last_practiced': None,
+                'score': None
+            }
+        ]
+    }
+    
+    return jsonify(stats)
+
+
+@app.route('/api/user/stats/update', methods=['POST'])
+@login_required
+def update_user_stats():
+    """更新用户使用统计."""
+    data = request.json
+    topic_id = data.get('topic_id')
+    action = data.get('action', 'practice')
+    
+    # 更新 session
+    if topic_id:
+        topics_completed = session.get('topics_completed', 0)
+        if action == 'complete':
+            # 标记主题为完成
+            session['topics_completed'] = topics_completed + 1
+            
+            # 更新最后活跃时间
+            session['last_active'] = datetime.now().isoformat()
+    
+    return jsonify({'success': True})
+
+
+# ============ Parent Notes API ============
+
+@app.route('/api/notes', methods=['GET'])
+@login_required
+def get_notes():
+    """获取家长笔记列表."""
+    user_id = session.get('user_id')
+    
+    try:
+        from services.parent_notes import get_latest_notes
+        limit = request.args.get('limit', 10, type=int)
+        notes = get_latest_notes(user_id, limit)
+        return jsonify({'notes': notes})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes', methods=['POST'])
+@login_required
+def create_note():
+    """创建新笔记."""
+    user_id = session.get('user_id')
+    data = request.json
+    
+    try:
+        from services.parent_notes import create_note
+        
+        note = create_note(
+            user_id=user_id,
+            topic_id=data.get('topic_id'),
+            content=data.get('content'),
+            score=data.get('score')
+        )
+        
+        return jsonify({'success': True, 'note': note})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes/template/<topic_id>')
+@login_required
+def get_note_template(topic_id):
+    """获取笔记模板."""
+    try:
+        from services.parent_notes import get_template
+        template = get_template(topic_id)
+        return jsonify(template)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes/report')
+@login_required
+def get_notes_report():
+    """获取练习报告."""
+    user_id = session.get('user_id')
+    
+    try:
+        from services.parent_notes import generate_practice_report
+        report = generate_practice_report(user_id)
+        return jsonify(report or {'message': 'No data yet'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
