@@ -357,5 +357,20 @@ def generate_teaching_content_with_audio(profile, topic_id):
             'cantonese': 'unavailable',
             'mandarin': 'unavailable'
         }
+    
+    # 3. 生成图片
+    try:
+        from services.image_service import select_images_for_topic
+        
+        interests = profile.get('interests', [])
+        images = select_images_for_topic(topic_id, interests, count=3)
+        
+        result['images'] = images.get('images', [])
+        result['image_status'] = 'ready'
+        
+    except ImportError:
+        print("⚠️ Image service not available")
+        result['images'] = []
+        result['image_status'] = 'unavailable'
 
     return result
