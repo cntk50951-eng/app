@@ -868,3 +868,40 @@ def update_progress():
         return jsonify({'success': True, 'progress': progress})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress')
+@login_required
+def get_progress():
+    """获取用户进度."""
+    user_id = session.get('user_id')
+    try:
+        from services.progress_tracker import load_progress, get_overall_stats
+        progress = load_progress(str(user_id))
+        stats = get_overall_stats(str(user_id))
+        return jsonify({
+            'progress': progress,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress/update', methods=['POST'])
+@login_required
+def update_progress():
+    """更新进度."""
+    user_id = session.get('user_id')
+    data = request.json
+    
+    try:
+        from services.progress_tracker import update_topic_progress
+        progress = update_topic_progress(
+            str(user_id),
+            data.get('topic_id'),
+            data.get('action', 'practice'),
+            data.get('score')
+        )
+        return jsonify({'success': True, 'progress': progress})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
