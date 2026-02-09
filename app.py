@@ -580,29 +580,75 @@ def lesson(topic_id):
 @app.route('/api/generate', methods=['POST'])
 @login_required
 def generate_content():
-    """API endpoint for generating AI content."""
+    """
+    API endpoint for generating AI teaching content.
+    Integrates with MiniMax API for text generation.
+    """
     data = request.json
     topic = data.get('topic')
-    profile_id = data.get('profile_id')
+    force_regenerate = data.get('force_regenerate', False)
 
-    # Mock response - in production, call MiniMax API
-    content = {
-        'teaching_goal': '教小朋友自信地介紹自己的特點，展示個性。',
-        'parent_script': '家長可以先問：「寶寶，你最鍾意做咩呀？」然後引導佢講多啲細節...',
-        'sample_questions': [
-            '你叫咩名？今年幾歲？',
-            '你最鍾意玩咩玩具？點解鍾意？',
-            '你有咩特別既地方？'
-        ],
-        'model_answer': '我叫小明，今年 5 歲。我最鍾意砌 Lego 同埋恐龍，因為我想做建築師...',
-        'tips': [
-            '望住對方眼睛，唔好望地下',
-            '講大聲啲、清楚啲',
-            '可以加入自己既特點，例如：「我記性好好」'
-        ]
+    # Get profile from session/database
+    user_id = session.get('user_id')
+    profile_id = session.get('profile_id')
+
+    if not topic:
+        return jsonify({'error': 'Topic is required', 'message': '請指定要生成的主題'}), 400
+
+    # Get profile data from database
+    db = get_db_functions()
+    if not db:
+        return jsonify({'error': 'Database not configured', 'message': '數據庫未配置'}), 500
+
+    # Build profile dict
+    profile = {
+        'id': profile_id,
+        'child_name': session.get('child_name'),
+        'child_age': session.get('child_age'),
+        'child_gender': session.get('child_gender'),
+        'interests': session.get('child_interests', []),
+        'target_schools': session.get('target_schools', [])
     }
 
-    return jsonify(content)
+    # Get from database if not in session
+    if not profile['child_name']:
+        child_profile = db['get_child_profile_by_user_id'](user_id)
+        if child_profile:
+            profile['id'] = child_profile['id']
+            profile['child_name'] = child_profile['child_name']
+            profile['child_age'] = child_profile['child_age']
+            profile['child_gender'] = child_profile.get('child_gender')
+
+    if not profile['interests']:
+        interests = db['get_user_interests'](profile['id'])
+        profile['interests'] = [i['id'] for i in interests]
+
+    if not profile['target_schools']:
+        schools = db['get_target_schools'](profile['id'])
+        profile['target_schools'] = [s['id'] for s in schools]
+
+    if not profile['child_name']:
+        return jsonify({
+            'error': 'Profile incomplete',
+            'message': '請先完成孩子資料填寫'
+        }), 400
+
+    # Clear cache if force regenerate
+    if force_regenerate:
+        from services.ai_generator import clear_cache
+        clear_cache(profile_id)
+
+    # Generate content
+    try:
+        from services.ai_generator import generate_teaching_content
+        content = generate_teaching_content(profile, topic)
+        return jsonify(content)
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return jsonify({
+            'error': 'Generation failed',
+            'message': '生成內容失敗，請稍後再試'
+        }), 500
 
 
 @app.route('/unlock-full-access')
