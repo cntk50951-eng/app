@@ -311,3 +311,51 @@ def clear_cache(profile_id=None):
         # 清除所有緩存
         content_cache = {}
     print(f"🗑️ Cache cleared for: {profile_id or 'all'}")
+
+
+# ============ TTS 集成 ============
+
+def generate_teaching_content_with_audio(profile, topic_id):
+    """
+    生成完整教學內容（文字 + 語音 URL）
+
+    Args:
+        profile: 用戶畫像 dict
+        topic_id: 主題 ID
+
+    Returns:
+        dict: 教學內容（包含 audio URLs）
+    """
+    # 1. 生成文字內容
+    result = generate_teaching_content(profile, topic_id)
+
+    if 'error' in result:
+        return result
+
+    # 2. 生成語音（異步，不阻塞返回）
+    try:
+        from services.tts_service import generate_audio_urls
+
+        text_content = result.get('content', {})
+        audio_urls = generate_audio_urls(text_content, language='cantonese')
+
+        # 更新結果中的音頻 URL
+        if 'audio' not in result:
+            result['audio'] = {}
+
+        result['audio'].update(audio_urls)
+
+        # 標記音頻狀態
+        result['audio_status'] = {
+            'cantonese': 'ready' if audio_urls.get('cantonese_url') else 'pending',
+            'mandarin': 'pending'  # 待實現
+        }
+
+    except ImportError:
+        print("⚠️ TTS service not available")
+        result['audio_status'] = {
+            'cantonese': 'unavailable',
+            'mandarin': 'unavailable'
+        }
+
+    return result

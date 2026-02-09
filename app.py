@@ -640,8 +640,8 @@ def generate_content():
 
     # Generate content
     try:
-        from services.ai_generator import generate_teaching_content
-        content = generate_teaching_content(profile, topic)
+        from services.ai_generator import generate_teaching_content_with_audio
+        content = generate_teaching_content_with_audio(profile, topic)
         return jsonify(content)
     except Exception as e:
         print(f"Error generating content: {e}")

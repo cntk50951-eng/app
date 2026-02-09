@@ -91,6 +91,24 @@
         .regenerate-btn.loading .spinner {
             display: inline-block;
         }
+        
+        /* Coming Soon Badge */
+        .coming-soon-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .coming-soon-badge .material-symbols-outlined {
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -151,8 +169,16 @@
                                 <span class="material-symbols-outlined" id="cantonesePlayIcon">play_arrow</span>
                             </button>
                         </div>
-                        <!-- Audio Player (hidden, controlled via JS) -->
-                        <audio id="cantoneseAudio" style="display: none;"></audio>
+                        <!-- Audio Player -->
+                        <audio id="cantoneseAudio" style="display: none;" controls>
+                            您的瀏覽器不支援音頻播放
+                        </audio>
+                    </div>
+                    
+                    <!-- Coming Soon Badge -->
+                    <div class="coming-soon-badge" id="mandarinComingSoon" style="display: none;">
+                        <span class="material-symbols-outlined">schedule</span>
+                        普通話即將推出
                     </div>
                 </section>
 
@@ -371,6 +397,33 @@
                 document.getElementById('genTime').textContent = 
                     `生成時間: ${(data.generation_time_ms / 1000).toFixed(1)}秒`;
             }
+            
+            // Render audio section
+            const audioSection = document.getElementById('audioSection');
+            const mandarinBadge = document.getElementById('mandarinComingSoon');
+            
+            if (data.audio && data.audio.cantonese_url) {
+                // Audio is ready
+                audioSection.style.display = 'block';
+                mandarinBadge.style.display = 'none';
+                
+                // Setup audio player
+                const audio = document.getElementById('cantoneseAudio');
+                audio.src = data.audio.cantonese_url;
+                audio.onloadedmetadata = () => {
+                    document.getElementById('audioLength').textContent = 
+                        `${Math.floor(audio.duration / 60)}:${String(Math.floor(audio.duration % 60)).padStart(2, '0')}`;
+                };
+            } else if (data.audio_status && data.audio_status.cantonese === 'pending') {
+                // Audio is being generated
+                audioSection.style.display = 'block';
+                document.getElementById('audioLength').textContent = '緊係度生成緊係...';
+                mandarinBadge.style.display = 'none';
+            } else {
+                // Audio not available
+                audioSection.style.display = 'none';
+                mandarinBadge.style.display = 'flex';
+            }
         }
 
         // UI Helpers
@@ -406,10 +459,30 @@
             }
         }
 
-        // Audio player (placeholder - to be implemented with TTS)
+        // Audio player
+        let currentAudio = null;
+        
         function toggleAudio(language) {
-            console.log('Audio player for', language, '- TTS not yet implemented');
-            alert('語音功能即將推出！');
+            const audio = document.getElementById('cantoneseAudio');
+            const icon = document.getElementById('cantonesePlayIcon');
+            
+            if (!audio.src || audio.src === window.location.href) {
+                // No audio available
+                alert('語音功能即將推出！');
+                return;
+            }
+            
+            if (audio.paused) {
+                audio.play();
+                icon.textContent = 'pause';
+            } else {
+                audio.pause();
+                icon.textContent = 'play_arrow';
+            }
+            
+            audio.onended = () => {
+                icon.textContent = 'play_arrow';
+            };
         }
 
         // Mark as complete
