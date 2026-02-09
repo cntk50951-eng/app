@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>錄音練習 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; max-width: 480px; margin: 0 auto; padding: 1rem; }
+        .recording-btn {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none; color: white; font-size: 2rem; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .recording-btn:hover { transform: scale(1.05); }
+        .recording-btn.recording { background: #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    </style>
+</head>
+<body style="text-align: center; padding-top: 2rem;">
+    <h1>🎙️ 錄音練習</h1>
+    <p>錄低小朋友既練習，回答完可以聽吓自己講成點！</p>
+    
+    <div style="margin: 2rem 0;">
+        <button class="recording-btn" id="recordBtn" onclick="toggleRecording()">
+            <span class="material-symbols-outlined">mic</span>
+        </button>
+        <p id="statusText" style="margin-top: 1rem; color: #666;">點擊開始錄音</p>
+    </div>
+    
+    <div id="recordingsList" style="text-align: left; margin-top: 2rem;">
+    </div>
+    
+    <script>
+        let mediaRecorder = null;
+        let chunks = [];
+        
+        async function toggleRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        }
+        
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                chunks = [];
+                
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    saveRecording(blob);
+                };
+                
+                mediaRecorder.start();
+                document.getElementById('recordBtn').classList.add('recording');
+                document.getElementById('statusText').textContent = '錄緊音... (30秒後自動停止)';
+                
+                setTimeout(() => { if (mediaRecorder.state === 'recording') stopRecording(); }, 30000);
+            } catch (e) {
+                alert('無法訪問麥克風：' + e.message);
+            }
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                document.getElementById('recordBtn').classList.remove('recording');
+                document.getElementById('statusText').textContent = '錄音已保存！';
+            }
+        }
+        
+        function saveRecording(blob) {
+            const url = URL.createObjectURL(blob);
+            const list = document.getElementById('recordingsList');
+            const item = document.createElement('div');
+            item.style.cssText = 'background: #f5f5f5; padding: 1rem; border-radius: 8px; margin: 0.5rem 0;';
+            item.innerHTML = `
+                <audio controls src="${url}" style="width: 100%;"></audio>
+                <button onclick="this.parentElement.remove()" style="margin-top: 0.5rem; color: #ef4444; border: none; background: none; cursor: pointer;">刪除</button>
+            `;
+            list.insertBefore(item, list.firstChild);
+        }
+    </script>
+</body>
+</html>
