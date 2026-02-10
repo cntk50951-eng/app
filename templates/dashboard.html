@@ -666,8 +666,8 @@
             <!-- Topics Section -->
             <div class="section">
                 <div class="section-header">
-                    <h3 class="section-title">Interview Topics</h3>
-                    <span class="view-all">View All</span>
+                    <h3 class="section-title">面試主題</h3>
+                    <span class="view-all">查看全部</span>
                 </div>
                 <div class="topics-list">
                     <!-- Completed -->
@@ -680,11 +680,11 @@
                                 <span class="material-symbols-outlined">face</span>
                             </div>
                             <div class="topic-info">
-                                <h4 class="topic-title">Self-introduction</h4>
-                                <p class="topic-description">Mastered confidently. Great eye contact!</p>
+                                <h4 class="topic-title">自我介紹</h4>
+                                <p class="topic-description">已經掌握！表現自信，眼神接觸良好！</p>
                                 <div class="topic-status">
                                     <span class="material-symbols-outlined" style="font-size: 0.875rem;">done_all</span>
-                                    Completed
+                                    已完成
                                 </div>
                             </div>
                         </div>
@@ -698,10 +698,10 @@
                             </div>
                             <div class="topic-info">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <h4 class="topic-title">Hobbies & Interests</h4>
-                                    <span style="padding: 0.25rem 0.5rem; background: var(--primary-50); color: var(--primary); border-radius: 0.25rem; font-size: 0.625rem; font-weight: 700; text-transform: uppercase;">Current</span>
+                                    <h4 class="topic-title">興趣愛好</h4>
+                                    <span style="padding: 0.25rem 0.5rem; background: var(--primary-50); color: var(--primary); border-radius: 0.25rem; font-size: 0.625rem; font-weight: 700; text-transform: uppercase;">當前</span>
                                 </div>
-                                <p class="topic-description">Practicing: Talking about favorite toys.</p>
+                                <p class="topic-description">練習：談論喜愛的玩具和活動。</p>
                                 <div class="topic-progress">
                                     <div class="progress-dots">
                                         <div class="progress-dot completed">1</div>
@@ -709,7 +709,7 @@
                                         <div class="progress-dot">3</div>
                                     </div>
                                     <button class="continue-btn">
-                                        Continue
+                                        繼續
                                         <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
                                     </button>
                                 </div>
@@ -724,10 +724,10 @@
                                 <span class="material-symbols-outlined">diversity_3</span>
                             </div>
                             <div class="topic-info">
-                                <h4 class="topic-title">Family</h4>
-                                <p class="topic-description">Next up: Describing family members.</p>
+                                <h4 class="topic-title">家庭介紹</h4>
+                                <p class="topic-description">下一步：介紹家庭成員。</p>
                                 <div class="topic-status" style="background: var(--background-light); color: var(--text-secondary);">
-                                    Not Started
+                                    未開始
                                 </div>
                             </div>
                         </div>
@@ -740,8 +740,8 @@
                                 <span class="material-symbols-outlined">psychology</span>
                             </div>
                             <div class="topic-info">
-                                <h4 class="topic-title">Observation</h4>
-                                <p class="topic-description">Unlock advanced logic questions.</p>
+                                <h4 class="topic-title">觀察力訓練</h4>
+                                <p class="topic-description">解鎖進階邏輯問題。</p>
                             </div>
                         </div>
                         <div class="locked-overlay">
@@ -759,8 +759,8 @@
                 <div class="tip-card">
                     <span class="material-symbols-outlined">lightbulb</span>
                     <div class="tip-content">
-                        <p class="tip-label">Tip of the day</p>
-                        <p class="tip-text">Encourage eye contact when Jamie answers questions. It shows confidence to the interviewers.</p>
+                        <p class="tip-label">今日小貼士</p>
+                        <p class="tip-text">鼓勵小明回答問題時保持眼神接觸，這能向面試官展現自信。</p>
                     </div>
                 </div>
             </div>
@@ -770,11 +770,11 @@
         <nav class="bottom-nav">
             <div class="nav-item active" onclick="window.location.href='/'">
                 <span class="material-symbols-outlined filled">dashboard</span>
-                <span>Home</span>
+                <span>首頁</span>
             </div>
             <div class="nav-item" onclick="window.location.href='{{ url_for('lesson', topic_id='self-introduction') }}'">
                 <span class="material-symbols-outlined">school</span>
-                <span>Practice</span>
+                <span>練習</span>
             </div>
             <div class="nav-center">
                 <button class="nav-center-btn" onclick="window.location.href='{{ url_for('parent_notes') }}'">
@@ -783,11 +783,11 @@
             </div>
             <div class="nav-item" onclick="window.location.href='{{ url_for('unlock_full_access') }}'">
                 <span class="material-symbols-outlined">bar_chart</span>
-                <span>Reports</span>
+                <span>報告</span>
             </div>
             <a href="{{ url_for('profile_edit') }}" class="nav-item">
                 <span class="material-symbols-outlined">person</span>
-                <span>Profile</span>
+                <span>檔案</span>
             </a>
         </nav>
     </div>
