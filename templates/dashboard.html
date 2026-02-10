@@ -663,6 +663,16 @@
                 </div>
             </div>
 
+            <!-- Search Topics -->
+            <div style="padding: 1rem 1.5rem 0;">
+                <div class="search-box" style="position: relative;">
+                    <span class="material-symbols-outlined" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
+                    <input type="text" id="topic-search" placeholder="搜尋面試主題..." 
+                           style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-lg); font-size: 0.9375rem; outline: none; transition: border-color 0.2s;"
+                           onkeyup="filterTopics()">
+                </div>
+            </div>
+
             <!-- Topics Section -->
             <div class="section">
                 <div class="section-header">
@@ -791,5 +801,39 @@
             </a>
         </nav>
     </div>
+
+    <script>
+    // Topic Search Functionality
+    function filterTopics() {
+        const searchInput = document.getElementById('topic-search');
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const topicsList = document.querySelector('.topics-list');
+        const topicCards = document.querySelectorAll('.topic-card');
+        
+        if (!topicsList) return;
+        
+        topicCards.forEach(card => {
+            const title = card.querySelector('.topic-title');
+            const description = card.querySelector('.topic-description');
+            
+            if (!title) return;
+            
+            const titleText = title.textContent.toLowerCase();
+            const descText = description ? description.textContent.toLowerCase() : '';
+            
+            if (searchTerm === '' || titleText.includes(searchTerm) || descText.includes(searchTerm)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Show/hide "no results" message
+        const visibleCards = document.querySelectorAll('.topic-card[style=""]');
+        if (searchTerm !== '' && visibleCards.length === 0) {
+            // Could add "no results" message here
+        }
+    }
+    </script>
 </body>
 </html>
