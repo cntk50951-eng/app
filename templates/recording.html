@@ -61,7 +61,7 @@
                 document.getElementById('recordBtn').classList.add('recording');
                 document.getElementById('statusText').textContent = '錄緊音... (30秒後自動停止)';
                 
-                setTimeout(() => { if (mediaRecorder.state === 'recording') stopRecording(); }, 30000);
+                setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording(); }, 30000);
             } catch (e) {
                 alert('無法訪問麥克風：' + e.message);
             }
