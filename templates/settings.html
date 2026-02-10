@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>家長控制台 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gestatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .settings-header {
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .settings-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .settings-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .settings-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .section-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .section-icon.profile { background: #dbeafe; color: #3b82f6; }
+        .section-icon.stats { background: #dcfce7; color: #22c55e; }
+        .section-icon.language { background: #fef3c7; color: #f59e0b; }
+        .section-icon.notification { background: #f3e8ff; color: #a855f7; }
+        .section-icon.subscription { background: #fee2e2; color: #ef4444; }
+        .section-icon.security { background: #e0e7ff; color: #6366f1; }
+        
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .section-content {
+            padding: 1rem 1.5rem;
+        }
+        
+        /* Profile Section */
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-avatar-large {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .profile-details h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .profile-details p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .profile-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-age { background: #dbeafe; color: #1d4ed8; }
+        .badge-interests { background: #dcfce7; color: #15803d; }
+        
+        .edit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--background-light);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .edit-btn:hover {
+            background: var(--background);
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Settings Options */
+        .settings-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-option:last-child {
+            border-bottom: none;
+        }
+        
+        .option-label {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+        
+        .option-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.125rem;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 28px;
+            background: var(--border-color);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: var(--primary-color);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+        
+        /* Language Selector */
+        .language-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .language-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .language-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        /* Subscription Card */
+        .subscription-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .subscription-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subscription-plan {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .subscription-remaining {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .upgrade-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: white;
+            color: var(--primary-color);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upgrade-btn:hover {
+            background: rgba(255,255,255,0.9);
+        }
+        
+        /* Danger Zone */
+        .danger-zone {
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+        }
+        
+        .danger-zone .section-header {
+            border-bottom-color: #fecaca;
+        }
+        
+        .danger-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: white;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .danger-btn:hover {
+            background: #fee2e2;
+        }
+        
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (min-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Blob Decorations -->
+        <div class="blob-1"></div>
+        <div class="blob-2"></div>
+        
+        <!-- Header -->
+        <header class="header">
+            <button class="back-btn" onclick="window.location.href='/dashboard'">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h1 class="page-title">家長控制台</h1>
+            <div style="width: 40px;"></div>
+        </header>
+        
+        <main class="main-content">
+            <div class="settings-container">
+                
+                <!-- Profile Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon profile">
+                            <span class="material-symbols-outlined">child_care</span>
+                        </div>
+                        <div>
+                            <div class="section-title">孩子資料</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="profile-info">
+                            <div class="profile-avatar-large" id="childAvatar">載入中...</div>
+                            <div class="profile-details">
+                                <h3 id="childName">載入中...</h3>
+                                <p id="childAge">-</p>
+                            </div>
+                        </div>
+                        <div class="profile-badges" id="childInterests">
+                            <!-- Interests badges will be populated by JS -->
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <button class="edit-btn" onclick="window.location.href='/profile/edit'">
+                                <span class="material-symbols-outlined">edit</span>
+                                編輯資料
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Usage Stats Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon stats">
+                            <span class="material-symbols-outlined">insights</span>
+                        </div>
+                        <div>
+                            <div class="section-title">使用統計</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="topicsCompleted">0</div>
+                                <div class="stat-label">已完成主題</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="lessonsCompleted">0</div>
+                                <div class="stat-label">練習次數</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalTime">0</div>
+                                <div class="stat-label">總時長(分鐘)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="streakDays">0</div>
+                                <div class="stat-label">連續天數</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Language Settings -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon language">
+                            <span class="material-symbols-outlined">language</span>
+                        </div>
+                        <div>
+                            <div class="section-title">語言偏好</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="language-options">
+                            <button class="language-btn active" data-lang="cantonese" onclick="setLanguage('cantonese')">
+                                🇭🇰 粵語
+                            </button>
+                            <button class="language-btn" data-lang="mandarin" onclick="setLanguage('mandarin')">
+                                🇨🇳 普通話
+                            </button>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem;">
+                            AI 生成內容的語言偏好設定
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Notification Settings -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon notification">
+                            <span class="material-symbols-outlined">notifications</span>
+                        </div>
+                        <div>
+                            <div class="section-title">通知設定</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="settings-option">
+                            <div>
+                                <div class="option-label">每日練習提醒</div>
+                                <div class="option-desc">每天晚上 8 點發送練習提醒</div>
+                            </div>
+                            <div class="toggle-switch active" id="dailyReminderToggle" onclick="toggleSetting('dailyReminder')"></div>
+                        </div>
+                        <div class="settings-option">
+                            <div>
+                                <div class="option-label">新主題通知</div>
+                                <div class="option-desc">當有新面試主題時通知</div>
+                            </div>
+                            <div class="toggle-switch active" id="newTopicToggle" onclick="toggleSetting('newTopic')"></div>
+                        </div>
+                        <div class="settings-option">
+                            <div>
+                                <div class="option-label">進度報告</div>
+                                <div class="option-desc">每週發送孩子學習進度報告</div>
+                            </div>
+                            <div class="toggle-switch" id="weeklyReportToggle" onclick="toggleSetting('weeklyReport')"></div>
+                        </div>
+                        <div class="settings-option">
+                            <div>
+                                <div class="option-label">行銷郵件</div>
+                                <div class="option-desc">接收優惠和更新資訊</div>
+                            </div>
+                            <div class="toggle-switch" id="marketingToggle" onclick="toggleSetting('marketing')"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Subscription Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon subscription">
+                            <span class="material-symbols-outlined">workspace_premium</span>
+                        </div>
+                        <div>
+                            <div class="section-title">訂閱管理</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="subscription-info">
+                            <div class="subscription-status">
+                                <span class="material-symbols-outlined" style="font-size: 1rem;">verified</span>
+                                {% if subscription_status == 'trial' %}免費試用中{% else %}已訂閱{% endif %}
+                            </div>
+                            <div class="subscription-plan">
+                                {% if subscription_status == 'trial' %}免費試用{% else %}Premium{% endif %}
+                            </div>
+                            <div class="subscription-remaining">
+                                {% if subscription_status == 'trial' %}剩餘 {{ trial_topics_used }}/3 主題{% else %}本月剩餘次數無限制{% endif %}
+                            </div>
+                        </div>
+                        <button class="upgrade-btn" onclick="window.location.href='/unlock-full-access'">
+                            {% if subscription_status == 'trial' %}升級至 Premium{% else %}管理訂閱{% endif %}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Security Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-icon security">
+                            <span class="material-symbols-outlined">security</span>
+                        </div>
+                        <div>
+                            <div class="section-title">帳號安全</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="settings-option">
+                            <div>
+                                <div class="option-label">密碼</div>
+                                <div class="option-desc">上次更新：2026-02-08</div>
+                            </div>
+                            <button class="edit-btn" style="width: auto; padding: 0.5rem 1rem;" onclick="showChangePassword()">
+                                更改
+                            </button>
+                        </div>
+                        <div class="settings-option">
+                            <div>
+                                <div class="option-label">Google 帳號</div>
+                                <div class="option-desc">已連結 Google 登入</div>
+                            </div>
+                            <span class="material-symbols-outlined" style="color: var(--success-color);">check_circle</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Danger Zone -->
+                <div class="settings-section danger-zone">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: #fee2e2; color: #dc2626;">
+                            <span class="material-symbols-outlined">warning</span>
+                        </div>
+                        <div>
+                            <div class="section-title" style="color: #dc2626;">危險區域</div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <button class="danger-btn" onclick="confirmDeleteAccount()">
+                            刪除帳號
+                        </button>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; text-align: center;">
+                            刪除後將無法恢復，所有資料將被永久刪除
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Logout -->
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="edit-btn" style="color: var(--text-secondary); border: none;" onclick="window.location.href='/logout'">
+                        登出
+                    </button>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Settings Page JavaScript
+        let settingsData = {
+            language: 'cantonese',
+            notifications: {
+                dailyReminder: true,
+                newTopic: true,
+                weeklyReport: false,
+                marketing: false
+            }
+        };
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadSettings();
+            await loadChildProfile();
+            await loadUsageStats();
+        });
+        
+        // Load settings from server
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/user/settings');
+                if (response.ok) {
+                    const data = await response.json();
+                    settingsData = data;
+                    updateUI();
+                }
+            } catch (error) {
+                console.log('Using default settings');
+            }
+        }
+        
+        // Load child profile
+        async function loadChildProfile() {
+            try {
+                const response = await fetch('/api/user/profile');
+                if (response.ok) {
+                    const profile = await response.json();
+                    
+                    document.getElementById('childName').textContent = profile.name || '未設置';
+                    document.getElementById('childAge').textContent = profile.age || '未設置';
+                    document.getElementById('childAvatar').textContent = profile.name ? profile.name.charAt(0).toUpperCase() : '?';
+                    
+                    // Load interests
+                    const interestsContainer = document.getElementById('childInterests');
+                    if (profile.interests && profile.interests.length > 0) {
+                        interestsContainer.innerHTML = profile.interests.map(interest => 
+                            `<span class="badge badge-interests">${interest}</span>`
+                        ).join('');
+                    } else {
+                        interestsContainer.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.875rem;">尚未設置興趣</span>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+        
+        // Load usage stats
+        async function loadUsageStats() {
+            try {
+                const response = await fetch('/api/user/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    document.getElementById('topicsCompleted').textContent = stats.topics_completed || 0;
+                    document.getElementById('lessonsCompleted').textContent = stats.lessons_completed || 0;
+                    document.getElementById('totalTime').textContent = stats.total_minutes || 0;
+                    document.getElementById('streakDays').textContent = stats.streak_days || 0;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Update UI based on loaded settings
+        function updateUI() {
+            // Language
+            document.querySelectorAll('.language-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === settingsData.language);
+            });
+            
+            // Notifications
+            document.getElementById('dailyReminderToggle').classList.toggle('active', settingsData.notifications.dailyReminder);
+            document.getElementById('newTopicToggle').classList.toggle('active', settingsData.notifications.newTopic);
+            document.getElementById('weeklyReportToggle').classList.toggle('active', settingsData.notifications.weeklyReport);
+            document.getElementById('marketingToggle').classList.toggle('active', settingsData.notifications.marketing);
+        }
+        
+        // Set language preference
+        async function setLanguage(lang) {
+            settingsData.language = lang;
+            updateUI();
+            
+            try {
+                await fetch('/api/user/settings/language', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ language: lang })
+                });
+            } catch (error) {
+                console.error('Error saving language preference:', error);
+            }
+        }
+        
+        // Toggle notification settings
+        async function toggleSetting(setting) {
+            const toggle = document.getElementById(setting + 'Toggle');
+            const newValue = !toggle.classList.contains('active');
+            
+            toggle.classList.toggle('active');
+            settingsData.notifications[setting] = newValue;
+            
+            try {
+                await fetch('/api/user/settings/notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        setting: setting,
+                        value: newValue
+                    })
+                });
+            } catch (error) {
+                console.error('Error saving notification setting:', error);
+            }
+        }
+        
+        // Show change password dialog
+        function showChangePassword() {
+            alert('更改密碼功能即將推出');
+        }
+        
+        // Confirm delete account
+        function confirmDeleteAccount() {
+            if (confirm('確定要刪除帳號嗎？此操作無法撤銷。')) {
+                if (confirm('最後確認：您確定要刪除帳號嗎？')) {
+                    alert('帳號刪除功能需要客服協助，請聯繫 support@aitutor.hk');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

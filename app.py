@@ -523,6 +523,32 @@ def dashboard():
     return render_template('dashboard.html')
 
 
+@app.route('/settings')
+@login_required
+def settings():
+    """Parent settings / console page."""
+    user_id = session.get('user_id')
+    
+    # Get user subscription status
+    subscription_status = 'trial'
+    trial_topics_used = 0
+    
+    if user_id:
+        try:
+            user = db.get_user_by_id(user_id)
+            if user:
+                subscription_status = user.get('subscription_status', 'trial')
+                trial_topics_used = user.get('trial_topics_used', 0)
+        except Exception as e:
+            print(f"Error fetching user: {e}")
+    
+    return render_template(
+        'settings.html',
+        subscription_status=subscription_status,
+        trial_topics_used=trial_topics_used
+    )
+
+
 @app.route('/lesson/<topic_id>')
 @login_required
 def lesson(topic_id):
@@ -687,6 +713,20 @@ def get_user():
     })
 
 
+@app.route('/api/user/profile', methods=['GET'])
+@login_required
+def get_child_profile():
+    """获取孩子画像信息."""
+    user_id = session.get('user_id')
+    try:
+        profile = db.get_child_profile(user_id)
+        if profile:
+            return jsonify(profile)
+        return jsonify({'error': 'Profile not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/user/stats')
 @login_required
 def get_user_stats():
@@ -760,6 +800,105 @@ def update_user_stats():
             session['last_active'] = datetime.now().isoformat()
     
     return jsonify({'success': True})
+
+
+# ============ Settings API ============
+
+@app.route('/api/user/settings', methods=['GET'])
+@login_required
+def get_user_settings():
+    """获取用户设置."""
+    user_id = session.get('user_id')
+    
+    try:
+        user = db.get_user_by_id(user_id)
+        if user:
+            return jsonify({
+                'language': user.get('preferred_language', 'cantonese'),
+                'notifications': {
+                    'dailyReminder': user.get('notify_daily', True),
+                    'newTopic': user.get('notify_new_topic', True),
+                    'weeklyReport': user.get('notify_weekly', False),
+                    'marketing': user.get('notify_marketing', False)
+                }
+            })
+    except Exception as e:
+        print(f"Error fetching settings: {e}")
+    
+    return jsonify({'error': 'Settings not found'}), 404
+
+
+@app.route('/api/user/settings/language', methods=['POST'])
+@login_required
+def update_language():
+    """更新语言偏好."""
+    user_id = session.get('user_id')
+    data = request.json
+    language = data.get('language', 'cantonese')
+    
+    try:
+        db.update_user(user_id, preferred_language=language)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/user/settings/notifications', methods=['POST'])
+@login_required
+def update_notifications():
+    """更新通知设置."""
+    user_id = session.get('user_id')
+    data = request.json
+    setting = data.get('setting')
+    value = data.get('value', False)
+    
+    # Map setting name to database field
+    field_map = {
+        'dailyReminder': 'notify_daily',
+        'newTopic': 'notify_new_topic',
+        'weeklyReport': 'notify_weekly',
+        'marketing': 'notify_marketing'
+    }
+    
+    field = field_map.get(setting)
+    if field:
+        try:
+            db.update_user(user_id, **{field: value})
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Invalid setting'}), 400
+
+
+@app.route('/api/user/settings', methods=['POST'])
+@login_required
+def update_settings():
+    """批量更新用户设置."""
+    user_id = session.get('user_id')
+    data = request.json
+    
+    try:
+        update_data = {}
+        
+        if 'language' in data:
+            update_data['preferred_language'] = data['language']
+        
+        if 'notifications' in data:
+            notifs = data['notifications']
+            update_data.update({
+                'notify_daily': notifs.get('dailyReminder', True),
+                'notify_new_topic': notifs.get('newTopic', True),
+                'notify_weekly': notifs.get('weeklyReport', False),
+                'notify_marketing': notifs.get('marketing', False)
+            })
+        
+        if update_data:
+            db.update_user(user_id, **update_data)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # ============ Parent Notes API ============
