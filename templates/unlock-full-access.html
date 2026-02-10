@@ -353,13 +353,34 @@
         <div class="content">
             <div class="title-section">
                 <h1 class="title">
-                    <span class="title-emoji">Congrats on finishing</span><br>
-                    3 topics! 🎉
+                    <span class="title-emoji">{% if trial_topics_used >= 3 %}🎉{% else %}🚀{% endif %}</span><br>
+                    {% if trial_topics_used >= 3 %}
+                    完成 3 個主題！{% else %}
+                    {{ trial_topics_used }}/3 主題已完成{% endif %}
                 </h1>
                 <p class="subtitle">
-                    Unlock your child's full potential with Premium and ace the admission interview.
+                    {% if trial_topics_used >= 3 %}
+                    解鎖 Premium，讓孩子充分發揮潛力，成功通過入學面試！
+                    {% else %}
+                    解鎖所有功能，讓孩子持續進步！{% endif %}
                 </p>
             </div>
+
+            <!-- Trial Progress -->
+            {% if trial_topics_used < 3 %}
+            <div class="trial-progress">
+                <div class="trial-header">
+                    <span class="material-symbols-outlined" style="color: var(--primary-color);">timer</span>
+                    <span>免費試用進度</span>
+                </div>
+                <div class="trial-bar">
+                    <div class="trial-fill" style="width: {{ (trial_topics_used / 3 * 100)|int }}%"></div>
+                </div>
+                <div class="trial-text">
+                    已完成 {{ trial_topics_used }} / 3 主題
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Benefits -->
             <div class="benefits">
@@ -368,8 +389,8 @@
                         <span class="material-symbols-outlined">check</span>
                     </div>
                     <div class="benefit-content">
-                        <h4>Access all 50+ admission topics</h4>
-                        <p>Comprehensive coverage for every subject</p>
+                        <h4>50+ 面試主題無限暢學</h4>
+                        <p>涵蓋所有常見面試題目類型</p>
                     </div>
                 </div>
 
@@ -378,8 +399,8 @@
                         <span class="material-symbols-outlined">auto_awesome</span>
                     </div>
                     <div class="benefit-content">
-                        <h4>Unlimited AI practice generation</h4>
-                        <p>Personalized questions adapted to skill level</p>
+                        <h4>AI 無限生成練習</h4>
+                        <p>根據孩子程度自動調整問題難度</p>
                     </div>
                 </div>
 
@@ -388,8 +409,8 @@
                         <span class="material-symbols-outlined">analytics</span>
                     </div>
                     <div class="benefit-content">
-                        <h4>Detailed progress reports & analytics</h4>
-                        <p>Track improvement over time</p>
+                        <h4>詳細進度報告</h4>
+                        <p>追蹤孩子學習進步曲線</p>
                     </div>
                 </div>
             </div>
@@ -398,15 +419,15 @@
             <div class="pricing-cards">
                 <!-- Annual Plan -->
                 <div class="pricing-card annual">
-                    <div class="recommended-badge">Recommended</div>
+                    <div class="recommended-badge">最抵選擇</div>
                     <div class="pricing-header">
                         <div>
-                            <span class="plan-name">Annual Plan</span>
+                            <span class="plan-name">年費計劃</span>
                             <div class="pricing">
                                 <span class="price">HKD 588</span>
-                                <span class="price-period">/year</span>
+                                <span class="price-period">/年</span>
                             </div>
-                            <span class="original-price">HKD 816 /year</span>
+                            <span class="original-price">原價 HKD 816 /年</span>
                         </div>
                         <div class="check-icon">
                             <span class="material-symbols-outlined">check</span>
@@ -418,10 +439,10 @@
                 <div class="pricing-card monthly unselected">
                     <div class="pricing-header">
                         <div>
-                            <span class="plan-name">Monthly Plan</span>
+                            <span class="plan-name">月費計劃</span>
                             <div class="pricing">
                                 <span class="price">HKD 68</span>
-                                <span class="price-period">/month</span>
+                                <span class="price-period">/月</span>
                             </div>
                         </div>
                         <div class="check-icon">
@@ -433,19 +454,19 @@
 
             <!-- Terms -->
             <p class="terms">
-                Recurring billing, cancel anytime. By continuing you agree to our
-                <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
+                定期扣費，隨時取消。繼續即表示您同意我們的
+                <a href="#">服務條款</a>和<a href="#">隱私政策</a>。
             </p>
         </div>
 
         <!-- Footer -->
         <footer class="footer">
-            <button class="btn-subscribe" onclick="alert('Subscription flow would start here!')">
-                Subscribe Now
+            <button class="btn-subscribe" onclick="alert('訂閱功能即將推出，請聯繫客服 support@aitutor.hk')">
+                立即訂閱
                 <span class="material-symbols-outlined">arrow_forward</span>
             </button>
             <button class="btn-later" onclick="window.history.back()">
-                Maybe Later
+                稍後再說
             </button>
         </footer>
     </div>
