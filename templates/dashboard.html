@@ -691,6 +691,51 @@
                 </div>
             </div>
 
+            <!-- Achievement Badges -->
+            <div class="profile-card" style="margin: 1rem 1.5rem;">
+                <h4 style="margin: 0 0 1rem; font-size: 1rem; font-weight: 600; color: var(--text-primary);">🏆 成就徽章</h4>
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem;">
+                    <!-- Badge 1: First Step -->
+                    <div class="achievement-badge" style="min-width: 4rem; text-align: center; cursor: pointer;" title="完成第一個主題！">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 0.5rem; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);">🌟</div>
+                        <div style="font-size: 0.625rem; color: var(--text-secondary);">第一步</div>
+                    </div>
+                    
+                    <!-- Badge 2: Consistent -->
+                    <div class="achievement-badge" style="min-width: 4rem; text-align: center; cursor: pointer;" title="連續練習 3 天！">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 0.5rem; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);">🔥</div>
+                        <div style="font-size: 0.625rem; color: var(--text-secondary);">連續</div>
+                    </div>
+                    
+                    <!-- Badge 3: Speed -->
+                    <div class="achievement-badge locked" style="min-width: 4rem; text-align: center; opacity: 0.5;" title="完成一個主題少於 10 分鐘">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 0.5rem; background: var(--background-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">⚡</div>
+                        <div style="font-size: 0.625rem; color: var(--text-secondary);">神速</div>
+                    </div>
+                    
+                    <!-- Badge 4: Perfect -->
+                    <div class="achievement-badge locked" style="min-width: 4rem; text-align: center; opacity: 0.5;" title="獲得家長 5 星評價">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 0.5rem; background: var(--background-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">💯</div>
+                        <div style="font-size: 0.625rem; color: var(--text-secondary);">完美</div>
+                    </div>
+                    
+                    <!-- Badge 5: Explorer -->
+                    <div class="achievement-badge locked" style="min-width: 4rem; text-align: center; opacity: 0.5;" title="嘗試所有主題">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 0.5rem; background: var(--background-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🗺️</div>
+                        <div style="font-size: 0.625rem; color: var(--text-secondary);">探索</div>
+                    </div>
+                    
+                    <!-- Badge 6: Master -->
+                    <div class="achievement-badge locked" style="min-width: 4rem; text-align: center; opacity: 0.5;" title="完成所有主題！">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 0.5rem; background: var(--background-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">👑</div>
+                        <div style="font-size: 0.625rem; color: var(--text-secondary);">大師</div>
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); text-align: center;">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">1/6 徽章已解鎖</span>
+                </div>
+            </div>
+
             <!-- Search Topics -->
             <div style="padding: 1rem 1.5rem 0;">
                 <div class="search-box" style="position: relative;">
@@ -839,6 +884,75 @@
     </div>
 
     <script>
+    // Achievement Badges Functionality
+    const achievementData = {
+        '第一步': {
+            icon: '🌟',
+            title: '第一步',
+            description: '完成第一個面試主題！',
+            unlocked: true,
+            date: '2026-02-08'
+        },
+        '連續': {
+            icon: '🔥',
+            title: '連續練習',
+            description: '連續練習 3 天！',
+            unlocked: true,
+            date: '2026-02-10'
+        },
+        '神速': {
+            icon: '⚡',
+            title: '神速完成',
+            description: '完成一個主題少於 10 分鐘',
+            unlocked: false,
+            requirement: '完成任何主題的練習時間少於 10 分鐘'
+        },
+        '完美': {
+            icon: '💯',
+            title: '完美評價',
+            description: '獲得家長 5 星評價',
+            unlocked: false,
+            requirement: '在練習後給予 5 星評價'
+        },
+        '探索': {
+            icon: '🗺️',
+            title: '勇敢探索',
+            description: '嘗試至少 5 個不同主題',
+            unlocked: false,
+            requirement: '完成 5 個不同的面試主題'
+        },
+        '大師': {
+            icon: '👑',
+            title: '面試大師',
+            description: '完成所有 9 個面試主題！',
+            unlocked: false,
+            requirement: '完成全部面試主題'
+        }
+    };
+
+    function showAchievementDetail(badgeName) {
+        const badge = achievementData[badgeName];
+        if (!badge) return;
+        
+        if (badge.unlocked) {
+            alert(`${badge.icon} ${badge.title}\n\n${badge.description}\n\n解鎖日期: ${badge.date || '未知'}`);
+        } else {
+            alert(`${badge.icon} ${badge.title} (鎖定)\n\n${badge.description}\n\n解鎖條件: ${badge.requirement}`);
+        }
+    }
+
+    // Add click handlers to badges
+    document.addEventListener('DOMContentLoaded', function() {
+        const badges = document.querySelectorAll('.achievement-badge');
+        badges.forEach(badge => {
+            const nameEl = badge.querySelector('div:last-child');
+            if (nameEl && nameEl.textContent) {
+                const badgeName = nameEl.textContent.trim();
+                badge.onclick = function() { showAchievementDetail(badgeName); };
+            }
+        });
+    });
+
     // Topic Search Functionality
     function filterTopics() {
         const searchInput = document.getElementById('topic-search');
