@@ -9,9 +9,7 @@ BADGES = {
     'streak_3': {'name': '🔥 連續3日', 'description': '連續練習3日', 'icon': '🔥'},
     'streak_7': {'name': '💪 連續7日', 'description': '連續練習7日', 'icon': '💪'},
     'complete_all': {'name': '🎉 全部完成', 'description': '完成所有主題', 'icon': '🎉'},
-    'perfect_score': {'name': '🌈 完美分數', 'description': '獲得5分評價', 'icon': '🌈'},
-    'week_warrior': {'name': '📅 一周戰士', 'description': '一週內每日練習', 'icon': '📅'},
-    'early_bird': {'name': '🌅 早起小鳥', 'description': '朝早練習', 'icon': '🌅'}
+    'perfect_score': {'name': '🌈 完美分數', 'description': '獲得5分評價', 'icon': '🌈'}
 }
 
 def check_badges(progress_data):
@@ -30,13 +28,3 @@ def check_badges(progress_data):
 
 def get_badge_info(badge_id):
     return BADGES.get(badge_id, {'name': 'Unknown', 'description': '', 'icon': '❓'})
-
-def get_all_badges():
-    return BADGES
-
-def calculate_streak(practice_dates):
-    """計算連續天數."""
-    if not practice_dates:
-        return 0
-    # 簡化計算
-    return 1
