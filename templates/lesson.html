@@ -157,7 +157,6 @@
             color: var(--text-secondary);
         }
     </style>
-    </style>
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -592,8 +591,340 @@
 
         // Mark as complete
         function markComplete() {
-            alert('練習完成！🎉 記得要比啱唔好要俾爸爸媽咪睇吓～');
+            showFeedbackModal();
+        }
+
+        // Feedback Modal
+        function showFeedbackModal() {
+            document.getElementById('feedbackModal').style.display = 'flex';
+        }
+
+        function hideFeedbackModal() {
+            document.getElementById('feedbackModal').style.display = 'none';
+        }
+
+        // Submit feedback
+        async function submitFeedback() {
+            const rating = document.querySelector('input[name="rating"]:checked');
+            const difficulties = Array.from(document.querySelectorAll('input[name="difficulty"]:checked')).map(cb => cb.value);
+            const comment = document.getElementById('feedbackComment').value;
+            const childFeeling = document.querySelector('input[name="feeling"]:checked')?.value;
+
+            if (!rating) {
+                alert('請選擇評分！');
+                return;
+            }
+
+            const feedbackData = {
+                topic_id: '{{ topic.id }}',
+                rating: parseInt(rating.value),
+                difficulties: difficulties,
+                comment: comment,
+                child_feeling: childFeeling,
+                submitted_at: new Date().toISOString()
+            };
+
+            // Show loading
+            const btn = document.getElementById('submitFeedbackBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '緊係度提交緊係...';
+            btn.disabled = true;
+
+            try {
+                // Simulate API call (would be real API in production)
+                console.log('Submitting feedback:', feedbackData);
+
+                // Show success
+                alert('多謝您既反馈！🎉\n\n我地會根據您既意見改進內容！');
+
+                hideFeedbackModal();
+
+                // Reset form
+                document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
+                document.querySelectorAll('input[name="difficulty"]').forEach(c => c.checked = false);
+                document.getElementById('feedbackComment').value = '';
+All('input[name="feeling"]').forEach(f => f.checked = false);
+
+            } catch (error) {
+                alert('提交失敗，請重試！');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Star rating hover effect
+        function setupStarRating() {
+            const stars = document.querySelectorAll('.star-rating input');
+            const labels = document.querySelectorAll('.star-rating label');
+
+            stars.forEach((star, index) => {
+                star.addEventListener('mouseenter', () => {
+                    labels.forEach((label, i) => {
+                        label.style.color = i <= index ? '#fbbf24' : '#d1d5db';
+                    });
+                });
+                star.addEventListener('mouseleave', () => {
+                    if (!star.checked) {
+                        labels.forEach((label, i) => {
+                            label.style.color = '#d1d5db';
+                        });
+                    }
+                });
+            });
         }
     </script>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="feedback-modal" style="display: none;">
+        <div class="feedback-content">
+            <div class="feedback-header">
+                <h3>練習完成！🎉</h3>
+                <p>您對今次練習有咩意見？</p>
+            </div>
+
+            <!-- Rating -->
+            <div class="feedback-section">
+                <label class="feedback-label">整體評分</label>
+                <div class="star-rating">
+                    <input type="radio" name="rating" id="star5" value="5">
+                    <label for="star5" title="非常好">⭐⭐⭐⭐⭐</label>
+                    <input type="radio" name="rating" id="star4" value="4">
+                    <label for="star4" title="好">⭐⭐⭐⭐</label>
+                    <input type="radio" name="rating" id="star3" value="3">
+                    <label for="star3" title="一般">⭐⭐⭐</label>
+                    <input type="radio" name="rating" id="star2" value="2">
+                    <label for="star2" title="不太好">⭐⭐</label>
+                    <input type="radio" name="rating" id="star1" value="1">
+                    <label for="star1" title="需要改進">⭐</label>
+                </div>
+            </div>
+
+            <!-- Child Feeling -->
+            <div class="feedback-section">
+                <label class="feedback-label">小朋友今次表現</label>
+                <div class="feeling-options">
+                    <label class="feeling-option">
+                        <input type="radio" name="feeling" value="great">
+                        <span>😊 表現自信</span>
+                    </label>
+                    <label class="feeling-option">
+                        <input type="radio" name="feeling" value="okay">
+                        <span>😐 一般</span>
+                    </label>
+                    <label class="feeling-option">
+                        <input type="radio" name="feeling" value="struggling">
+                        <span>😟 需要多啲練習</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Difficulties -->
+            <div class="feedback-section">
+                <label class="feedback-label">邊方面比較困難？（可選）</label>
+                <div class="difficulty-options">
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="difficulty" value="vocabulary">
+                        <span>詞彙不足</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="difficulty" value="confidence">
+                        <span>唔夠自信</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="difficulty" value="eye_contact">
+                        <span>眼神接觸</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="difficulty" value="structure">
+                        <span>表達結構</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="difficulty" value="listening">
+                        <span>聽題目</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="feedback-section">
+                <label class="feedback-label">其他意見（可選）</label>
+                <textarea id="feedbackComment" placeholder="例如：有咩地方需要改進？有咩主題想練習多啲？" rows="3"></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="feedback-actions">
+                <button class="btn-secondary" onclick="hideFeedbackModal()">Skip</button>
+                <button class="btn-primary" id="submitFeedbackBtn" onclick="submitFeedback()">提交反馈</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Feedback Modal Styles */
+        .feedback-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .feedback-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .feedback-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .feedback-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-header p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .feedback-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .feedback-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 1.75rem;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input:checked ~ label {
+            color: #fbbf24;
+        }
+
+        .feeling-options,
+        .difficulty-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .feeling-option,
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--background-light);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .feeling-option:hover,
+        .checkbox-option:hover {
+            background: var(--primary-50);
+        }
+
+        .feeling-option input,
+        .checkbox-option input {
+            accent-color: var(--primary);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .feedback-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background-light);
+        }
+    </style>
 </body>
 </html>
