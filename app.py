@@ -5,6 +5,7 @@ Flask-based web application for personalized primary school interview preparatio
 
 import os
 import sys
+import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_dotenv import DotEnv
@@ -962,6 +963,61 @@ def get_notes_report():
         from services.parent_notes import generate_practice_report
         report = generate_practice_report(user_id)
         return jsonify(report or {'message': 'No data yet'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/feedback', methods=['POST'])
+@login_required
+def submit_feedback():
+    """提交练习反馈."""
+    user_id = session.get('user_id')
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('rating'):
+            return jsonify({'error': 'Rating is required'}), 400
+        
+        # Save feedback (simplified - uses session storage for now)
+        feedback_data = {
+            'user_id': user_id,
+            'topic_id': data.get('topic_id'),
+            'rating': data.get('rating'),
+            'difficulties': data.get('difficulties', []),
+            'comment': data.get('comment', ''),
+            'child_feeling': data.get('child_feeling'),
+            'submitted_at': datetime.now().isoformat()
+        }
+        
+        # Store in session for now (would be database in production)
+        if 'feedback_history' not in session:
+            session['feedback_history'] = []
+        
+        session['feedback_history'].insert(0, feedback_data)
+        session['feedback_history'] = session['feedback_history'][:100]  # Keep last 100
+        session.modified = True
+        
+        return jsonify({
+            'success': True,
+            'message': 'Feedback submitted successfully',
+            'feedback_id': feedback_data['submitted_at']
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/feedback/history')
+@login_required
+def get_feedback_history():
+    """获取反馈历史."""
+    user_id = session.get('user_id')
+    
+    try:
+        history = session.get('feedback_history', [])
+        return jsonify({'feedback': history})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
