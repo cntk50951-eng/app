@@ -671,10 +671,13 @@ def generate_content():
                 print(f"Warning: Could not fetch target schools: {e}")
 
     if not profile['child_name']:
-        return jsonify({
-            'error': 'Profile incomplete',
-            'message': '請先完成孩子資料填寫'
-        }), 400
+        # Use default values for development/demo mode
+        print("⚠️ Profile incomplete, using default values")
+        profile['child_name'] = '小明'
+        profile['child_age'] = 'K2'
+        profile['child_gender'] = '不透露'
+        profile['interests'] = ['lego', 'sports']
+        profile['target_schools'] = ['academic']
 
     # Clear cache if force regenerate
     if force_regenerate:
