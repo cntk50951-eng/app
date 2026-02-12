@@ -191,6 +191,12 @@ def index():
     return render_template('welcome.html')
 
 
+@app.route('/favicon.ico')
+def favicon():
+    """Return empty response for favicon to avoid 404."""
+    return '', 204
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login selection page."""
@@ -538,25 +544,34 @@ def dashboard():
 def settings():
     """Parent settings / console page."""
     user_id = session.get('user_id')
-    
+
     # Get user subscription status
     subscription_status = 'trial'
     trial_topics_used = 0
-    
+
     if user_id:
         try:
-            user = db.get_user_by_id(user_id)
-            if user:
-                subscription_status = user.get('subscription_status', 'trial')
-                trial_topics_used = user.get('trial_topics_used', 0)
+            db_funcs = get_db_functions()
+            if db_funcs and 'get_user_by_id' in db_funcs:
+                user = db_funcs['get_user_by_id'](user_id)
+                if user:
+                    subscription_status = user.get('subscription_status', 'trial')
+                    trial_topics_used = user.get('trial_topics_used', 0)
         except Exception as e:
             print(f"Error fetching user: {e}")
-    
+
     return render_template(
         'settings.html',
         subscription_status=subscription_status,
         trial_topics_used=trial_topics_used
     )
+
+
+@app.route('/lesson')
+@app.route('/lesson/')
+def lesson_redirect():
+    """Redirect /lesson to dashboard or default topic."""
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/lesson/<topic_id>')
@@ -698,7 +713,6 @@ def generate_content():
 
 
 @app.route('/unlock-full-access')
-@login_required
 def unlock_full_access():
     """Paywall page for unlocking full access."""
     return render_template('unlock-full-access.html')
@@ -716,6 +730,13 @@ def profile_edit():
 def parent_notes():
     """家长笔记页面."""
     return render_template('parent-notes.html')
+
+
+@app.route('/recording')
+@login_required
+def recording():
+    """录音练习页面."""
+    return render_template('recording.html')
 
 
 @app.route('/api/user')
@@ -739,10 +760,18 @@ def get_child_profile():
     """获取孩子画像信息."""
     user_id = session.get('user_id')
     try:
-        profile = db.get_child_profile(user_id)
-        if profile:
-            return jsonify(profile)
-        return jsonify({'error': 'Profile not found'}), 404
+        db = get_db_functions()
+        if db and 'get_child_profile_by_user_id' in db:
+            profile = db['get_child_profile_by_user_id'](user_id)
+            if profile:
+                return jsonify(profile)
+        # Return mock data if no database
+        return jsonify({
+            'child_name': session.get('child_name'),
+            'child_age': session.get('child_age'),
+            'child_gender': session.get('child_gender'),
+            'profile_complete': session.get('profile_complete', False)
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -956,23 +985,34 @@ def update_user_stats():
 def get_user_settings():
     """获取用户设置."""
     user_id = session.get('user_id')
-    
+
     try:
-        user = db.get_user_by_id(user_id)
-        if user:
-            return jsonify({
-                'language': user.get('preferred_language', 'cantonese'),
-                'notifications': {
-                    'dailyReminder': user.get('notify_daily', True),
-                    'newTopic': user.get('notify_new_topic', True),
-                    'weeklyReport': user.get('notify_weekly', False),
-                    'marketing': user.get('notify_marketing', False)
-                }
-            })
+        db = get_db_functions()
+        if db and 'get_user_by_id' in db:
+            user = db['get_user_by_id'](user_id)
+            if user:
+                return jsonify({
+                    'language': user.get('preferred_language', 'cantonese'),
+                    'notifications': {
+                        'dailyReminder': user.get('notify_daily', True),
+                        'newTopic': user.get('notify_new_topic', True),
+                        'weeklyReport': user.get('notify_weekly', False),
+                        'marketing': user.get('notify_marketing', False)
+                    }
+                })
     except Exception as e:
         print(f"Error fetching settings: {e}")
-    
-    return jsonify({'error': 'Settings not found'}), 404
+
+    # Return default settings if no database
+    return jsonify({
+        'language': 'cantonese',
+        'notifications': {
+            'dailyReminder': True,
+            'newTopic': True,
+            'weeklyReport': False,
+            'marketing': False
+        }
+    })
 
 
 @app.route('/api/user/settings/language', methods=['POST'])
