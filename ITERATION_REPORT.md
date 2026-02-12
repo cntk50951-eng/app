@@ -321,6 +321,38 @@ API 端点:
    - 修復：使用默認畫像數據而非返回錯誤
    - 提交：`e550b54`
 
+---
+
+## 📅 日期: 2026-02-12 (功能增強迭代)
+
+### 新增功能
+
+**1. 家長筆記功能 (Parent Notes)**
+- API 端點：`/api/notes` (GET/POST)
+- 功能：記錄練習觀察、查看歷史筆記
+- 支持按主題分組
+
+**2. 練習記錄功能**
+- API 端點：`/api/sessions` (POST/GET)
+- 功能：記錄練習時長、評分、備註
+- 統計總練習時間和會話數
+
+**3. 分享功能**
+- API 端點：`/api/share/progress`
+- 功能：生成孩子的學習進度分享數據
+- 支持社交媒體分享
+
+**4. API 端點清單**
+```
+GET/POST /api/notes           - 筆記 CRUD
+PUT/DELETE /api/notes/<id>   - 編輯/刪除筆記
+GET /api/notes/questions/<topic> - 獲取問題提示
+POST/GET /api/sessions       - 練習記錄
+GET /api/share/progress       - 分享數據
+```
+
+**提交**: `26cb759`
+
 **已知問題**:
 - favicon.ico 404 (不影響功能)
 - AI 內容生成需要完整登錄流程測試
