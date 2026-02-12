@@ -1168,6 +1168,229 @@ def get_feedback_history():
         return jsonify({'error': str(e)}), 500
 
 
+# ============ 家长笔记 API ============
+
+@app.route('/api/notes', methods=['GET'])
+@login_required
+def get_notes():
+    """获取用户所有笔记."""
+    user_id = session.get('user_id')
+    topic = request.args.get('topic')
+
+    try:
+        from services.parent_notes import get_user_notes, get_notes_stats
+
+        if topic:
+            notes = get_user_notes(user_id, topic)
+        else:
+            notes = get_user_notes(user_id)
+
+        stats = get_notes_stats(user_id)
+
+        return jsonify({
+            'success': True,
+            'notes': notes,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes', methods=['POST'])
+@login_required
+def create_note():
+    """创建新笔记."""
+    user_id = session.get('user_id')
+    data = request.json
+
+    topic = data.get('topic')
+    content = data.get('content')
+    child_name = session.get('child_name')
+
+    if not topic or not content:
+        return jsonify({'error': 'Topic and content are required'}), 400
+
+    try:
+        from services.parent_notes import create_note
+
+        note = create_note(
+            user_id=user_id,
+            topic=topic,
+            content=content,
+            child_name=child_name
+        )
+
+        return jsonify({
+            'success': True,
+            'note': note,
+            'message': '筆記已保存'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes/<note_id>', methods=['PUT'])
+@login_required
+def update_note(note_id):
+    """更新笔记."""
+    data = request.json
+    content = data.get('content')
+
+    if not content:
+        return jsonify({'error': 'Content is required'}), 400
+
+    try:
+        from services.parent_notes import update_note
+
+        note = update_note(note_id, content)
+
+        if note:
+            return jsonify({
+                'success': True,
+                'note': note,
+                'message': '筆記已更新'
+            })
+        else:
+            return jsonify({'error': 'Note not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes/<note_id>', methods=['DELETE'])
+@login_required
+def delete_note(note_id):
+    """删除笔记."""
+    try:
+        from services.parent_notes import delete_note
+
+        success = delete_note(note_id)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': '筆記已刪除'
+            })
+        else:
+            return jsonify({'error': 'Note not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/notes/questions/<topic>')
+@login_required
+def get_note_questions(topic):
+    """获取笔记问题提示."""
+    try:
+        from services.parent_notes import get_topic_questions
+
+        questions = get_topic_questions(topic)
+
+        return jsonify({
+            'success': True,
+            'questions': questions
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ 练习记录 API ============
+
+@app.route('/api/sessions', methods=['POST'])
+@login_required
+def record_session():
+    """记录练习会话."""
+    user_id = session.get('user_id')
+    data = request.json
+
+    topic = data.get('topic')
+    duration_seconds = data.get('duration_seconds')
+    notes = data.get('notes')
+    rating = data.get('rating')
+
+    if not topic or not duration_seconds:
+        return jsonify({'error': 'Topic and duration are required'}), 400
+
+    try:
+        from services.parent_notes import record_practice_session
+
+        session = record_practice_session(
+            user_id=user_id,
+            topic=topic,
+            duration_seconds=duration_seconds,
+            notes=notes,
+            rating=rating
+        )
+
+        return jsonify({
+            'success': True,
+            'session': session,
+            'message': '練習記錄已保存'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/sessions')
+@login_required
+def get_sessions():
+    """获取用户练习记录."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.parent_notes import get_user_sessions, get_session_stats
+
+        sessions = get_user_sessions(user_id)
+        stats = get_session_stats(user_id)
+
+        return jsonify({
+            'success': True,
+            'sessions': sessions,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ 分享功能 API ============
+
+@app.route('/api/share/progress')
+@login_required
+def share_progress():
+    """生成分享链接数据."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.analytics import get_user_analytics
+        from services.progress import get_user_progress
+        from services.parent_notes import get_session_stats
+
+        analytics = get_user_analytics(user_id)
+        progress = get_user_progress(user_id)
+        session_stats = get_session_stats(user_id)
+
+        # 生成分享数据
+        child_name = session.get('child_name', '小朋友')
+        completed_topics = progress.get('completed', [])
+        streak_days = analytics.get('streak_days', 0)
+
+        share_data = {
+            'child_name': child_name,
+            'topics_completed': len(completed_topics),
+            'total_topics': 5,
+            'streak_days': streak_days,
+            'total_minutes': session_stats.get('total_minutes', 0),
+            'message': f'{child_name}已經完成 {len(completed_topics)}/5 個面試主題練習！連續練習 {streak_days} 日！',
+            'generated_at': datetime.now().isoformat()
+        }
+
+        return jsonify({
+            'success': True,
+            'share_data': share_data
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     print("Starting AI Tutor application...")
     print(f"Database configured: {bool(DATABASE_URL)}")
