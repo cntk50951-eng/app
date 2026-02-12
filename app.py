@@ -414,6 +414,15 @@ def child_profile_step1():
         child_age = request.form.get('child_age')
         child_gender = request.form.get('child_gender')
 
+        if not db:
+            # Mock profile for development (no database)
+            session['child_name'] = child_name
+            session['child_age'] = child_age
+            session['child_gender'] = child_gender
+            session['profile_id'] = f'mock_{user_id}'
+            flash('Profile saved! (Development mode)', 'success')
+            return redirect(url_for('child_profile_step2'))
+
         if profile:
             # Update existing profile
             profile = db['create_child_profile'](
@@ -622,14 +631,9 @@ def generate_content():
     if not topic:
         return jsonify({'error': 'Topic is required', 'message': '請指定要生成的主題'}), 400
 
-    # Get profile data from database
-    db = get_db_functions()
-    if not db:
-        return jsonify({'error': 'Database not configured', 'message': '數據庫未配置'}), 500
-
-    # Build profile dict
+    # Build profile dict from session (always available)
     profile = {
-        'id': profile_id,
+        'id': profile_id or f'mock_{user_id}',
         'child_name': session.get('child_name'),
         'child_age': session.get('child_age'),
         'child_gender': session.get('child_gender'),
@@ -637,22 +641,34 @@ def generate_content():
         'target_schools': session.get('target_schools', [])
     }
 
-    # Get from database if not in session
-    if not profile['child_name']:
-        child_profile = db['get_child_profile_by_user_id'](user_id)
-        if child_profile:
-            profile['id'] = child_profile['id']
-            profile['child_name'] = child_profile['child_name']
-            profile['child_age'] = child_profile['child_age']
-            profile['child_gender'] = child_profile.get('child_gender')
+    # Try to enhance with database data if available
+    db = get_db_functions()
+    if db:
+        # Get from database if not in session
+        if not profile['child_name']:
+            try:
+                child_profile = db['get_child_profile_by_user_id'](user_id)
+                if child_profile:
+                    profile['id'] = child_profile['id']
+                    profile['child_name'] = child_profile['child_name']
+                    profile['child_age'] = child_profile['child_age']
+                    profile['child_gender'] = child_profile.get('child_gender')
+            except Exception as e:
+                print(f"Warning: Could not fetch child profile: {e}")
 
-    if not profile['interests']:
-        interests = db['get_user_interests'](profile['id'])
-        profile['interests'] = [i['id'] for i in interests]
+        if not profile['interests'] and profile.get('id'):
+            try:
+                interests = db['get_user_interests'](profile['id'])
+                profile['interests'] = [i['id'] for i in interests]
+            except Exception as e:
+                print(f"Warning: Could not fetch interests: {e}")
 
-    if not profile['target_schools']:
-        schools = db['get_target_schools'](profile['id'])
-        profile['target_schools'] = [s['id'] for s in schools]
+        if not profile['target_schools'] and profile.get('id'):
+            try:
+                schools = db['get_target_schools'](profile['id'])
+                profile['target_schools'] = [s['id'] for s in schools]
+            except Exception as e:
+                print(f"Warning: Could not fetch target schools: {e}")
 
     if not profile['child_name']:
         return jsonify({
