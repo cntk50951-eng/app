@@ -731,55 +731,182 @@ def get_child_profile():
 @app.route('/api/user/stats')
 @login_required
 def get_user_stats():
-    """获取用户使用统计."""
+    """获取用户使用统计（整合 analytics + progress 服务）."""
     user_id = session.get('user_id')
-    
-    # Mock 统计数据（实际应该从数据库获取）
+
+    # 使用 analytics 服务
+    try:
+        from services.analytics import get_user_analytics, get_topic_progress
+        analytics_data = get_user_analytics(user_id)
+        topic_progress = get_topic_progress(user_id)
+    except ImportError:
+        # 回退到 mock 数据
+        analytics_data = {
+            'topics_completed': session.get('topics_completed', 0),
+            'total_minutes': session.get('total_minutes', 0),
+            'notes_created': 0,
+            'feedback_submitted': 0,
+            'last_active': session.get('last_active')
+        }
+        topic_progress = {}
+
+    # 使用 progress 服务获取详细统计
+    try:
+        from services.progress import get_overall_stats, get_all_topic_summaries
+        overall_stats = get_overall_stats(user_id)
+        topic_summaries = get_all_topic_summaries(user_id)
+    except ImportError:
+        overall_stats = {
+            'total_topics': 5,
+            'completed_topics': analytics_data.get('topics_completed', 0),
+            'completion_percent': 0,
+            'total_practices': 0,
+            'total_minutes': analytics_data.get('total_minutes', 0),
+            'streak_days': session.get('streak_days', 0),
+            'first_practice_date': None,
+            'last_active': analytics_data.get('last_active')
+        }
+        topic_summaries = []
+
     stats = {
-        'topics_completed': session.get('topics_completed', 0),
-        'total_minutes': session.get('total_minutes', 0),
-        'streak_days': session.get('streak_days', 0),
-        'last_active': session.get('last_active'),
-        'topics': [
-            {
-                'id': 'self-introduction',
-                'title': '自我介紹',
-                'completed': False,
-                'last_practiced': None,
-                'score': None
-            },
-            {
-                'id': 'interests',
-                'title': '興趣愛好',
-                'completed': False,
-                'last_practiced': None,
-                'score': None
-            },
-            {
-                'id': 'family',
-                'title': '家庭介紹',
-                'completed': False,
-                'last_practiced': None,
-                'score': None
-            },
-            {
-                'id': 'observation',
-                'title': '觀察力訓練',
-                'completed': False,
-                'last_practiced': None,
-                'score': None
-            },
-            {
-                'id': 'scenarios',
-                'title': '處境題',
-                'completed': False,
-                'last_practiced': None,
-                'score': None
-            }
-        ]
+        'topics_completed': overall_stats.get('completed_topics', analytics_data.get('topics_completed', 0)),
+        'total_minutes': overall_stats.get('total_minutes', analytics_data.get('total_minutes', 0)),
+        'streak_days': overall_stats.get('streak_days', session.get('streak_days', 0)),
+        'last_active': overall_stats.get('last_active', analytics_data.get('last_active')),
+        'total_practices': overall_stats.get('total_practices', 0),
+        'notes_created': analytics_data.get('notes_created', 0),
+        'completion_percent': overall_stats.get('completion_percent', 0),
+        'topics': topic_summaries
     }
-    
+
     return jsonify(stats)
+
+
+@app.route('/api/progress/start', methods=['POST'])
+@login_required
+def start_lesson_progress():
+    """記錄練習開始."""
+    user_id = session.get('user_id')
+    data = request.json
+    topic_id = data.get('topic_id')
+
+    if not topic_id:
+        return jsonify({'error': 'Topic ID is required'}), 400
+
+    try:
+        from services.progress import update_progress
+        from services.analytics import track_event
+
+        # 更新進度
+        update_progress(user_id, topic_id, 'start')
+
+        # 追蹤事件
+        track_event(user_id, 'LESSON_START', {'topic_id': topic_id})
+
+        return jsonify({'success': True, 'message': '練習開始記錄'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress/complete', methods=['POST'])
+@login_required
+def complete_lesson_progress():
+    """記錄練習完成."""
+    user_id = session.get('user_id')
+    data = request.json
+    topic_id = data.get('topic_id')
+    score = data.get('score')
+    duration_seconds = data.get('duration_seconds')
+
+    if not topic_id:
+        return jsonify({'error': 'Topic ID is required'}), 400
+
+    try:
+        from services.progress import update_progress, mark_topic_complete
+        from services.analytics import track_event
+
+        # 更新進度
+        mark_topic_complete(user_id, topic_id, score, duration_seconds)
+
+        # 追蹤事件
+        track_event(user_id, 'LESSON_COMPLETE', {
+            'topic_id': topic_id,
+            'score': score,
+            'duration_minutes': round(duration_seconds / 60, 2) if duration_seconds else None
+        })
+
+        return jsonify({'success': True, 'message': '練習完成！'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress/recommendations')
+@login_required
+def get_recommendations():
+    """獲取練習推薦."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.progress import get_recommendations
+        recommendations = get_recommendations(user_id)
+        return jsonify({'recommendations': recommendations})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress/report')
+@login_required
+def get_progress_report():
+    """獲取進度報告."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.progress import generate_progress_report
+        report = generate_progress_report(user_id)
+        return jsonify(report)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/analytics/event', methods=['POST'])
+@login_required
+def track_analytics_event():
+    """手動追蹤分析事件."""
+    user_id = session.get('user_id')
+    data = request.json
+
+    event_type = data.get('event_type')
+    properties = data.get('properties', {})
+
+    if not event_type:
+        return jsonify({'error': 'Event type is required'}), 400
+
+    try:
+        from services.analytics import track_event
+        track_event(user_id, event_type, properties)
+        return jsonify({'success': True})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/analytics/summary')
+@login_required
+def get_analytics_summary():
+    """獲取用戶分析摘要."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.analytics import get_user_analytics
+        summary = get_user_analytics(user_id)
+        return jsonify(summary)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/user/stats/update', methods=['POST'])
