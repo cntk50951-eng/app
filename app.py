@@ -5,7 +5,7 @@ Flask-based web application for personalized primary school interview preparatio
 
 import os
 import sys
-import datetime
+from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_dotenv import DotEnv
