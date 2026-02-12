@@ -66,6 +66,7 @@ def call_minimax_api(endpoint, payload):
     """調用 MiniMax API."""
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API Key not configured")
+        print(f"   Checking environment: MINIMAX_API_KEY={MINIMAX_API_KEY}")
         return None
 
     try:
@@ -74,17 +75,22 @@ def call_minimax_api(endpoint, payload):
             'Content-Type': 'application/json'
         }
 
+        url = f"{MINIMAX_BASE_URL}/{endpoint}"
+        print(f"📡 Calling MiniMax API: {url}")
+
         response = requests.post(
-            f"{MINIMAX_BASE_URL}/{endpoint}",
+            url,
             json=payload,
             headers=headers,
             timeout=30
         )
 
         if response.status_code == 200:
+            print(f"✅ MiniMax API success")
             return response.json()
         else:
-            print(f"❌ MiniMax API error: {response.status_code} - {response.text}")
+            print(f"❌ MiniMax API error: {response.status_code}")
+            print(f"   Response: {response.text[:200]}")
             return None
 
     except Exception as e:
