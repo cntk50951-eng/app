@@ -277,6 +277,158 @@
         .difficulty-medium { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
         .difficulty-hard { background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
 
+        /* Practice Controls */
+        .practice-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .count-select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            background: white;
+            cursor: pointer;
+        }
+
+        .count-select:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .refresh-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #e04658;
+            transform: translateY(-1px);
+        }
+
+        .refresh-btn .material-symbols-outlined {
+            font-size: 18px;
+        }
+
+        /* Question Card Enhanced */
+        .question-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #f5576c;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: #f5576c;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .question-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .category-tag {
+            background: #e0e7ff;
+            color: #4f46e5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .question-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .question-text-en {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .tips-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid #f5576c;
+            color: #f5576c;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .tips-toggle:hover {
+            background: #f5576c;
+            color: white;
+        }
+
+        .tips-toggle .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        .answer-tips {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff3cd;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #856404;
+            border: 1px dashed #ffc107;
+        }
+
         .tabs {
             display: flex;
             gap: 8px;
@@ -403,24 +555,44 @@
                 <span class="material-symbols-outlined">format_list_numbered</span>
                 练习题目
             </h3>
-            <div class="tabs">
-                <div class="tab active" onclick="showTab('all')">全部</div>
-                <div class="tab" onclick="showTab('high')">高频</div>
+            <div class="practice-controls">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('all')">全部</div>
+                    <div class="tab" onclick="showTab('high')">高频</div>
+                </div>
+                <div class="control-buttons">
+                    <select id="questionCount" class="count-select" onchange="updateQuestionCount()">
+                        <option value="10">10题</option>
+                        <option value="20" selected>20题</option>
+                        <option value="30">30题</option>
+                        <option value="50">50题</option>
+                    </select>
+                    <button class="refresh-btn" onclick="refreshQuestions()">
+                        <span class="material-symbols-outlined">refresh</span>
+                        换一批
+                    </button>
+                </div>
             </div>
             <div class="question-list" id="questionList">
                 {% for q in questions %}
                 <div class="question-card" data-frequency="{{ q.frequency }}">
+                    <div class="question-header">
+                        <span class="question-number">{{ loop.index }}</span>
+                        <div class="question-tags">
+                            <span class="frequency-{{ q.frequency }}">{{ q.frequency }}</span>
+                            <span class="difficulty-{{ q.difficulty }}">{{ q.difficulty }}</span>
+                            <span class="category-tag">{{ q.category_name_zh }}</span>
+                        </div>
+                    </div>
                     <div class="question-text">{{ q.question_zh }}</div>
                     {% if q.question_en %}
-                    <div class="question-text" style="color: #666; font-size: 14px;">{{ q.question_en }}</div>
+                    <div class="question-text-en">{{ q.question_en }}</div>
                     {% endif %}
-                    <div class="question-meta">
-                        <span class="frequency-{{ q.frequency }}">{{ q.frequency }}</span>
-                        <span class="difficulty-{{ q.difficulty }}">{{ q.difficulty }}</span>
-                        <span>{{ q.category_name_zh }}</span>
-                    </div>
+                    <button class="tips-toggle" onclick="toggleTips(this)">
+                        <span class="material-symbols-outlined">lightbulb</span> 查看答题提示
+                    </button>
                     {% if q.answer_tips %}
-                    <div class="answer-tips">
+                    <div class="answer-tips" style="display: none;">
                         <strong>答题提示：</strong>{{ q.answer_tips }}
                     </div>
                     {% endif %}
@@ -531,6 +703,39 @@
                     card.style.display = 'none';
                 }
             });
+        }
+
+        // Toggle answer tips visibility
+        function toggleTips(btn) {
+            const tipsDiv = btn.nextElementSibling;
+            if (tipsDiv && tipsDiv.classList.contains('answer-tips')) {
+                if (tipsDiv.style.display === 'none') {
+                    tipsDiv.style.display = 'block';
+                    btn.innerHTML = '<span class="material-symbols-outlined">hide_source</span> 隐藏答题提示';
+                } else {
+                    tipsDiv.style.display = 'none';
+                    btn.innerHTML = '<span class="material-symbols-outlined">lightbulb</span> 查看答题提示';
+                }
+            }
+        }
+
+        // Update question count and reload
+        function updateQuestionCount() {
+            const select = document.getElementById('questionCount');
+            const newLimit = select.value;
+            const params = new URLSearchParams(window.location.search);
+            params.set('limit', newLimit);
+            window.location.href = '/question-bank/practice?' + params.toString();
+        }
+
+        // Refresh questions - get new random set
+        function refreshQuestions() {
+            const params = new URLSearchParams(window.location.search);
+            // Add timestamp to force new random selection
+            params.set('_t', Date.now());
+            const select = document.getElementById('questionCount');
+            params.set('limit', select.value);
+            window.location.href = '/question-bank/practice?' + params.toString();
         }
     </script>
 </body>

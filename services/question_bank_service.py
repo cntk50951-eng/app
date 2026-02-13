@@ -202,9 +202,11 @@ def get_all_categories():
 def get_random_questions(school_type=None, categories=None, limit=10):
     """随机获取题目组合"""
     if not _check_table_exists():
-        # Use sample questions
-        filtered = SAMPLE_QUESTIONS
-        if categories:
+        # Use sample questions - create a copy to avoid modifying original
+        import time
+        random.seed(int(time.time() * 1000) % 1000000)
+        filtered = SAMPLE_QUESTIONS.copy()
+        if categories and len(categories) > 0:
             filtered = [q for q in filtered if q['category'] in categories]
         random.shuffle(filtered)
         return filtered[:limit]
