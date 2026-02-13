@@ -349,7 +349,7 @@ def generate_suggestions(gaps, school_type):
                     "tips": [
                         "与孩子说话时提醒保持眼神接触",
                         "对着镜子练习自我介绍",
-                        "玩"对视比赛"游戏"
+                        '玩"对视比赛"游戏'
                     ]
                 })
             elif dim == "manners":
