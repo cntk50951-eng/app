@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar']
 
 
 def login_required(f):
@@ -1612,6 +1612,85 @@ def school_advisor_analyze():
     return render_template(
         'school-advisor-result.html',
         result=result
+    )
+
+
+# ============ Capability Radar Routes ============
+
+@app.route('/capability-radar')
+def capability_radar():
+    """面试能力分析页面."""
+    from services.capability_radar_service import analyze_capabilities, get_radar_chart_data
+
+    logged_in = 'user_id' in session
+    school_type = request.args.get('school_type', 'academic')
+
+    analysis = None
+    chart_data = None
+    overall_score = 0
+
+    dimension_names = {
+        "communication": "沟通表达",
+        "logic": "逻辑思维",
+        "creativity": "创意思维",
+        "confidence": "自信心",
+        "eye_contact": "眼神接触",
+        "manners": "礼貌礼仪"
+    }
+
+    dimension_descriptions = {
+        "communication": "清晰表达想法的能力",
+        "logic": "思考和解决问题的能力",
+        "creativity": "想象力和创新能力",
+        "confidence": "自我展示的自信程度",
+        "eye_contact": "与他人眼神交流的能力",
+        "manners": "基本礼仪和社交礼貌"
+    }
+
+    if logged_in:
+        user_id = session.get('user_id')
+
+        # 获取孩子画像
+        profile_data = {
+            'interests': [],
+            'strengths': [],
+            'personality': ''
+        }
+
+        try:
+            from db.database import get_db_connection
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT interests, strengths, personality FROM children WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+                (user_id,)
+            )
+            row = cursor.fetchone()
+
+            if row:
+                profile_data['interests'] = row['interests'].split(',') if row['interests'] else []
+                profile_data['strengths'] = row['strengths'].split(',') if row['strengths'] else []
+                profile_data['personality'] = row['personality'] or ''
+
+            conn.close()
+        except Exception as e:
+            print(f"Error fetching profile: {e}")
+
+        # 分析能力
+        analysis = analyze_capabilities(profile_data, None, school_type)
+        chart_data = get_radar_chart_data(analysis)
+        overall_score = analysis.get('overall_score', 0)
+
+    return render_template(
+        'capability-radar.html',
+        logged_in=logged_in,
+        school_type=school_type,
+        analysis=analysis,
+        chart_data=chart_data,
+        overall_score=overall_score,
+        dimension_names=dimension_names,
+        dimension_descriptions=dimension_descriptions
     )
 
 
