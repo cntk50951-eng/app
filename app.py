@@ -46,7 +46,7 @@ def get_db_functions():
     try:
         from db.database import (
             create_user, get_user_by_email, get_user_by_google_id, get_user_by_id,
-            create_child_profile, get_child_profile_by_user_id,
+            create_child_profile, get_child_profile_by_user_id, update_child_profile,
             set_user_interests, get_user_interests,
             set_target_schools, get_target_schools,
             create_complete_profile
@@ -58,6 +58,7 @@ def get_db_functions():
             'get_user_by_id': get_user_by_id,
             'create_child_profile': create_child_profile,
             'get_child_profile_by_user_id': get_child_profile_by_user_id,
+            'update_child_profile': update_child_profile,
             'set_user_interests': set_user_interests,
             'get_user_interests': get_user_interests,
             'set_target_schools': set_target_schools,
@@ -437,8 +438,8 @@ def child_profile_step1():
         try:
             if profile:
                 # Update existing profile
-                profile = db['create_child_profile'](
-                    user_id=user_id,
+                profile = db['update_child_profile'](
+                    profile_id=profile['id'],
                     child_name=child_name,
                     child_age=child_age,
                     child_gender=child_gender
@@ -453,6 +454,8 @@ def child_profile_step1():
                 )
         except Exception as e:
             print(f"Database error in child_profile_step1: {e}")
+            import traceback
+            traceback.print_exc()
             flash('Failed to save profile. Please try again or contact support.', 'error')
             return redirect(url_for('child_profile_step1'))
 
