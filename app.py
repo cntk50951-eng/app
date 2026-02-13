@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress']
 
 
 def login_required(f):
@@ -1779,6 +1779,185 @@ def api_questions_statistics():
         'success': True,
         'statistics': stats
     })
+
+
+# ============ Practice Center Routes ============
+# 练习中心 - 错题本、进度追踪、每日挑战
+
+@app.route('/practice')
+def practice_center():
+    """练习中心主页"""
+    from services.practice_data_service import get_category_progress, get_user_stats
+
+    user_id = session.get('user_id')
+    categories = get_category_progress(user_id or 0)
+    stats = get_user_stats(user_id or 0)
+
+    return render_template(
+        'practice.html',
+        categories=categories,
+        stats=stats
+    )
+
+
+@app.route('/practice/daily-challenge')
+def daily_challenge():
+    """每日挑战页面"""
+    from services.practice_data_service import get_daily_challenge
+    from services.question_bank_service import get_all_categories
+
+    user_id = session.get('user_id')
+    challenge = get_daily_challenge(user_id or 0)
+    categories = get_all_categories()
+
+    return render_template(
+        'question-bank.html',
+        school_type='',
+        categories=categories,
+        stats={'total': 3000, 'by_category': categories},
+        selected_categories=[],
+        questions=challenge['questions']
+    )
+
+
+@app.route('/practice/wrong-questions')
+def wrong_questions():
+    """错题本页面"""
+    from services.practice_data_service import get_wrong_questions
+    from services.question_bank_service import get_all_categories, get_question_by_id
+
+    user_id = session.get('user_id')
+    wrong_ids = get_wrong_questions(user_id or 0)
+
+    # 获取错题详情
+    wrong_list = []
+    for wid in wrong_ids:
+        q = get_question_by_id(wid)
+        if q:
+            wrong_list.append(q)
+
+    categories = get_all_categories()
+
+    return render_template(
+        'question-bank.html',
+        school_type='',
+        categories=categories,
+        stats={'total': len(wrong_list), 'by_category': categories},
+        selected_categories=[],
+        questions=wrong_list
+    )
+
+
+@app.route('/practice/favorites')
+def favorites():
+    """收藏夹页面"""
+    from services.practice_data_service import get_favorites
+    from services.question_bank_service import get_all_categories, get_question_by_id
+
+    user_id = session.get('user_id')
+    fav_ids = get_favorites(user_id or 0)
+
+    # 获取收藏题详情
+    fav_list = []
+    for fid in fav_ids:
+        q = get_question_by_id(fid)
+        if q:
+            fav_list.append(q)
+
+    categories = get_all_categories()
+
+    return render_template(
+        'question-bank.html',
+        school_type='',
+        categories=categories,
+        stats={'total': len(fav_list), 'by_category': categories},
+        selected_categories=[],
+        questions=fav_list
+    )
+
+
+@app.route('/practice/recommended')
+def recommended():
+    """智能推荐页面"""
+    from services.practice_data_service import get_recommended_questions
+    from services.question_bank_service import get_all_categories
+
+    user_id = session.get('user_id')
+    questions = get_recommended_questions(user_id or 0, limit=20)
+    categories = get_all_categories()
+
+    return render_template(
+        'question-bank.html',
+        school_type='',
+        categories=categories,
+        stats={'total': 3000, 'by_category': categories},
+        selected_categories=[],
+        questions=questions
+    )
+
+
+@app.route('/practice/progress')
+def progress_detail():
+    """练习进度详情页"""
+    from services.practice_data_service import get_category_progress, get_user_stats
+
+    user_id = session.get('user_id')
+    categories = get_category_progress(user_id or 0)
+    stats = get_user_stats(user_id or 0)
+
+    return render_template(
+        'practice.html',
+        categories=categories,
+        stats=stats
+    )
+
+
+# ============ Practice API Endpoints ============
+
+@app.route('/api/practice/record', methods=['POST'])
+@login_required
+def api_record_practice():
+    """记录练习结果API"""
+    from services.practice_data_service import record_practice
+
+    data = request.json or {}
+    user_id = session.get('user_id')
+    question_id = data.get('question_id')
+    is_correct = data.get('is_correct', True)
+
+    result = record_practice(user_id, question_id, is_correct)
+
+    return jsonify({'success': result})
+
+
+@app.route('/api/practice/favorite', methods=['POST'])
+@login_required
+def api_add_favorite():
+    """添加收藏API"""
+    from services.practice_data_service import add_favorite
+
+    data = request.json or {}
+    user_id = session.get('user_id')
+    question_id = data.get('question_id')
+
+    result = add_favorite(user_id, question_id)
+
+    return jsonify({'success': result})
+
+
+@app.route('/api/practice/wrong', methods=['POST'])
+@login_required
+def api_mark_wrong():
+    """标记错题API"""
+    from services.practice_data_service import mark_wrong
+
+    data = request.json or {}
+    user_id = session.get('user_id')
+    question_id = data.get('question_id')
+
+    result = mark_wrong(user_id, question_id)
+
+    return jsonify({'success': result})
 
 
 # ============ Mock Interview API ============

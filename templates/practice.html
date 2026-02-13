@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>练习中心 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .banner {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .banner a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner h1 {
+            font-size: 20px;
+            color: #333;
+            margin-left: 12px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Stats Overview */
+        .stats-overview {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-circle {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stats-title {
+            flex: 1;
+        }
+
+        .stats-title h2 {
+            font-size: 22px;
+            color: #333;
+        }
+
+        .stats-title p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .streak-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Feature Cards */
+        .feature-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .feature-icon.daily {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .feature-icon.wrong {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .feature-icon.progress {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .feature-icon.favorites {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: #fee2e2;
+            color: #dc2626;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        /* Daily Challenge */
+        .daily-challenge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .challenge-title {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .challenge-streak {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .challenge-progress {
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            height: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .challenge-progress-bar {
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            transition: width 0.3s ease;
+        }
+
+        .challenge-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .challenge-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .challenge-btn.primary {
+            background: white;
+            color: #f5576c;
+        }
+
+        .challenge-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .challenge-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Category Progress */
+        .progress-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .category-icon {
+            font-size: 24px;
+        }
+
+        .category-info {
+            flex: 1;
+        }
+
+        .category-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .category-stats {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 80px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        .progress-fill.high { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .progress-fill.medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .progress-fill.low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .bottom-nav a {
+            text-decoration: none;
+            color: #999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span.material-symbols-outlined {
+            font-size: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .feature-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1>练习中心</h1>
+    </div>
+
+    <div class="container">
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stats-header">
+                <div class="avatar-circle">M</div>
+                <div class="stats-title">
+                    <h2>欢迎回来！</h2>
+                    <p>继续加油，面试成功在望</p>
+                </div>
+                <div class="streak-badge">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">local_fire_department</span>
+                    0天
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">练习次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">答题总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">连续天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">掌握题目</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Challenge -->
+        <div class="daily-challenge">
+            <div class="challenge-header">
+                <div class="challenge-title">
+                    <span class="material-symbols-outlined">bolt</span>
+                    每日挑战
+                </div>
+                <div class="challenge-streak">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">local_fire_department</span>
+                    0天连续
+                </div>
+            </div>
+            <div class="challenge-progress">
+                <div class="challenge-progress-bar" style="width: 0%;"></div>
+            </div>
+            <p style="margin-bottom: 16px; opacity: 0.9;">今日完成: 0/10 题</p>
+            <div class="challenge-actions">
+                <button class="challenge-btn primary" onclick="startDailyChallenge()">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                    开始挑战
+                </button>
+                <button class="challenge-btn secondary">
+                    <span class="material-symbols-outlined">visibility</span>
+                    查看答案
+                </button>
+            </div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="feature-section">
+            <div class="feature-card" onclick="showWrongQuestions()">
+                <div class="feature-icon wrong">
+                    <span class="material-symbols-outlined" style="color: white;">error</span>
+                </div>
+                <div class="feature-title">错题本</div>
+                <div class="feature-desc">记录易错题目，定期复习巩固</div>
+                <span class="feature-badge">0题待复习</span>
+            </div>
+
+            <div class="feature-card" onclick="showFavorites()">
+                <div class="feature-icon favorites">
+                    <span class="material-symbols-outlined" style="color: white;">favorite</span>
+                </div>
+                <div class="feature-title">收藏夹</div>
+                <div class="feature-desc">收藏重要题目，方便集中练习</div>
+                <span class="feature-badge">0题收藏</span>
+            </div>
+
+            <div class="feature-card" onclick="showProgress()">
+                <div class="feature-icon progress">
+                    <span class="material-symbols-outlined" style="color: white;">trending_up</span>
+                </div>
+                <div class="feature-title">练习进度</div>
+                <div class="feature-desc">查看各分类掌握情况</div>
+            </div>
+
+            <div class="feature-card" onclick="showRecommended()">
+                <div class="feature-icon daily">
+                    <span class="material-symbols-outlined" style="color: white;">auto_awesome</span>
+                </div>
+                <div class="feature-title">智能推荐</div>
+                <div class="feature-desc">根据薄弱环节推荐练习</div>
+            </div>
+        </div>
+
+        <!-- Category Progress -->
+        <div class="progress-section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">bar_chart</span>
+                分类进度
+            </h3>
+            <div class="category-list">
+                {% for cat in categories %}
+                <div class="category-item">
+                    <span class="category-icon">
+                        {% if cat.category == 'self_intro' %}👤
+                        {% elif cat.category == 'family' %}👨‍👩‍👧
+                        {% elif cat.category == 'hobbies' %}🎨
+                        {% elif cat.category == 'school' %}🏫
+                        {% elif cat.category == 'life' %}🏠
+                        {% elif cat.category == 'science' %}🔬
+                        {% elif cat.category == 'society' %}🌆
+                        {% elif cat.category == 'creative' %}💡
+                        {% elif cat.category == 'situational' %}⚡
+                        {% elif cat.category == 'group' %}👥
+                        {% endif %}
+                    </span>
+                    <div class="category-info">
+                        <div class="category-name">{{ cat.category_name_zh }}</div>
+                        <div class="category-stats">已练 {{ cat.practiced }}/{{ cat.total }} 题</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if (cat.practiced / cat.total * 100) >= 80 %}high{% elif (cat.practiced / cat.total * 100) >= 40 %}medium{% else %}low{% endif %}"
+                             style="width: {{ (cat.practiced / cat.total * 100)|int }}%;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>首页</span>
+        </a>
+        <a href="/question-bank">
+            <span class="material-symbols-outlined">quiz</span>
+            <span>真题库</span>
+        </a>
+        <a href="/practice" class="active">
+            <span class="material-symbols-outlined">fitness_center</span>
+            <span>练习</span>
+        </a>
+        <a href="/settings">
+            <span class="material-symbols-outlined">settings</span>
+            <span>设置</span>
+        </a>
+    </nav>
+
+    <script>
+        function startDailyChallenge() {
+            window.location.href = '/practice/daily-challenge';
+        }
+
+        function showWrongQuestions() {
+            window.location.href = '/practice/wrong-questions';
+        }
+
+        function showFavorites() {
+            window.location.href = '/practice/favorites';
+        }
+
+        function showProgress() {
+            window.location.href = '/practice/progress';
+        }
+
+        function showRecommended() {
+            window.location.href = '/practice/recommended';
+        }
+    </script>
+</body>
+</html>

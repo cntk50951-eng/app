@@ -246,3 +246,76 @@ CREATE INDEX idx_questions_category ON interview_questions(category);
 CREATE INDEX idx_questions_school_types ON interview_questions(school_types);
 CREATE INDEX idx_questions_frequency ON interview_questions(frequency);
 CREATE INDEX idx_practice_history_user ON question_practice_history(user_id);
+
+-- ============ 练习数据扩展 ============
+
+-- 用户收藏的题目
+CREATE TABLE user_favorites (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    question_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, question_id)
+);
+
+-- 用户错题记录
+CREATE TABLE user_wrong_answers (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    question_id VARCHAR(50) NOT NULL,
+    times_wrong INTEGER DEFAULT 1,
+    last_wrong_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    mastered BOOLEAN DEFAULT FALSE, -- 是否已掌握
+    mastered_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, question_id)
+);
+
+-- 用户分类练习进度
+CREATE TABLE category_progress (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category VARCHAR(50) NOT NULL,
+    total_practiced INTEGER DEFAULT 0,
+    correct_count INTEGER DEFAULT 0,
+    wrong_count INTEGER DEFAULT 0,
+    last_practiced_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, category)
+);
+
+-- 每日挑战记录
+CREATE TABLE daily_challenges (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    challenge_date DATE NOT NULL,
+    questions_completed INTEGER DEFAULT 0,
+    total_questions INTEGER DEFAULT 10,
+    completed BOOLEAN DEFAULT FALSE,
+    completed_at TIMESTAMP,
+    streak_days INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, challenge_date)
+);
+
+-- 用户练习统计
+CREATE TABLE user_stats (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    total_practice_count INTEGER DEFAULT 0,
+    total_questions_answered INTEGER DEFAULT 0,
+    total_time_seconds INTEGER DEFAULT 0,
+    current_streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0,
+    last_practice_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id)
+);
+
+CREATE INDEX idx_favorites_user ON user_favorites(user_id);
+CREATE INDEX idx_wrong_user ON user_wrong_answers(user_id);
+CREATE INDEX idx_category_progress_user ON category_progress(user_id);
+CREATE INDEX idx_daily_challenge_user ON daily_challenges(user_id, challenge_date);
+CREATE INDEX idx_user_stats_user ON user_stats(user_id);
