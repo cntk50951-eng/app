@@ -420,6 +420,11 @@ def child_profile_step1():
         child_age = request.form.get('child_age')
         child_gender = request.form.get('child_gender')
 
+        # Validate input
+        if not child_name or not child_age or not child_gender:
+            flash('Please fill in all fields', 'error')
+            return redirect(url_for('child_profile_step1'))
+
         if not db:
             # Mock profile for development (no database)
             session['child_name'] = child_name
@@ -429,22 +434,27 @@ def child_profile_step1():
             flash('Profile saved! (Development mode)', 'success')
             return redirect(url_for('child_profile_step2'))
 
-        if profile:
-            # Update existing profile
-            profile = db['create_child_profile'](
-                user_id=user_id,
-                child_name=child_name,
-                child_age=child_age,
-                child_gender=child_gender
-            )
-        else:
-            # Create new profile
-            profile = db['create_child_profile'](
-                user_id=user_id,
-                child_name=child_name,
-                child_age=child_age,
-                child_gender=child_gender
-            )
+        try:
+            if profile:
+                # Update existing profile
+                profile = db['create_child_profile'](
+                    user_id=user_id,
+                    child_name=child_name,
+                    child_age=child_age,
+                    child_gender=child_gender
+                )
+            else:
+                # Create new profile
+                profile = db['create_child_profile'](
+                    user_id=user_id,
+                    child_name=child_name,
+                    child_age=child_age,
+                    child_gender=child_gender
+                )
+        except Exception as e:
+            print(f"Database error in child_profile_step1: {e}")
+            flash('Failed to save profile. Please try again or contact support.', 'error')
+            return redirect(url_for('child_profile_step1'))
 
         # Update session
         session['child_name'] = child_name
@@ -696,13 +706,25 @@ def generate_content():
 
     # Clear cache if force regenerate
     if force_regenerate:
-        from services.ai_generator import clear_cache
-        clear_cache(profile_id)
+        try:
+            from services.ai_generator import clear_cache
+            clear_cache(profile_id)
+        except Exception as e:
+            print(f"Warning: Could not clear cache: {e}")
 
     # Generate content
     try:
         from services.ai_generator import generate_teaching_content_with_audio
         content = generate_teaching_content_with_audio(profile, topic)
+
+        # Ensure content has required fields
+        if not content:
+            return jsonify({
+                'error': 'Content generation failed',
+                'message': '內容生成失敗，請稍後再試',
+                'fallback': True
+            }), 200
+
         return jsonify(content)
     except Exception as e:
         print(f"Error generating content: {e}")

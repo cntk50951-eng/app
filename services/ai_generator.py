@@ -114,13 +114,25 @@ def generate_text_content(system_prompt, user_prompt):
 
     if result and 'choices' in result:
         content = result['choices'][0]['message']['content']
+        if not content or not content.strip():
+            print("⚠️ Empty response from API")
+            return None
         try:
             # 嘗試解析 JSON
-            return json.loads(content)
+            parsed = json.loads(content)
+            # 驗證內容量效性
+            if isinstance(parsed, dict) and len(parsed) > 0:
+                return parsed
+            else:
+                print(f"⚠️ Invalid content structure: {parsed}")
+                return None
         except json.JSONDecodeError:
             # 如果不是純 JSON，嘗試提取 JSON
             print(f"⚠️ Response is not pure JSON: {content[:200]}")
-            return {"raw_content": content}
+            # 嘗試從文本中提取有效內容
+            if len(content) > 50:  # 如果文本足夠長，可能是有用的內容
+                return {"raw_content": content}
+            return None
 
     return None
 
@@ -171,13 +183,13 @@ def generate_teaching_content(profile, topic_id):
 
     # 1. 檢查緩存
     cached = get_from_cache(profile_id, topic)
-    if cached:
+    if cached and 'error' not in cached:
         return cached
 
     # 2. 獲取模板
     template = get_template(topic_id)
     if not template:
-        return {"error": f"Unknown topic: {topic_id}"}
+        return {"error": f"Unknown topic: {topic_id}", "fallback": True}
 
     # 3. 填充 Prompt
     system_prompt = template.get('system', '')
@@ -186,16 +198,23 @@ def generate_teaching_content(profile, topic_id):
     # 4. 生成文字內容
     print(f"🎯 Generating content for topic: {topic_id}")
     start_time = time.time()
+    use_fallback = False
 
-    text_content = generate_text_content(system_prompt, user_prompt)
+    try:
+        text_content = generate_text_content(system_prompt, user_prompt)
+
+        if not text_content:
+            # API 调用失败，使用 fallback
+            print("⚠️ Using fallback data (API call failed)")
+            use_fallback = True
+            text_content = generate_mock_content(topic_id, profile)
+    except Exception as e:
+        print(f"❌ Error generating content: {e}")
+        use_fallback = True
+        text_content = generate_mock_content(topic_id, profile)
 
     generation_time = time.time() - start_time
-    print(f"⏱️ Content generated in {generation_time:.2f}s")
-
-    if not text_content:
-        # 返回 Mock 數據（開發階段）
-        print("⚠️ Using mock data (MiniMax API not configured)")
-        text_content = generate_mock_content(topic_id, profile)
+    print(f"⏱️ Content generated in {generation_time:.2f}s (fallback: {use_fallback})")
 
     # 5. 組裝結果
     result = {
@@ -205,6 +224,7 @@ def generate_teaching_content(profile, topic_id):
         "content": text_content,
         "generation_time_ms": int(generation_time * 1000),
         "created_at": time.strftime('%Y-%m-%d %H:%M:%S'),
+        "fallback": use_fallback,
         "audio": {
             "cantonese_url": None,  # 待實現
             "mandarin_url": None    # 待實現

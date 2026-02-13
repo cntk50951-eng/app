@@ -376,7 +376,7 @@
         // Load content from API
         async function loadContent(forceRegenerate = false) {
             if (isLoading) return;
-            
+
             isLoading = true;
             showLoading(true);
             hideError();
@@ -395,10 +395,23 @@
 
                 const data = await response.json();
 
+                // Check for error in response
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    showError(data.message || '載入失敗，請稍後再試');
+                    return;
+                }
+
+                // Check for valid content
                 if (response.ok && data.content) {
                     currentContent = data;
                     renderContent(data);
                     showContent();
+
+                    // Show fallback notification if using cached/fallback data
+                    if (data.fallback) {
+                        console.log('Using fallback data due to API issues');
+                    }
                 } else {
                     showError(data.message || '載入失敗');
                 }
