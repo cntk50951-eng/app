@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析结果 - 智能择校顾问</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .banner {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .banner a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner h1 {
+            font-size: 20px;
+            color: #333;
+            margin-left: 12px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .score-circle.excellent {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        }
+
+        .score-circle.good {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+        }
+
+        .score-circle.moderate {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+
+        .score-circle.low {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .match-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .match-badge.excellent {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .match-badge.good {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .match-badge.moderate {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .match-badge.low {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .school-info {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .school-info h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .school-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title span {
+            color: #667eea;
+        }
+
+        .dimension-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .dimension-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dimension-name {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .dimension-bar {
+            width: 120px;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .dimension-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .dimension-fill.high {
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+        }
+
+        .dimension-fill.medium {
+            background: linear-gradient(90deg, #60a5fa, #3b82f6);
+        }
+
+        .dimension-fill.low {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        }
+
+        .dimension-fill.critical {
+            background: linear-gradient(90deg, #f87171, #ef4444);
+        }
+
+        .dimension-score {
+            width: 40px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .tips-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tip-number {
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .tip-text {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .suggestion-card {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .suggestion-card.improve {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .suggestion-card.keep {
+            background: #dcfce7;
+            border-left: 4px solid #22c55e;
+        }
+
+        .suggestion-card.general {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .suggestion-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestion-content {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .parent-section {
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+        }
+
+        .parent-section .section-title span {
+            color: #db2777;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .values-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .value-tag {
+            padding: 6px 14px;
+            background: #f3f4f6;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        @media (max-width: 600px) {
+            .dimension-bar {
+                width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <a href="/school-advisor">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1>分析结果</h1>
+    </div>
+
+    <div class="container">
+        <div class="score-card">
+            <div class="score-circle {{ result.match_level }}">
+                <span class="score-value">{{ result.total_score }}</span>
+                <span class="score-label">分</span>
+            </div>
+            <div class="match-badge {{ result.match_level }}">
+                {{ result.match_text }}
+            </div>
+            <div class="school-info">
+                <h3>{{ result.school_name }} · 目标学校</h3>
+                <p>代表学校: {{ result.school_examples }}</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">school</span>
+                学校价值观
+            </h3>
+            <div class="values-list">
+                {% for value in result.school_values %}
+                <span class="value-tag">{{ value }}</span>
+                {% endfor %}
+            </div>
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                {{ result.school_name }}类型学校重视学生的{{ result.school_values[0] }}，在面试中会重点考察学生的{{ result.focus_areas[0] }}能力。
+            </p>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">analytics</span>
+                匹配维度分析
+            </h3>
+            <div class="dimension-list">
+                {% for dimension, score in result.dimension_scores.items() %}
+                <div class="dimension-item">
+                    <span class="dimension-name">{{ dimension }}</span>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill {% if score >= 80 %}high{% elif score >= 60 %}medium{% elif score >= 40 %}low{% else %}critical{% endif %}"
+                             style="width: {{ score }}%"></div>
+                    </div>
+                    <span class="dimension-score">{{ score }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">lightbulb</span>
+                个性化建议
+            </h3>
+            <div class="tips-list">
+                {% for suggestion in result.suggestions %}
+                <div class="suggestion-card {{ suggestion.type }}">
+                    <div class="suggestion-title">
+                        {% if suggestion.type == 'improve' %}
+                        <span class="material-symbols-outlined" style="color: #f59e0b;">trending_up</span>
+                        {% elif suggestion.type == 'keep' %}
+                        <span class="material-symbols-outlined" style="color: #22c55e;">check_circle</span>
+                        {% else %}
+                        <span class="material-symbols-outlined" style="color: #3b82f6;">info</span>
+                        {% endif %}
+                        {{ suggestion.title }}
+                    </div>
+                    <p class="suggestion-content">{{ suggestion.content }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">chat</span>
+                面试准备提示
+            </h3>
+            <div class="tips-list">
+                {% for tip in result.interview_tips %}
+                <div class="tip-item">
+                    <span class="tip-number">{{ loop.index }}</span>
+                    <span class="tip-text">{{ tip }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section parent-section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">family_restroom</span>
+                家长面试重点
+            </h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
+                香港小学面试除了考察孩子，家长面试同样重要。以下是{{ result.school_name }}类型学校常问的问题方向：
+            </p>
+            <div class="tips-list">
+                {% for focus in result.parent_interview_focus %}
+                <div class="tip-item" style="background: white;">
+                    <span class="material-symbols-outlined" style="color: #db2777; font-size: 20px;">help</span>
+                    <span class="tip-text">{{ focus }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button class="action-btn" onclick="window.location.href='/mock-interview?school_type={{ result.school_type }}'">
+            <span class="material-symbols-outlined">psychology</span>
+            开始模拟面试练习
+        </button>
+
+        <button class="action-btn secondary" onclick="window.location.href='/school-advisor'">
+            <span class="material-symbols-outlined">refresh</span>
+            重新选择学校
+        </button>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>首页</span>
+        </a>
+        <a href="/mock-interview">
+            <span class="material-symbols-outlined">psychology</span>
+            <span>模拟面试</span>
+        </a>
+        <a href="/school-advisor" class="active">
+            <span class="material-symbols-outlined">school</span>
+            <span>择校顾问</span>
+        </a>
+        <a href="/settings">
+            <span class="material-symbols-outlined">settings</span>
+            <span>设置</span>
+        </a>
+    </nav>
+
+    <style>
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .bottom-nav a {
+            text-decoration: none;
+            color: #999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .bottom-nav a.active {
+            color: #667eea;
+        }
+
+        .bottom-nav span.material-symbols-outlined {
+            font-size: 24px;
+        }
+    </style>
+</body>
+</html>

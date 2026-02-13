@@ -1550,6 +1550,71 @@ def mock_interview_result():
     return render_template('mock-interview-result.html', session_id=session_id)
 
 
+# ============ School Advisor Routes ============
+
+@app.route('/school-advisor')
+def school_advisor():
+    """智能择校顾问入口页."""
+    from services.school_advisor_service import get_school_types
+
+    logged_in = 'user_id' in session
+    school_types = get_school_types()
+
+    return render_template(
+        'school-advisor.html',
+        logged_in=logged_in,
+        school_types=school_types
+    )
+
+
+@app.route('/school-advisor/analyze')
+@login_required
+def school_advisor_analyze():
+    """智能择校分析结果页."""
+    from services.school_advisor_service import analyze_school_match
+
+    school_type = request.args.get('school_type', 'holistic')
+
+    # 获取用户的孩子画像
+    user_id = session.get('user_id')
+
+    # 查询孩子的画像数据
+    profile_data = {
+        'interests': [],
+        'strengths': [],
+        'personality': ''
+    }
+
+    try:
+        from db.database import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 尝试从children表获取
+        cursor.execute(
+            "SELECT interests, strengths, personality FROM children WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+            (user_id,)
+        )
+        row = cursor.fetchone()
+
+        if row:
+            profile_data['interests'] = row['interests'].split(',') if row['interests'] else []
+            profile_data['strengths'] = row['strengths'].split(',') if row['strengths'] else []
+            profile_data['personality'] = row['personality'] or ''
+
+        conn.close()
+    except Exception as e:
+        print(f"Error fetching profile: {e}")
+
+    # 分析匹配度
+    result = analyze_school_match(profile_data, school_type)
+
+    return render_template(
+        'school-advisor-result.html',
+        result=result
+    )
+
+
 # ============ Mock Interview API ============
 
 @app.route('/api/mock-interview/start', methods=['POST'])

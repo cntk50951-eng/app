@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能择校顾问 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .banner {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .banner a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner h1 {
+            font-size: 20px;
+            color: #333;
+            margin-left: 12px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .hero {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 32px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .hero-icon span {
+            font-size: 40px;
+            color: white;
+        }
+
+        .hero h2 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title span {
+            color: #667eea;
+        }
+
+        .school-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .school-type-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .school-type-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .school-type-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+        }
+
+        .school-type-card input {
+            display: none;
+        }
+
+        .school-type-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .school-type-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .school-type-icon span {
+            font-size: 20px;
+            color: white;
+        }
+
+        .school-type-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .school-type-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .school-type-examples {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .checkbox-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .school-type-card.selected .checkbox-indicator {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .school-type-card.selected .checkbox-indicator::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 16px;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+        }
+
+        .feature-icon span {
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        .feature-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .login-prompt {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .login-prompt p {
+            color: #856404;
+            margin-bottom: 12px;
+        }
+
+        .login-prompt a {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #ffc107;
+            color: #333;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            .school-types {
+                grid-template-columns: 1fr;
+            }
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1>智能择校顾问</h1>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <div class="hero-icon">
+                <span class="material-symbols-outlined">psychology</span>
+            </div>
+            <h2>从校长视角看择校</h2>
+            <p>帮您分析孩子与目标学校的匹配度，提供个性化的面试准备策略，让择校不再是盲目的猜测</p>
+        </div>
+
+        {% if not logged_in %}
+        <div class="login-prompt">
+            <p>登录后可使用智能择校分析功能</p>
+            <a href="/login?next=/school-advisor">立即登录</a>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                功能亮点
+            </h3>
+            <div class="features">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <div class="feature-title">学校匹配分析</div>
+                    <div class="feature-desc">基于孩子画像分析与学校的匹配程度</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">lightbulb</span>
+                    </div>
+                    <div class="feature-title">个性化建议</div>
+                    <div class="feature-desc">针对薄弱环节提供具体改进方案</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">strategy</span>
+                    </div>
+                    <div class="feature-title">面试策略</div>
+                    <div class="feature-desc">校方视角的面试准备重点提示</div>
+                </div>
+            </div>
+        </div>
+
+        {% if logged_in %}
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">location_on</span>
+                选择目标学校类型
+            </h3>
+            <div class="school-types">
+                {% for school_type in school_types %}
+                <label class="school-type-card" data-value="{{ school_type.id }}">
+                    <input type="radio" name="school_type" value="{{ school_type.id }}">
+                    <div class="school-type-header">
+                        <span class="checkbox-indicator"></span>
+                        <div class="school-type-icon">
+                            <span class="material-symbols-outlined">{{ school_type.icon }}</span>
+                        </div>
+                        <span class="school-type-name">{{ school_type.name }}</span>
+                    </div>
+                    <p class="school-type-desc">{{ school_type.description }}</p>
+                    <p class="school-type-examples">{{ school_type.examples }}</p>
+                </label>
+                {% endfor %}
+            </div>
+            <button class="action-btn" id="analyzeBtn" onclick="startAnalysis()">
+                <span class="material-symbols-outlined">analytics</span>
+                开始智能分析
+            </button>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">info</span>
+                了解更多
+            </h3>
+            <p style="color: #666; line-height: 1.8;">
+                香港小学面试竞争激烈，每所学校都有独特的选生标准。我们的智能顾问基于对各校招生偏好的深入研究，帮您从"校长视角"理解学校的选择逻辑，让您的孩子在做充分的准备，提升面试成功机会。
+            </p>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>首页</span>
+        </a>
+        <a href="/mock-interview">
+            <span class="material-symbols-outlined">psychology</span>
+            <span>模拟面试</span>
+        </a>
+        <a href="/school-advisor" class="active">
+            <span class="material-symbols-outlined">school</span>
+            <span>择校顾问</span>
+        </a>
+        <a href="/settings">
+            <span class="material-symbols-outlined">settings</span>
+            <span>设置</span>
+        </a>
+    </nav>
+
+    <style>
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .bottom-nav a {
+            text-decoration: none;
+            color: #999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .bottom-nav a.active {
+            color: #667eea;
+        }
+
+        .bottom-nav span.material-symbols-outlined {
+            font-size: 24px;
+        }
+    </style>
+
+    <script>
+        // 学校类型选择
+        document.querySelectorAll('.school-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // 移除其他选中状态
+                document.querySelectorAll('.school-type-card').forEach(c => c.classList.remove('selected'));
+                // 选中当前
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+
+        function startAnalysis() {
+            const selected = document.querySelector('input[name="school_type"]:checked');
+            if (!selected) {
+                alert('请先选择目标学校类型');
+                return;
+            }
+
+            const schoolType = selected.value;
+            window.location.href = `/school-advisor/analyze?school_type=${schoolType}`;
+        }
+    </script>
+</body>
+</html>
