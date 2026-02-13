@@ -494,6 +494,12 @@ def child_profile_step2():
     ]
 
     profile_id = session.get('profile_id')
+
+    # Check if user has completed Step 1 - redirect if not
+    if not profile_id:
+        flash('Please complete Step 1 first to create your child profile.', 'error')
+        return redirect(url_for('child_profile_step1'))
+
     selected_interests = session.get('child_interests', [])
 
     if request.method == 'POST':
@@ -501,7 +507,14 @@ def child_profile_step2():
 
         db = get_db_functions()
         if db and profile_id:
-            db['set_user_interests'](profile_id, selected_interests)
+            try:
+                db['set_user_interests'](profile_id, selected_interests)
+            except Exception as e:
+                print(f"Database error in child_profile_step2: {e}")
+                import traceback
+                traceback.print_exc()
+                flash('Failed to save interests. Please try again or contact support.', 'error')
+                return redirect(url_for('child_profile_step2'))
 
         session['child_interests'] = selected_interests
         flash('Interests saved!', 'success')
@@ -522,6 +535,12 @@ def child_profile_step3():
     ]
 
     profile_id = session.get('profile_id')
+
+    # Check if user has completed Step 1 - redirect if not
+    if not profile_id:
+        flash('Please complete Step 1 first to create your child profile.', 'error')
+        return redirect(url_for('child_profile_step1'))
+
     selected_schools = session.get('target_schools', [])
 
     if request.method == 'POST':
@@ -529,7 +548,14 @@ def child_profile_step3():
 
         db = get_db_functions()
         if db and profile_id:
-            db['set_target_schools'](profile_id, target_schools)
+            try:
+                db['set_target_schools'](profile_id, target_schools)
+            except Exception as e:
+                print(f"Database error in child_profile_step3: {e}")
+                import traceback
+                traceback.print_exc()
+                flash('Failed to save target schools. Please try again or contact support.', 'error')
+                return redirect(url_for('child_profile_step3'))
 
         session['target_schools'] = target_schools
         session['profile_complete'] = True
