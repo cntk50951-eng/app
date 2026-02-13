@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI 模拟面试 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            padding-bottom: 0.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            flex: 1;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-right: 2.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 1.5rem 6rem;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .hero-icon {
+            width: 6rem;
+            height: 6rem;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        /* Features */
+        .features-section {
+            margin-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.25rem;
+        }
+
+        .feature-icon.school { background: #dbeafe; color: #2563eb; }
+        .feature-icon.question { background: #fce7f3; color: #db2777; }
+        .feature-icon.audio { background: #fef3c7; color: #d97706; }
+        .feature-icon.feedback { background: #dcfce7; color: #16a34a; }
+
+        .feature-content h4 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem;
+        }
+
+        .feature-content p {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* School Type Selection */
+        .school-section {
+            margin-top: 2rem;
+        }
+
+        .school-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .school-card {
+            position: relative;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .school-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .school-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+
+        .school-card.selected::after {
+            content: '';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: var(--primary);
+            border-radius: 50%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+            background-size: 1rem;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .school-name {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .school-examples {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Start Button */
+        .start-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+        }
+
+        .start-btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .start-hint {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+        }
+
+        /* Recent Sessions */
+        .recent-section {
+            margin-top: 2rem;
+        }
+
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .recent-item:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .recent-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .recent-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-lg);
+            background: var(--primary-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .recent-info h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 0.125rem;
+        }
+
+        .recent-info p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .recent-score {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .material-symbols-outlined {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+
+        .nav-item.filled .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <a href="{{ url_for('dashboard') }}" class="back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <h1 class="page-title">AI 模拟面试</h1>
+            <div style="width: 2.5rem;"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-icon">
+                    <span class="material-symbols-outlined" style="color: white;">psychology</span>
+                </div>
+                <h2 class="hero-title">AI 面试官</h2>
+                <p class="hero-subtitle">模拟真实面试场景，AI扮演面试官，帮助孩子熟悉面试流程</p>
+            </div>
+
+            <!-- Features -->
+            <div class="features-section">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    功能特点
+                </h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon school">
+                            <span class="material-symbols-outlined">school</span>
+                        </div>
+                        <div class="feature-content">
+                            <h4>目标学校适配</h4>
+                            <p>根据目标学校类型，调整问题风格和难度</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon question">
+                            <span class="material-symbols-outlined">help</span>
+                        </div>
+                        <div class="feature-content">
+                            <h4>个性化问题</h4>
+                            <p>结合孩子兴趣生成专属面试问题</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon audio">
+                            <span class="material-symbols-outlined">record_voice_over</span>
+                        </div>
+                        <div class="feature-content">
+                            <h4>语音提问</h4>
+                            <p>AI 面试官语音提问，孩子更像在真实面试</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon feedback">
+                            <span class="material-symbols-outlined">rate_review</span>
+                        </div>
+                        <div class="feature-content">
+                            <h4>即时反馈</h4>
+                            <p>面试结束后提供详细评估和改进建议</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Type Selection -->
+            <div class="school-section">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">location_on</span>
+                    选择目标学校类型
+                </h3>
+                <form id="school-form">
+                    <div class="school-grid">
+                        <label class="school-card {% if session.get('target_schools') and 'academic' in session.get('target_schools') %}selected{% endif %}">
+                            <input type="radio" name="school_type" value="academic" {% if session.get('target_schools') and 'academic' in session.get('target_schools') %}checked{% endif %}>
+                            <div class="school-name">学术型</div>
+                            <div class="school-examples">DBS / SPCC</div>
+                        </label>
+                        <label class="school-card {% if session.get('target_schools') and 'holistic' in session.get('target_schools') %}selected{% endif %}">
+                            <input type="radio" name="school_type" value="holistic" {% if session.get('target_schools') and 'holistic' in session.get('target_schools') %}checked{% endif %}>
+                            <div class="school-name">全人型</div>
+                            <div class="school-examples">英华 / TSL</div>
+                        </label>
+                        <label class="school-card {% if session.get('target_schools') and 'international' in session.get('target_schools') %}selected{% endif %}">
+                            <input type="radio" name="school_type" value="international" {% if session.get('target_schools') and 'international' in session.get('target_schools') %}checked{% endif %}>
+                            <div class="school-name">国际型</div>
+                            <div class="school-examples">CKY / 港同</div>
+                        </label>
+                        <label class="school-card {% if session.get('target_schools') and 'traditional' in session.get('target_schools') %}selected{% endif %}">
+                            <input type="radio" name="school_type" value="traditional" {% if session.get('target_schools') and 'traditional' in session.get('target_schools') %}selected{% endif %}>
+                            <div class="school-name">传统名校</div>
+                            <div class="school-examples">KTS / SFA</div>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Start Button -->
+            <div class="start-section">
+                <button class="start-btn" id="start-btn" onclick="startInterview()">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                    开始模拟面试
+                </button>
+                <p class="start-hint">约 5-10 分钟，包含 5 个问题</p>
+            </div>
+
+            <!-- Recent Sessions -->
+            <div class="recent-section">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">history</span>
+                    最近面试记录
+                </h3>
+                <div id="recent-list" class="recent-list">
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">hourglass_empty</span>
+                        <p>暂无面试记录</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item" onclick="window.location.href='{{ url_for('dashboard') }}'">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>首页</span>
+            </div>
+            <div class="nav-item" onclick="window.location.href='{{ url_for('parent_notes') }}'">
+                <span class="material-symbols-outlined">note_add</span>
+                <span>笔记</span>
+            </div>
+            <div class="nav-item" onclick="window.location.href='{{ url_for('settings') }}'">
+                <span class="material-symbols-outlined">settings</span>
+                <span>设置</span>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        // School type selection
+        const schoolCards = document.querySelectorAll('.school-card');
+        schoolCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected from all
+                schoolCards.forEach(c => c.classList.remove('selected'));
+                // Add selected to clicked
+                card.classList.add('selected');
+            });
+        });
+
+        // Load recent sessions
+        async function loadRecentSessions() {
+            try {
+                const response = await fetch('/api/mock-interview/history');
+                if (response.ok) {
+                    const data = await response.json();
+                    displayRecentSessions(data.sessions || []);
+                }
+            } catch (error) {
+                console.error('Error loading recent sessions:', error);
+            }
+        }
+
+        function displayRecentSessions(sessions) {
+            const container = document.getElementById('recent-list');
+
+            if (!sessions || sessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">hourglass_empty</span>
+                        <p>暂无面试记录</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sessions.map(session => `
+                <div class="recent-item" onclick="viewSession('${session.session_id}')">
+                    <div class="recent-left">
+                        <div class="recent-icon">
+                            <span class="material-symbols-outlined">chat</span>
+                        </div>
+                        <div class="recent-info">
+                            <h4>${session.school_type_name || '模拟面试'}</h4>
+                            <p>${session.created_at || ''}</p>
+                        </div>
+                    </div>
+                    <div class="recent-score">${session.score || 0}%</div>
+                </div>
+            `).join('');
+        }
+
+        // Start interview
+        async function startInterview() {
+            // Get selected school type
+            const selectedRadio = document.querySelector('input[name="school_type"]:checked');
+            const schoolType = selectedRadio ? selectedRadio.value : 'holistic';
+
+            // Save to session
+            sessionStorage.setItem('interview_school_type', schoolType);
+
+            // Navigate to start page
+            window.location.href = `/mock-interview/start?school_type=${schoolType}`;
+        }
+
+        // View session detail
+        function viewSession(sessionId) {
+            window.location.href = `/mock-interview/result?session_id=${sessionId}`;
+        }
+
+        // Load recent sessions on page load
+        document.addEventListener('DOMContentLoaded', loadRecentSessions);
+    </script>
+</body>
+</html>

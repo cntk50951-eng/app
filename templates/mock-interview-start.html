@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>模拟面试进行中 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 1rem 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.2s ease;
+            color: white;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .progress-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+        }
+
+        .progress-dot.active {
+            background: white;
+        }
+
+        .progress-dot.completed {
+            background: #22c55e;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Interviewer Avatar */
+        .interviewer-section {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .interviewer-avatar {
+            width: 5rem;
+            height: 5rem;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+            position: relative;
+        }
+
+        .interviewer-avatar.speaking {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .interviewer-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--primary-50);
+            color: var(--primary);
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .interviewer-status.listening {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .interviewer-status.speaking {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .question-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary-50);
+            color: var(--primary);
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .question-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Audio Control */
+        .audio-control {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .audio-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-50);
+            color: var(--primary);
+            border: none;
+            border-radius: 999px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .audio-btn:hover {
+            background: var(--primary-100);
+        }
+
+        .audio-btn.playing {
+            background: var(--primary);
+            color: white;
+            animation: sound-wave 1s ease-in-out infinite;
+        }
+
+        @keyframes sound-wave {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Answer Input */
+        .answer-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .answer-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .answer-input {
+            flex: 1;
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s ease;
+            font-family: inherit;
+        }
+
+        .answer-input:focus {
+            border-color: var(--primary);
+        }
+
+        .answer-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .answer-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Submit Button */
+        .submit-section {
+            margin-top: 1rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid var(--primary-50);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 1rem;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-subtext {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Recording Animation */
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #fef3c7;
+            border-radius: 999px;
+            margin-bottom: 1rem;
+        }
+
+        .recording-dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .recording-text {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: #d97706;
+        }
+
+        /* Follow-up Question */
+        .followup-section {
+            background: #f0fdf4;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid #bbf7d0;
+        }
+
+        .followup-label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #16a34a;
+            margin-bottom: 0.5rem;
+        }
+
+        .followup-question {
+            font-size: 0.9375rem;
+            color: #166534;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-btn" onclick="confirmExit()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <span class="header-title">AI 面试官</span>
+            <div class="progress-indicator">
+                <span id="question-num">1</span>/<span id="total-questions">5</span>
+                <div style="display: flex; gap: 0.25rem;" id="progress-dots">
+                    <div class="progress-dot active"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Interviewer Section -->
+            <div class="interviewer-section">
+                <div class="interviewer-avatar" id="interviewer-avatar">
+                    <span class="material-symbols-outlined" style="color: white;">psychology</span>
+                </div>
+                <div class="interviewer-status" id="interviewer-status">
+                    <span class="material-symbols-outlined">volume_up</span>
+                    AI 面试官准备提问
+                </div>
+            </div>
+
+            <!-- Audio Control -->
+            <div class="audio-control">
+                <button class="audio-btn" id="play-audio-btn" onclick="playQuestionAudio()">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                    播放语音
+                </button>
+            </div>
+
+            <!-- Question Card -->
+            <div class="question-card">
+                <div class="question-category" id="question-category">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">face</span>
+                    <span id="category-text">自我介绍</span>
+                </div>
+                <div class="question-text" id="question-text">
+                    加载中...
+                </div>
+                <div class="question-hint">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">lightbulb</span>
+                    慢慢谘清楚再回答，得闲可以谘多次
+                </div>
+
+                <!-- Follow-up Question (will be shown after first answer) -->
+                <div class="followup-section" id="followup-section" style="display: none;">
+                    <div class="followup-label">
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">forward</span>
+                        追问
+                    </div>
+                    <div class="followup-question" id="followup-question">
+                        可以话多啲俾老师知吗？
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Section -->
+            <div class="answer-section">
+                <div class="answer-label">
+                    <span class="material-symbols-outlined">record_voice_over</span>
+                    请回答
+                </div>
+                <textarea
+                    class="answer-input"
+                    id="answer-input"
+                    placeholder="用广东话回答老师的问题..."
+                    rows="4"
+                ></textarea>
+                <div class="answer-hint">
+                    建议回答 2-3 句话，唔洗太短
+                </div>
+
+                <!-- Submit Button -->
+                <div class="submit-section">
+                    <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">
+                        <span class="material-symbols-outlined">send</span>
+                        提交回答
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loading-text">正在准备面试...</div>
+        <div class="loading-subtext" id="loading-subtext">生成个性化问题</div>
+    </div>
+
+    <script>
+        // Interview State
+        let currentQuestionIndex = 0;
+        let questions = [];
+        let answers = [];
+        let sessionId = null;
+        let schoolType = '{{ school_type }}';
+
+        // Audio State
+        let audioElement = null;
+        let isPlaying = false;
+
+        // Initialize Interview
+        async function initInterview() {
+            showLoading('正在准备面试...', '生成个性化问题');
+
+            try {
+                // Get school type from URL params or session
+                const urlParams = new URLSearchParams(window.location.search);
+                schoolType = urlParams.get('school_type') || sessionStorage.getItem('interview_school_type') || 'holistic';
+
+                // Start interview
+                const response = await fetch('/api/mock-interview/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        school_type: schoolType,
+                        num_questions: 5
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    questions = data.questions || [];
+                    sessionId = data.session_id;
+
+                    // Update UI
+                    document.getElementById('total-questions').textContent = questions.length;
+                    updateProgressDots();
+
+                    // Show first question
+                    showQuestion(0);
+
+                    hideLoading();
+                } else {
+                    throw new Error('Failed to start interview');
+                }
+            } catch (error) {
+                console.error('Error initializing interview:', error);
+                showLoading('出错了', '请刷新页面重试');
+            }
+        }
+
+        // Show loading
+        function showLoading(text, subtext) {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-subtext').textContent = subtext;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+
+        // Hide loading
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        // Show question
+        function showQuestion(index) {
+            currentQuestionIndex = index;
+            const question = questions[index];
+
+            // Update question text
+            document.getElementById('question-text').textContent = question.question;
+            document.getElementById('category-text').textContent = question.category_zh;
+
+            // Update category icon
+            const categoryIcons = {
+                'self_introduction': 'face',
+                'family': 'diversity_3',
+                'interests': 'sports_esports',
+                'school': 'school',
+                'daily_life': 'today',
+                'future': 'rocket_launch',
+                'problem_solving': 'psychology',
+                'values': 'favorite'
+            };
+            const icon = categoryIcons[question.category] || 'help';
+            document.querySelector('.question-category .material-symbols-outlined').textContent = icon;
+
+            // Update question number
+            document.getElementById('question-num').textContent = index + 1;
+
+            // Update progress dots
+            updateProgressDots();
+
+            // Reset answer input
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').disabled = false;
+            document.getElementById('submit-btn').disabled = false;
+
+            // Hide follow-up
+            document.getElementById('followup-section').style.display = 'none';
+
+            // Reset audio button
+            document.getElementById('play-audio-btn').classList.remove('playing');
+            document.getElementById('play-audio-btn').innerHTML = '<span class="material-symbols-outlined">play_arrow</span> 播放语音';
+
+            // Update interviewer status
+            updateStatus('ready');
+        }
+
+        // Update progress dots
+        function updateProgressDots() {
+            const dots = document.querySelectorAll('.progress-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index < currentQuestionIndex) {
+                    dot.classList.add('completed');
+                } else if (index === currentQuestionIndex) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        // Update interviewer status
+        function updateStatus(status) {
+            const statusEl = document.getElementById('interviewer-status');
+            const avatarEl = document.getElementById('interviewer-avatar');
+
+            statusEl.classList.remove('speaking', 'listening');
+
+            if (status === 'speaking') {
+                statusEl.classList.add('speaking');
+                statusEl.innerHTML = '<span class="material-symbols-outlined">volume_up</span> 面试官提问中...';
+                avatarEl.classList.add('speaking');
+            } else if (status === 'listening') {
+                statusEl.classList.add('listening');
+                statusEl.innerHTML = '<span class="material-symbols-outlined">hearing</span> 请回答问题';
+                avatarEl.classList.remove('speaking');
+            } else {
+                statusEl.innerHTML = '<span class="material-symbols-outlined">psychology</span> AI 面试官准备提问';
+                avatarEl.classList.remove('speaking');
+            }
+        }
+
+        // Play question audio
+        async function playQuestionAudio() {
+            const question = questions[currentQuestionIndex];
+            const btn = document.getElementById('play-audio-btn');
+
+            if (isPlaying) {
+                // Stop audio
+                if (audioElement) {
+                    audioElement.pause();
+                }
+                isPlaying = false;
+                btn.classList.remove('playing');
+                btn.innerHTML = '<span class="material-symbols-outlined">play_arrow</span> 播放语音';
+                updateStatus('ready');
+                return;
+            }
+
+            try {
+                btn.classList.add('playing');
+                btn.innerHTML = '<span class="material-symbols-outlined">graphic_eq</span> 播放中...';
+                updateStatus('speaking');
+
+                const response = await fetch('/api/mock-interview/audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: question.question
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.audio_url) {
+                        audioElement = new Audio(data.audio_url);
+                        audioElement.onended = () => {
+                            isPlaying = false;
+                            btn.classList.remove('playing');
+                            btn.innerHTML = '<span class="material-symbols-outlined">play_arrow</span> 播放语音';
+                            updateStatus('ready');
+                        };
+                        audioElement.play();
+                        isPlaying = true;
+                    } else {
+                        // Mock audio - just simulate
+                        setTimeout(() => {
+                            isPlaying = false;
+                            btn.classList.remove('playing');
+                            btn.innerHTML = '<span class="material-symbols-outlined">play_arrow</span> 播放语音';
+                            updateStatus('ready');
+                        }, 3000);
+                    }
+                }
+            } catch (error) {
+                console.error('Error playing audio:', error);
+                isPlaying = false;
+                btn.classList.remove('playing');
+                btn.innerHTML = '<span class="material-symbols-outlined">play_arrow</span> 播放语音';
+                updateStatus('ready');
+            }
+        }
+
+        // Submit answer
+        async function submitAnswer() {
+            const answer = document.getElementById('answer-input').value.trim();
+
+            if (!answer) {
+                alert('请输入回答');
+                return;
+            }
+
+            // Save answer
+            const question = questions[currentQuestionIndex];
+            answers.push({
+                question_id: question.id,
+                question: question.question,
+                answer: answer
+            });
+
+            // Disable input
+            document.getElementById('answer-input').disabled = true;
+            document.getElementById('submit-btn').disabled = true;
+
+            // Update status
+            updateStatus('listening');
+
+            // Show follow-up question (after first question)
+            if (currentQuestionIndex === 0) {
+                try {
+                    const response = await fetch('/api/mock-interview/followup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            question: question.question,
+                            answer: answer
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.follow_up) {
+                            document.getElementById('followup-question').textContent = data.follow_up;
+                            document.getElementById('followup-section').style.display = 'block';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error getting follow-up:', error);
+                }
+            }
+
+            // Check if last question
+            if (currentQuestionIndex >= questions.length - 1) {
+                // Finish interview
+                setTimeout(() => {
+                    finishInterview();
+                }, 1500);
+            } else {
+                // Next question after delay
+                setTimeout(() => {
+                    showQuestion(currentQuestionIndex + 1);
+                }, 1500);
+            }
+        }
+
+        // Finish interview
+        async function finishInterview() {
+            showLoading('面试结束', '正在生成评估报告...');
+
+            try {
+                const response = await fetch('/api/mock-interview/finish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        answers: answers,
+                        school_type: schoolType
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Navigate to result page
+                    window.location.href = `/mock-interview/result?session_id=${sessionId}`;
+                } else {
+                    throw new Error('Failed to finish interview');
+                }
+            } catch (error) {
+                console.error('Error finishing interview:', error);
+                alert('出错了，请重试');
+                hideLoading();
+            }
+        }
+
+        // Confirm exit
+        function confirmExit() {
+            if (confirm('确定要退出面试吗？面试进度将会丢失。')) {
+                window.location.href = '{{ url_for("mock_interview") }}';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initInterview);
+    </script>
+</body>
+</html>

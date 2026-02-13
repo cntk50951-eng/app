@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result']
 
 
 def login_required(f):
@@ -1524,6 +1524,274 @@ def achievements_page():
 def reports_page():
     """学习报告页面."""
     return render_template('reports.html')
+
+
+# ============ Mock Interview Routes ============
+
+@app.route('/mock-interview')
+def mock_interview():
+    """AI 模拟面试入口页."""
+    return render_template('mock-interview.html')
+
+
+@app.route('/mock-interview/start')
+@login_required
+def mock_interview_start():
+    """开始模拟面试页面."""
+    school_type = request.args.get('school_type', 'holistic')
+    return render_template('mock-interview-start.html', school_type=school_type)
+
+
+@app.route('/mock-interview/result')
+@login_required
+def mock_interview_result():
+    """面试结果页面."""
+    session_id = request.args.get('session_id')
+    return render_template('mock-interview-result.html', session_id=session_id)
+
+
+# ============ Mock Interview API ============
+
+@app.route('/api/mock-interview/start', methods=['POST'])
+@login_required
+def api_mock_interview_start():
+    """开始模拟面试，生成问题."""
+    data = request.json or {}
+    school_type = data.get('school_type', 'holistic')
+    num_questions = data.get('num_questions', 5)
+
+    user_id = session.get('user_id')
+
+    # Get profile from session
+    profile = {
+        'child_name': session.get('child_name', '小朋友'),
+        'child_age': session.get('child_age', '5岁'),
+        'child_gender': session.get('child_gender', '不透露'),
+        'interests': session.get('child_interests', []),
+        'target_schools': session.get('target_schools', [])
+    }
+
+    try:
+        from services.mock_interview_service import (
+            generate_mock_interview_questions,
+            save_interview_session,
+            SCHOOL_TYPES
+        )
+
+        # Generate questions
+        questions = generate_mock_interview_questions(profile, school_type, num_questions)
+
+        # Save session
+        session_data = {
+            'school_type': school_type,
+            'school_type_name': SCHOOL_TYPES.get(school_type, {}).get('name', '模拟面试'),
+            'questions': questions,
+            'answers': [],
+            'user_id': user_id
+        }
+
+        session_id = save_interview_session(user_id, session_data)
+
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'questions': questions
+        })
+
+    except Exception as e:
+        print(f"Error starting mock interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/audio', methods=['POST'])
+@login_required
+def api_mock_interview_audio():
+    """生成面试问题语音."""
+    data = request.json or {}
+    text = data.get('text', '')
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    try:
+        from services.mock_interview_service import generate_question_audio
+
+        audio_url = generate_question_audio(text)
+
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+
+    except Exception as e:
+        print(f"Error generating audio: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/followup', methods=['POST'])
+@login_required
+def api_mock_interview_followup():
+    """生成追问问题."""
+    data = request.json or {}
+    session_id = data.get('session_id')
+    question = data.get('question', '')
+    answer = data.get('answer', '')
+
+    user_id = session.get('user_id')
+
+    # Get profile from session
+    profile = {
+        'child_name': session.get('child_name', '小朋友'),
+        'child_age': session.get('child_age', '5岁')
+    }
+
+    try:
+        from services.mock_interview_service import generate_ai_follow_up
+
+        follow_up = generate_ai_follow_up(question, answer, profile)
+
+        return jsonify({
+            'success': True,
+            'follow_up': follow_up
+        })
+
+    except Exception as e:
+        print(f"Error generating follow-up: {e}")
+        # Return default follow-up on error
+        return jsonify({
+            'success': True,
+            'follow_up': '可以话多啲俾老师知吗？'
+        })
+
+
+@app.route('/api/mock-interview/finish', methods=['POST'])
+@login_required
+def api_mock_interview_finish():
+    """完成面试，生成评估报告."""
+    data = request.json or {}
+    session_id = data.get('session_id')
+    answers = data.get('answers', [])
+    school_type = data.get('school_type', 'holistic')
+
+    user_id = session.get('user_id')
+
+    # Get profile from session
+    profile = {
+        'child_name': session.get('child_name', '小朋友'),
+        'child_age': session.get('child_age', '5岁')
+    }
+
+    try:
+        from services.mock_interview_service import (
+            get_interview_session,
+            evaluate_answer,
+            save_interview_session,
+            SCHOOL_TYPES
+        )
+
+        # Get session
+        session_data = get_interview_session(user_id, session_id)
+
+        if not session_data:
+            return jsonify({'error': 'Session not found'}), 404
+
+        # Evaluate each answer
+        evaluations = []
+        total_score = 0
+
+        for answer_data in answers:
+            question = answer_data.get('question', '')
+            answer = answer_data.get('answer', '')
+
+            evaluation = evaluate_answer(question, answer, profile, school_type)
+            evaluations.append({
+                'question': question,
+                'answer': answer,
+                'evaluation': evaluation
+            })
+            total_score += evaluation.get('score', 0)
+
+        # Calculate average score
+        avg_score = total_score // len(evaluations) if evaluations else 0
+
+        # Update session with answers and score
+        session_data['answers'] = answers
+        session_data['evaluations'] = evaluations
+        session_data['score'] = avg_score
+        session_data['school_type'] = school_type
+        session_data['school_type_name'] = SCHOOL_TYPES.get(school_type, {}).get('name', '模拟面试')
+
+        save_interview_session(user_id, session_data)
+
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'score': avg_score,
+            'evaluations': evaluations
+        })
+
+    except Exception as e:
+        print(f"Error finishing interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/history', methods=['GET'])
+@login_required
+def api_mock_interview_history():
+    """获取面试历史记录."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.mock_interview_service import get_interview_sessions
+
+        sessions = get_interview_sessions(user_id, 10)
+
+        # Convert to simple format
+        history = []
+        for session in sessions:
+            history.append({
+                'session_id': session.get('session_id'),
+                'school_type_name': session.get('school_type_name', '模拟面试'),
+                'score': session.get('score', 0),
+                'created_at': session.get('created_at', '')
+            })
+
+        return jsonify({
+            'success': True,
+            'sessions': history
+        })
+
+    except Exception as e:
+        print(f"Error getting history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/<session_id>', methods=['GET'])
+@login_required
+def api_mock_interview_detail(session_id):
+    """获取特定面试会话详情."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.mock_interview_service import get_interview_session
+
+        session_data = get_interview_session(user_id, session_id)
+
+        if not session_data:
+            return jsonify({'error': 'Session not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'session': session_data
+        })
+
+    except Exception as e:
+        print(f"Error getting session: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
