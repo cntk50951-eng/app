@@ -2,12 +2,89 @@
 -- Run this script to create all required tables
 
 -- Drop existing tables (in correct order for foreign key constraints)
+DROP TABLE IF EXISTS user_badges CASCADE;
+DROP TABLE IF EXISTS badges CASCADE;
+DROP TABLE IF EXISTS learning_reports CASCADE;
+DROP TABLE IF EXISTS practice_sessions CASCADE;
+DROP TABLE IF EXISTS user_progress CASCADE;
 DROP TABLE IF EXISTS user_interests CASCADE;
 DROP TABLE IF EXISTS target_schools CASCADE;
 DROP TABLE IF EXISTS child_profiles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS interests CASCADE;
 DROP TABLE IF EXISTS school_types CASCADE;
+
+-- Reference table: Badge definitions
+CREATE TABLE badges (
+    id VARCHAR(50) PRIMARY KEY,
+    name_zh VARCHAR(100) NOT NULL,
+    name_en VARCHAR(100),
+    description TEXT,
+    icon_emoji VARCHAR(10),
+    category VARCHAR(50), -- 'achievement', 'milestone', 'streak', 'master'
+    requirement_type VARCHAR(50), -- 'topics_completed', 'streak_days', 'practice_count', 'perfect_score'
+    requirement_value INTEGER,
+    points INTEGER DEFAULT 0,
+    rarity VARCHAR(20) DEFAULT 'common', -- 'common', 'rare', 'epic', 'legendary'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User earned badges
+CREATE TABLE user_badges (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    badge_id VARCHAR(50) NOT NULL REFERENCES badges(id),
+    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    progress INTEGER DEFAULT 0, -- Progress towards the badge (0-100)
+    UNIQUE(user_id, badge_id)
+);
+
+-- User progress tracking
+CREATE TABLE user_progress (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    topic_id VARCHAR(50) NOT NULL,
+    status VARCHAR(20) DEFAULT 'not_started', -- 'not_started', 'in_progress', 'completed'
+    completion_percent INTEGER DEFAULT 0,
+    practice_count INTEGER DEFAULT 0,
+    best_score INTEGER,
+    total_time_seconds INTEGER DEFAULT 0,
+    last_practiced_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, topic_id)
+);
+
+-- Practice sessions
+CREATE TABLE practice_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    topic_id VARCHAR(50) NOT NULL,
+    duration_seconds INTEGER NOT NULL,
+    score INTEGER,
+    feedback_rating INTEGER, -- 1-5 stars
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Learning reports (weekly/monthly)
+CREATE TABLE learning_reports (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    report_type VARCHAR(20) NOT NULL, -- 'weekly', 'monthly'
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    topics_completed INTEGER DEFAULT 0,
+    total_practice_time INTEGER DEFAULT 0,
+    average_score DECIMAL(5,2),
+    streak_days INTEGER DEFAULT 0,
+    badges_earned INTEGER DEFAULT 0,
+    highlights TEXT,
+    improvements TEXT,
+    recommendation TEXT,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Reference table: Interest options
 CREATE TABLE interests (
@@ -97,6 +174,30 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_child_profiles_user_id ON child_profiles(user_id);
 CREATE INDEX idx_user_interests_profile_id ON user_interests(child_profile_id);
 CREATE INDEX idx_target_schools_profile_id ON target_schools(child_profile_id);
+CREATE INDEX idx_user_badges_user_id ON user_badges(user_id);
+CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
+CREATE INDEX idx_practice_sessions_user_id ON practice_sessions(user_id);
+CREATE INDEX idx_learning_reports_user_id ON learning_reports(user_id);
+
+-- Insert badge definitions
+INSERT INTO badges (id, name_zh, name_en, description, icon_emoji, category, requirement_type, requirement_value, points, rarity) VALUES
+-- Achievement badges
+('first_step', '第一步', 'First Step', '完成第一個面試主題', '🌟', 'achievement', 'topics_completed', 1, 10, 'common'),
+('expression_master', '表達大師', 'Expression Master', '完成5次表達類主題練習', '🎤', 'achievement', 'practice_count', 5, 20, 'rare'),
+('logic_genius', '邏輯小天才', 'Logic Genius', '完成所有邏輯思維主題', '🧠', 'achievement', 'topics_completed', 3, 30, 'rare'),
+('polite_star', '禮貌之星', 'Polite Star', '連續3次練習使用禮貌用語', '🙇', 'achievement', 'streak_days', 3, 15, 'common'),
+('diligent_practitioner', '勤奮練習者', 'Diligent Practitioner', '一週內完成10次練習', '📚', 'achievement', 'practice_count', 10, 25, 'rare'),
+-- Milestone badges
+('week_warrior', '週冠軍', 'Week Warrior', '連續練習7天', '🔥', 'milestone', 'streak_days', 7, 50, 'rare'),
+('month_master', '月冠軍', 'Month Master', '連續練習30天', '👑', 'milestone', 'streak_days', 30, 100, 'legendary'),
+-- Streak badges
+('streak_3', '小試牛刀', 'Streak Starter', '連續練習3天', '💪', 'streak', 'streak_days', 3, 10, 'common'),
+('streak_5', '五天不懈', 'Five Day Fighter', '連續練習5天', '⭐', 'streak', 'streak_days', 5, 15, 'common'),
+('streak_10', '十天突破', 'Ten Day Champion', '連續練習10天', '🏆', 'streak', 'streak_days', 10, 30, 'rare'),
+-- Master badges
+('interview_master', '面試大師', 'Interview Master', '完成所有9個面試主題', '🎓', 'master', 'topics_completed', 9, 100, 'legendary'),
+('perfect_score', '滿分達人', 'Perfect Score', '獲得3次滿分評價', '💯', 'master', 'perfect_score', 3, 40, 'epic'),
+('explorer', '勇敢探索者', 'Explorer', '嘗試至少5個不同主題', '🗺️', 'master', 'topics_started', 5, 20, 'common');
 
 -- Comments
 COMMENT ON TABLE users IS 'Stores user authentication information';
@@ -105,3 +206,8 @@ COMMENT ON TABLE interests IS 'Reference table for interest options';
 COMMENT ON TABLE school_types IS 'Reference table for school type options';
 COMMENT ON TABLE user_interests IS 'Links child profiles to interests';
 COMMENT ON TABLE target_schools IS 'Links child profiles to target school types';
+COMMENT ON TABLE badges IS 'Achievement badge definitions';
+COMMENT ON TABLE user_badges IS 'User earned badges';
+COMMENT ON TABLE user_progress IS 'User learning progress by topic';
+COMMENT ON TABLE practice_sessions IS 'Practice session history';
+COMMENT ON TABLE learning_reports IS 'Generated learning reports';

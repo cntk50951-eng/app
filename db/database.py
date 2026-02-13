@@ -333,6 +333,262 @@ def create_complete_profile(user_data, child_data, interests=None, target_school
             conn.close()
 
 
+# ============ Achievement & Badge Operations ============
+
+def get_all_badges():
+    """Get all available badges."""
+    query = """
+        SELECT * FROM badges ORDER BY rarity, points;
+    """
+    return execute_query(query, fetch=True)
+
+
+def get_badge_by_id(badge_id):
+    """Get badge by ID."""
+    query = "SELECT * FROM badges WHERE id = %s;"
+    result = execute_query(query, (badge_id,), fetch=True)
+    return result[0] if result else None
+
+
+def get_user_badges(user_id):
+    """Get all badges earned by a user."""
+    query = """
+        SELECT b.*, ub.earned_at, ub.progress as badge_progress
+        FROM badges b
+        INNER JOIN user_badges ub ON b.id = ub.badge_id
+        WHERE ub.user_id = %s
+        ORDER BY ub.earned_at DESC;
+    """
+    return execute_query(query, (user_id,), fetch=True)
+
+
+def get_user_badge_progress(user_id):
+    """Get user's progress towards all badges."""
+    query = """
+        SELECT b.id, b.name_zh, b.name_en, b.description, b.icon_emoji,
+               b.category, b.requirement_type, b.requirement_value, b.points, b.rarity,
+               COALESCE(ub.progress, 0) as progress,
+               CASE WHEN ub.earned_at IS NOT NULL THEN TRUE ELSE FALSE END as earned
+        FROM badges b
+        LEFT JOIN user_badges ub ON b.id = ub.badge_id AND ub.user_id = %s
+        ORDER BY b.rarity, b.points;
+    """
+    return execute_query(query, (user_id,), fetch=True)
+
+
+def award_badge(user_id, badge_id):
+    """Award a badge to a user."""
+    query = """
+        INSERT INTO user_badges (user_id, badge_id, progress, earned_at)
+        VALUES (%s, %s, 100, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id, badge_id) DO UPDATE SET
+            progress = 100,
+            earned_at = CURRENT_TIMESTAMP
+        RETURNING id;
+    """
+    result = execute_query(query, (user_id, badge_id), fetch=True)
+    return result[0] if result else None
+
+
+def update_badge_progress(user_id, badge_id, progress):
+    """Update user's progress towards a badge."""
+    query = """
+        INSERT INTO user_badges (user_id, badge_id, progress)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (user_id, badge_id) DO UPDATE SET
+            progress = %s
+        RETURNING id;
+    """
+    result = execute_query(query, (user_id, badge_id, progress, progress), fetch=True)
+    return result[0] if result else None
+
+
+# ============ User Progress Operations ============
+
+def get_user_progress_by_topic(user_id, topic_id):
+    """Get user's progress for a specific topic."""
+    query = "SELECT * FROM user_progress WHERE user_id = %s AND topic_id = %s;"
+    result = execute_query(query, (user_id, topic_id), fetch=True)
+    return result[0] if result else None
+
+
+def get_user_all_progress(user_id):
+    """Get all progress for a user."""
+    query = "SELECT * FROM user_progress WHERE user_id = %s ORDER BY updated_at DESC;"
+    return execute_query(query, (user_id,), fetch=True)
+
+
+def update_user_progress(user_id, topic_id, status=None, completion_percent=None, practice_count=None, score=None, duration_seconds=None):
+    """Update or insert user progress for a topic."""
+    # Check if progress exists
+    existing = get_user_progress_by_topic(user_id, topic_id)
+
+    updates = []
+    params = []
+
+    if status:
+        updates.append("status = %s")
+        params.append(status)
+    if completion_percent is not None:
+        updates.append("completion_percent = %s")
+        params.append(completion_percent)
+    if practice_count is not None:
+        updates.append("practice_count = %s")
+        params.append(practice_count)
+    if score is not None:
+        updates.append("best_score = COALESCE(best_score, %s)")
+        params.append(score)
+    if duration_seconds is not None:
+        updates.append("total_time_seconds = total_time_seconds + %s")
+        params.append(duration_seconds)
+
+    updates.append("last_practiced_at = CURRENT_TIMESTAMP")
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+
+    if existing:
+        # Update existing
+        params.append(user_id)
+        params.append(topic_id)
+        query = f"""
+            UPDATE user_progress
+            SET {', '.join(updates)}
+            WHERE user_id = %s AND topic_id = %s
+            RETURNING *;
+        """
+    else:
+        # Insert new
+        params.extend([user_id, topic_id, status or 'not_started', completion_percent or 0])
+        query = """
+            INSERT INTO user_progress (user_id, topic_id, status, completion_percent, last_practiced_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING *;
+        """
+
+    result = execute_query(query, params, fetch=True)
+    return result[0] if result else None
+
+
+def mark_topic_complete(user_id, topic_id):
+    """Mark a topic as completed."""
+    query = """
+        UPDATE user_progress
+        SET status = 'completed', completion_percent = 100, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = %s AND topic_id = %s
+        RETURNING *;
+    """
+    result = execute_query(query, (user_id, topic_id), fetch=True)
+    return result[0] if result else None
+
+
+def get_user_stats(user_id):
+    """Get overall user statistics."""
+    # Get total topics completed
+    query1 = "SELECT COUNT(*) as completed FROM user_progress WHERE user_id = %s AND status = 'completed';"
+    result1 = execute_query(query1, (user_id,), fetch=True)
+    completed = result1[0]['completed'] if result1 else 0
+
+    # Get total practice time
+    query2 = "SELECT COALESCE(SUM(total_time_seconds), 0) as total_time FROM user_progress WHERE user_id = %s;"
+    result2 = execute_query(query2, (user_id,), fetch=True)
+    total_time = result2[0]['total_time'] if result2 else 0
+
+    # Get total practice count
+    query3 = "SELECT COALESCE(SUM(practice_count), 0) as practices FROM user_progress WHERE user_id = %s;"
+    result3 = execute_query(query3, (user_id,), fetch=True)
+    practices = result3[0]['practices'] if result3 else 0
+
+    # Get badges count
+    query4 = "SELECT COUNT(*) as badges FROM user_badges WHERE user_id = %s;"
+    result4 = execute_query(query4, (user_id,), fetch=True)
+    badges = result4[0]['badges'] if result4 else 0
+
+    return {
+        'completed_topics': completed,
+        'total_practice_time': total_time,
+        'total_practices': practices,
+        'badges_earned': badges
+    }
+
+
+# ============ Practice Session Operations ============
+
+def record_practice_session(user_id, topic_id, duration_seconds, score=None, feedback_rating=None, notes=None):
+    """Record a practice session."""
+    query = """
+        INSERT INTO practice_sessions (user_id, topic_id, duration_seconds, score, feedback_rating, notes)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    result = execute_query(query, (user_id, topic_id, duration_seconds, score, feedback_rating, notes), fetch=True)
+    return result[0] if result else None
+
+
+def get_user_practice_sessions(user_id, limit=50):
+    """Get user's practice sessions."""
+    query = """
+        SELECT * FROM practice_sessions
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        LIMIT %s;
+    """
+    return execute_query(query, (user_id, limit), fetch=True)
+
+
+def get_practice_sessions_in_period(user_id, start_date, end_date):
+    """Get practice sessions in a date range."""
+    query = """
+        SELECT * FROM practice_sessions
+        WHERE user_id = %s AND created_at >= %s AND created_at <= %s
+        ORDER BY created_at DESC;
+    """
+    return execute_query(query, (user_id, start_date, end_date), fetch=True)
+
+
+# ============ Learning Report Operations ============
+
+def create_learning_report(user_id, report_type, period_start, period_end, topics_completed, total_practice_time, average_score, streak_days, badges_earned, highlights=None, improvements=None, recommendation=None):
+    """Create a learning report."""
+    query = """
+        INSERT INTO learning_reports (user_id, report_type, period_start, period_end, topics_completed, total_practice_time, average_score, streak_days, badges_earned, highlights, improvements, recommendation)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    result = execute_query(query, (user_id, report_type, period_start, period_end, topics_completed, total_practice_time, average_score, streak_days, badges_earned, highlights, improvements, recommendation), fetch=True)
+    return result[0] if result else None
+
+
+def get_user_reports(user_id, report_type=None, limit=10):
+    """Get user's learning reports."""
+    if report_type:
+        query = """
+            SELECT * FROM learning_reports
+            WHERE user_id = %s AND report_type = %s
+            ORDER BY generated_at DESC
+            LIMIT %s;
+        """
+        return execute_query(query, (user_id, report_type, limit), fetch=True)
+    else:
+        query = """
+            SELECT * FROM learning_reports
+            WHERE user_id = %s
+            ORDER BY generated_at DESC
+            LIMIT %s;
+        """
+        return execute_query(query, (user_id, limit), fetch=True)
+
+
+def get_latest_report(user_id, report_type):
+    """Get the latest report of a specific type."""
+    query = """
+        SELECT * FROM learning_reports
+        WHERE user_id = %s AND report_type = %s
+        ORDER BY generated_at DESC
+        LIMIT 1;
+    """
+    result = execute_query(query, (user_id, report_type), fetch=True)
+    return result[0] if result else None
+
+
 if __name__ == '__main__':
     print("Database utilities loaded.")
     if DATABASE_URL:

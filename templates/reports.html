@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>學習報告 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            padding-bottom: 0.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 6rem;
+        }
+
+        /* Progress Summary */
+        .summary-card {
+            margin: 1rem 1.5rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .summary-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            text-align: center;
+        }
+
+        .summary-stat {
+            padding: 0.75rem 0.25rem;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+        }
+
+        .summary-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .summary-stat-label {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            margin: 1rem 1.5rem;
+            padding: 1.25rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .progress-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 1rem;
+            background: var(--background-light);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Weekly Report Card */
+        .report-card {
+            margin: 1rem 1.5rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .report-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .report-icon.weekly {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+        }
+
+        .report-icon.monthly {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .report-info h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .report-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin: 0.25rem 0 0;
+        }
+
+        .report-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            padding: 1rem 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
+
+        .report-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-stat-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .report-stat-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .report-stat-label {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+        }
+
+        .report-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .report-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+        }
+
+        .report-list li {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            padding: 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-list li::before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .recommendation {
+            background: var(--background-light);
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Share Button */
+        .share-section {
+            margin: 1rem 1.5rem;
+        }
+
+        .share-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Report History */
+        .history-section {
+            padding: 0 1.5rem 1rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .history-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .history-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .history-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .history-arrow {
+            color: var(--text-muted);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+
+        .nav-center {
+            position: relative;
+            margin-top: -1.5rem;
+        }
+
+        .nav-center-btn {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(30, 148, 246, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        /* Share Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .share-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        .share-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .share-stats {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .share-stat {
+            text-align: center;
+        }
+
+        .share-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .share-stat-label {
+            font-size: 0.625rem;
+            opacity: 0.8;
+        }
+
+        .share-message {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 1rem;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .share-button {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background 0.2s ease;
+        }
+
+        .share-button:hover {
+            background: var(--background-light);
+        }
+
+        .share-button.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .share-button.primary:hover {
+            background: #1a82d9;
+        }
+
+        .modal-close {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--background-light);
+            color: var(--text-secondary);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="{{ url_for('dashboard') }}" class="back-btn">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="page-title">學習報告</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Summary -->
+            <div class="summary-card">
+                <div class="summary-header">
+                    <div>
+                        <div class="summary-title">學習進度總覽</div>
+                        <div class="summary-subtitle">持續練習，邁向成功！</div>
+                    </div>
+                </div>
+                <div class="summary-stats">
+                    <div class="summary-stat">
+                        <div class="summary-stat-value" id="completed-topics">1</div>
+                        <div class="summary-stat-label">已完成</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value" id="in-progress-topics">1</div>
+                        <div class="summary-stat-label">進行中</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value" id="total-minutes">45</div>
+                        <div class="summary-stat-label">分鐘</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value" id="streak-days">3</div>
+                        <div class="summary-stat-label">天連續</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span class="progress-title">總進度</span>
+                    <span class="progress-value" id="progress-percent">11%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 11%;"></div>
+                </div>
+                <div class="progress-details">
+                    <span>已完成 <span id="completed-count">1</span> 個主題</span>
+                    <span>目標: 9 個主題</span>
+                </div>
+            </div>
+
+            <!-- Weekly Report -->
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-icon weekly">📊</div>
+                    <div class="report-info">
+                        <h3>本週報告</h3>
+                        <p>過去 7 天學習摘要</p>
+                    </div>
+                </div>
+
+                <div class="report-stats">
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #dbeafe; color: #3b82f6;">📚</div>
+                        <div>
+                            <div class="report-stat-value" id="weekly-topics">1</div>
+                            <div class="report-stat-label">完成主題</div>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #dcfce7; color: #22c55e;">⏱️</div>
+                        <div>
+                            <div class="report-stat-value" id="weekly-minutes">45</div>
+                            <div class="report-stat-label">練習分鐘</div>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #fef3c7; color: #f59e0b;">⭐</div>
+                        <div>
+                            <div class="report-stat-value" id="weekly-score">85</div>
+                            <div class="report-stat-label">平均分數</div>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #fce7f3; color: #ec4899;">🔥</div>
+                        <div>
+                            <div class="report-stat-value" id="weekly-streak">3</div>
+                            <div class="report-stat-label">天連續</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-section-title">亮點</div>
+                <ul class="report-list">
+                    <li>完成了自我介紹主題</li>
+                    <li>連續練習 3 天</li>
+                </ul>
+
+                <div class="report-section-title">建議</div>
+                <div class="recommendation">
+                    "下週目標：完成興趣愛好主題。多練習眼神接觸和說話語速。"
+                </div>
+            </div>
+
+            <!-- Monthly Report -->
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-icon monthly">📈</div>
+                    <div class="report-info">
+                        <h3>本月報告</h3>
+                        <p>過去 30 天學習摘要</p>
+                    </div>
+                </div>
+
+                <div class="report-stats">
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #dbeafe; color: #3b82f6;">📚</div>
+                        <div>
+                            <div class="report-stat-value" id="monthly-topics">2</div>
+                            <div class="report-stat-label">完成主題</div>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #dcfce7; color: #22c55e;">⏱️</div>
+                        <div>
+                            <div class="report-stat-value" id="monthly-minutes">180</div>
+                            <div class="report-stat-label">練習分鐘</div>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #fef3c7; color: #f59e0b;">⭐</div>
+                        <div>
+                            <div class="report-stat-value" id="monthly-score">82</div>
+                            <div class="report-stat-label">平均分數</div>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="report-stat-icon" style="background: #fce7f3; color: #ec4899;">🏆</div>
+                        <div>
+                            <div class="report-stat-value" id="monthly-badges">2</div>
+                            <div class="report-stat-label">獲得徽章</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Share Section -->
+            <div class="share-section">
+                <button class="share-btn" onclick="showShareModal()">
+                    <span class="material-symbols-outlined">share</span>
+                    分享學習進度
+                </button>
+            </div>
+
+            <!-- Report History -->
+            <div class="history-section">
+                <div class="section-title">報告歷史</div>
+
+                <div class="history-card">
+                    <div class="history-icon" style="background: #dbeafe; color: #3b82f6;">📊</div>
+                    <div class="history-info">
+                        <div class="history-title">第 4 週報告</div>
+                        <div class="history-date">2026年2月1日 - 2月7日</div>
+                    </div>
+                    <span class="material-symbols-outlined history-arrow">chevron_right</span>
+                </div>
+
+                <div class="history-card">
+                    <div class="history-icon" style="background: #fef3c7; color: #f59e0b;">📊</div>
+                    <div class="history-info">
+                        <div class="history-title">第 3 週報告</div>
+                        <div class="history-date">2026年1月25日 - 1月31日</div>
+                    </div>
+                    <span class="material-symbols-outlined history-arrow">chevron_right</span>
+                </div>
+
+                <div class="history-card">
+                    <div class="history-icon" style="background: #dcfce7; color: #22c55e;">📊</div>
+                    <div class="history-info">
+                        <div class="history-title">第 2 週報告</div>
+                        <div class="history-date">2026年1月18日 - 1月24日</div>
+                    </div>
+                    <span class="material-symbols-outlined history-arrow">chevron_right</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <span class="material-symbols-outlined filled">dashboard</span>
+                <span>首頁</span>
+            </a>
+            <a href="{{ url_for('lesson', topic_id='self-introduction') }}" class="nav-item">
+                <span class="material-symbols-outlined">school</span>
+                <span>練習</span>
+            </a>
+            <div class="nav-center">
+                <button class="nav-center-btn" onclick="window.location.href='{{ url_for('parent_notes') }}'">
+                    <span class="material-symbols-outlined">note_add</span>
+                </button>
+            </div>
+            <a href="{{ url_for('reports_page') }}" class="nav-item active">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span>報告</span>
+            </a>
+            <a href="{{ url_for('achievements_page') }}" class="nav-item">
+                <span class="material-symbols-outlined">emoji_events</span>
+                <span>成就</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="modal">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">分享到社交媒體</h3>
+
+            <div class="share-preview">
+                <div class="share-title">🎉 我的學習進度</div>
+                <div class="share-stats">
+                    <div class="share-stat">
+                        <div class="share-stat-value" id="share-topics">1/9</div>
+                        <div class="share-stat-label">主題</div>
+                    </div>
+                    <div class="share-stat">
+                        <div class="share-stat-value" id="share-streak">3</div>
+                        <div class="share-stat-label">天連續</div>
+                    </div>
+                    <div class="share-stat">
+                        <div class="share-stat-value" id="share-badges">2</div>
+                        <div class="share-stat-label">徽章</div>
+                    </div>
+                </div>
+                <div class="share-message" id="share-message">
+                    小朋友已經完成 1/9 個面試主題練習！連續練習 3 日！
+                </div>
+            </div>
+
+            <div class="share-buttons">
+                <button class="share-button" onclick="copyToClipboard()">
+                    <span class="material-symbols-outlined" style="font-size: 1.25rem;">content_copy</span>
+                    複製
+                </button>
+                <button class="share-button primary" onclick="shareToSocial()">
+                    <span class="material-symbols-outlined" style="font-size: 1.25rem;">send</span>
+                    分享
+                </button>
+            </div>
+
+            <button class="modal-close" onclick="closeShareModal()">關閉</button>
+        </div>
+    </div>
+
+    <script>
+        // Load progress and reports data
+        async function loadData() {
+            try {
+                // Load progress summary
+                const progressResponse = await fetch('/api/progress/summary');
+                if (progressResponse.ok) {
+                    const progress = await progressResponse.json();
+                    updateProgressUI(progress);
+                }
+
+                // Load weekly report
+                const weeklyResponse = await fetch('/api/reports/weekly');
+                if (weeklyResponse.ok) {
+                    const weekly = await weeklyResponse.json();
+                    updateWeeklyReport(weekly);
+                }
+
+                // Load monthly report
+                const monthlyResponse = await fetch('/api/reports/monthly');
+                if (monthlyResponse.ok) {
+                    const monthly = await monthlyResponse.json();
+                    updateMonthlyReport(monthly);
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                // Use mock data if API fails
+                updateProgressUI({
+                    completed_topics: 1,
+                    in_progress_topics: 1,
+                    total_minutes: 45,
+                    current_streak: 3,
+                    completion_percent: 11
+                });
+            }
+        }
+
+        function updateProgressUI(data) {
+            document.getElementById('completed-topics').textContent = data.completed_topics || 0;
+            document.getElementById('in-progress-topics').textContent = data.in_progress_topics || 0;
+            document.getElementById('total-minutes').textContent = data.total_minutes || 0;
+            document.getElementById('streak-days').textContent = data.current_streak || 0;
+            document.getElementById('progress-percent').textContent = (data.completion_percent || 0) + '%';
+            document.getElementById('progress-fill').style.width = (data.completion_percent || 0) + '%';
+            document.getElementById('completed-count').textContent = data.completed_topics || 0;
+
+            // Update share modal
+            document.getElementById('share-topics').textContent = (data.completed_topics || 0) + '/9';
+            document.getElementById('share-streak').textContent = data.current_streak || 0;
+            document.getElementById('share-badges').textContent = '2';
+            document.getElementById('share-message').textContent =
+                '小朋友已經完成 ' + (data.completed_topics || 0) + '/9 個面試主題練習！連續練習 ' + (data.current_streak || 0) + ' 日！';
+        }
+
+        function updateWeeklyReport(data) {
+            document.getElementById('weekly-topics').textContent = data.topics_completed || 0;
+            document.getElementById('weekly-minutes').textContent = data.total_practice_time || 0;
+            document.getElementById('weekly-score').textContent = Math.round(data.average_score || 0);
+            document.getElementById('weekly-streak').textContent = data.streak_days || 0;
+        }
+
+        function updateMonthlyReport(data) {
+            document.getElementById('monthly-topics').textContent = data.topics_completed || 0;
+            document.getElementById('monthly-minutes').textContent = data.total_practice_time || 0;
+            document.getElementById('monthly-score').textContent = Math.round(data.average_score || 0);
+            document.getElementById('monthly-badges').textContent = data.badges_earned || 0;
+        }
+
+        function showShareModal() {
+            document.getElementById('share-modal').classList.add('active');
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.remove('active');
+        }
+
+        function copyToClipboard() {
+            const message = document.getElementById('share-message').textContent;
+            navigator.clipboard.writeText(message + ' #AITutor #面試準備').then(() => {
+                alert('已複製到剪貼簿！');
+            });
+        }
+
+        function shareToSocial() {
+            const message = document.getElementById('share-message').textContent;
+            const encodedMessage = encodeURIComponent(message + ' #AITutor #面試準備');
+
+            // Open share dialog
+            if (navigator.share) {
+                navigator.share({
+                    title: '我的學習進度',
+                    text: message,
+                    url: window.location.origin
+                }).catch(() => {
+                    // Fallback to copying
+                    copyToClipboard();
+                });
+            } else {
+                // Fallback
+                window.open('https://wa.me/?text=' + encodedMessage, '_blank');
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('share-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeShareModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

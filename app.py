@@ -1331,6 +1331,169 @@ def share_progress():
         return jsonify({'error': str(e)}), 500
 
 
+# ============ Achievements API ============
+
+@app.route('/api/achievements')
+@login_required
+def get_achievements():
+    """获取用户成就信息."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.achievements import get_achievement_summary
+        achievements = get_achievement_summary(user_id)
+        return jsonify(achievements)
+    except Exception as e:
+        print(f"Error getting achievements: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/achievements/check', methods=['POST'])
+@login_required
+def check_achievements():
+    """检查并更新用户成就."""
+    user_id = session.get('user_id')
+    data = request.json or {}
+    topic_id = data.get('topic_id')
+
+    try:
+        from services.achievements import check_and_award_badges
+
+        newly_earned = check_and_award_badges(user_id, topic_id)
+
+        return jsonify({
+            'success': True,
+            'new_badges': [
+                {
+                    'id': b['id'],
+                    'name_zh': b['name_zh'],
+                    'icon_emoji': b.get('icon_emoji')
+                }
+                for b in newly_earned
+            ]
+        })
+    except Exception as e:
+        print(f"Error checking achievements: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress/summary')
+@login_required
+def get_progress_summary():
+    """获取学习进度摘要."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.achievements import get_progress_summary
+        progress = get_progress_summary(user_id)
+        return jsonify(progress)
+    except Exception as e:
+        print(f"Error getting progress summary: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Learning Reports API ============
+
+@app.route('/api/reports/weekly')
+@login_required
+def get_weekly_report():
+    """获取本周学习报告."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.achievements import generate_weekly_report
+        report = generate_weekly_report(user_id)
+        return jsonify(report)
+    except Exception as e:
+        print(f"Error generating weekly report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/reports/monthly')
+@login_required
+def get_monthly_report():
+    """获取本月学习报告."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.achievements import generate_monthly_report
+        report = generate_monthly_report(user_id)
+        return jsonify(report)
+    except Exception as e:
+        print(f"Error generating monthly report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/reports')
+@login_required
+def get_reports():
+    """获取用户学习报告列表."""
+    user_id = session.get('user_id')
+    report_type = request.args.get('type')
+
+    try:
+        from services.achievements import get_share_data
+        from db.database import get_user_reports
+
+        reports = get_user_reports(user_id, report_type)
+
+        return jsonify({
+            'reports': [
+                {
+                    'id': r['id'],
+                    'report_type': r['report_type'],
+                    'period_start': r['period_start'].isoformat() if r.get('period_start') else None,
+                    'period_end': r['period_end'].isoformat() if r.get('period_end') else None,
+                    'topics_completed': r['topics_completed'],
+                    'total_practice_time': r['total_practice_time'],
+                    'average_score': float(r['average_score']) if r.get('average_score') else None,
+                    'streak_days': r['streak_days'],
+                    'badges_earned': r['badges_earned'],
+                    'generated_at': r['generated_at'].isoformat() if r.get('generated_at') else None
+                }
+                for r in reports
+            ]
+        })
+    except Exception as e:
+        print(f"Error getting reports: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/share/learning-progress')
+@login_required
+def share_learning_progress():
+    """生成分享到社交媒体的学习进度数据."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.achievements import get_share_data
+        share_data = get_share_data(user_id)
+
+        return jsonify({
+            'success': True,
+            'share_data': share_data
+        })
+    except Exception as e:
+        print(f"Error generating share data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ New Pages Routes ============
+
+@app.route('/achievements')
+@login_required
+def achievements_page():
+    """成就徽章页面."""
+    return render_template('achievements.html')
+
+
+@app.route('/reports')
+@login_required
+def reports_page():
+    """学习报告页面."""
+    return render_template('reports.html')
+
+
 if __name__ == '__main__':
     print("Starting AI Tutor application...")
     print(f"Database configured: {bool(DATABASE_URL)}")

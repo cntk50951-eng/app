@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>成就徽章 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            padding-bottom: 0.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 6rem;
+        }
+
+        /* Stats Summary */
+        .stats-card {
+            margin: 1rem 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-xl);
+            color: white;
+        }
+
+        .stats-title {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stats-item {
+            text-align: center;
+        }
+
+        .stats-item-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .stats-item-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Progress Card */
+        .progress-card {
+            margin: 1rem 1.5rem;
+            padding: 1.25rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar-container {
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.75rem;
+            background: var(--background-light);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        /* Badge Sections */
+        .section {
+            padding: 0 1.5rem 1rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .badge-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0.5rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .badge-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .badge-card.earned {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #fbbf24;
+        }
+
+        .badge-card.locked {
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+
+        .badge-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .badge-card.earned .badge-icon {
+            background: white;
+        }
+
+        .badge-card.locked .badge-icon {
+            background: var(--background-light);
+        }
+
+        /* Rarity colors */
+        .badge-card[data-rarity="common"] .badge-icon {
+            background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+        }
+
+        .badge-card[data-rarity="rare"] .badge-icon {
+            background: linear-gradient(135deg, #93c5fd, #60a5fa);
+        }
+
+        .badge-card[data-rarity="epic"] .badge-icon {
+            background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+        }
+
+        .badge-card[data-rarity="legendary"] .badge-icon {
+            background: linear-gradient(135deg, #fcd34d, #f59e0b);
+        }
+
+        .badge-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .badge-points {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+        }
+
+        .badge-progress {
+            width: 80%;
+            height: 4px;
+            background: var(--background-light);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .badge-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* Category Filter */
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 1.5rem 1rem;
+            overflow-x: auto;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            background: var(--background-light);
+            border: none;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+
+        .nav-center {
+            position: relative;
+            margin-top: -1.5rem;
+        }
+
+        .nav-center-btn {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a82d9 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(30, 148, 246, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-badge-icon {
+            width: 5rem;
+            height: 5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .modal-badge-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-badge-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .modal-badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-badge-status.earned {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .modal-badge-status.locked {
+            background: var(--background-light);
+            color: var(--text-secondary);
+        }
+
+        .modal-progress {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-progress-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-progress-bar {
+            width: 100%;
+            height: 0.75rem;
+            background: var(--background-light);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .modal-close {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="{{ url_for('dashboard') }}" class="back-btn">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="page-title">成就徽章</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Stats Summary -->
+            <div class="stats-card">
+                <div class="stats-title">總成就點數</div>
+                <div class="stats-value" id="total-points">0</div>
+                <div class="stats-grid">
+                    <div class="stats-item">
+                        <div class="stats-item-value" id="earned-badges">0</div>
+                        <div class="stats-item-label">已解鎖</div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-value" id="total-badges">13</div>
+                        <div class="stats-item-label">總徽章</div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-value" id="completion-percent">0%</div>
+                        <div class="stats-item-label">完成率</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-card">
+                <div class="progress-title">解鎖進度</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="overall-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="progress-text">已解鎖 <span id="earned-count">0</span> / <span id="total-count">13</span> 個徽章</div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">全部</button>
+                <button class="filter-tab" data-filter="achievement">成就</button>
+                <button class="filter-tab" data-filter="milestone">里程碑</button>
+                <button class="filter-tab" data-filter="streak">連續</button>
+                <button class="filter-tab" data-filter="master">大師</button>
+            </div>
+
+            <!-- Badge Grid -->
+            <div class="section">
+                <div class="badge-grid" id="badge-grid">
+                    <!-- Badges will be loaded dynamically -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <span class="material-symbols-outlined filled">dashboard</span>
+                <span>首頁</span>
+            </a>
+            <a href="{{ url_for('lesson', topic_id='self-introduction') }}" class="nav-item">
+                <span class="material-symbols-outlined">school</span>
+                <span>練習</span>
+            </a>
+            <div class="nav-center">
+                <button class="nav-center-btn" onclick="window.location.href='{{ url_for('parent_notes') }}'">
+                    <span class="material-symbols-outlined">note_add</span>
+                </button>
+            </div>
+            <a href="{{ url_for('reports_page') }}" class="nav-item">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span>報告</span>
+            </a>
+            <a href="{{ url_for('achievements_page') }}" class="nav-item active">
+                <span class="material-symbols-outlined">emoji_events</span>
+                <span>成就</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Badge Detail Modal -->
+    <div class="modal-overlay" id="badge-modal">
+        <div class="modal">
+            <div class="modal-badge-icon" id="modal-icon"></div>
+            <div class="modal-badge-name" id="modal-name"></div>
+            <div class="modal-badge-description" id="modal-description"></div>
+            <div class="modal-badge-status" id="modal-status"></div>
+            <div class="modal-progress" id="modal-progress-container">
+                <div class="modal-progress-label">進度: <span id="modal-progress-text">0</span>%</div>
+                <div class="modal-progress-bar">
+                    <div class="progress-bar-fill" id="modal-progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <button class="modal-close" onclick="closeModal()">關閉</button>
+        </div>
+    </div>
+
+    <script>
+        // Badge data from API
+        let badgesData = [];
+
+        // Load achievements from API
+        async function loadAchievements() {
+            try {
+                const response = await fetch('/api/achievements');
+                if (response.ok) {
+                    const data = await response.json();
+                    badgesData = data.badges || [];
+                    updateStats(data);
+                    renderBadges(badgesData);
+                } else {
+                    // Use mock data if API fails
+                    renderMockBadges();
+                }
+            } catch (error) {
+                console.error('Error loading achievements:', error);
+                renderMockBadges();
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('total-points').textContent = data.total_points || 0;
+            document.getElementById('earned-badges').textContent = data.earned_badges || 0;
+            document.getElementById('total-badges').textContent = data.total_badges || 13;
+            document.getElementById('completion-percent').textContent = Math.round((data.earned_badges / data.total_badges) * 100) + '%';
+            document.getElementById('earned-count').textContent = data.earned_badges || 0;
+            document.getElementById('total-count').textContent = data.total_badges || 13;
+            document.getElementById('overall-progress').style.width = ((data.earned_badges / data.total_badges) * 100) + '%';
+        }
+
+        function renderBadges(badges) {
+            const grid = document.getElementById('badge-grid');
+            grid.innerHTML = '';
+
+            badges.forEach(badge => {
+                const card = document.createElement('div');
+                card.className = `badge-card ${badge.earned ? 'earned' : 'locked'}`;
+                card.dataset.rarity = badge.rarity || 'common';
+                card.dataset.category = badge.category || 'achievement';
+                card.onclick = () => showBadgeModal(badge);
+
+                const progress = badge.progress || 0;
+
+                card.innerHTML = `
+                    <div class="badge-icon">${badge.icon_emoji || '🏆'}</div>
+                    <div class="badge-name">${badge.name_zh || '徽章'}</div>
+                    <div class="badge-points">${badge.points || 0} 分</div>
+                    ${!badge.earned ? `
+                        <div class="badge-progress">
+                            <div class="badge-progress-fill" style="width: ${progress}%;"></div>
+                        </div>
+                    ` : ''}
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function renderMockBadges() {
+            const mockBadges = [
+                {id: 'first_step', name_zh: '第一步', icon_emoji: '🌟', points: 10, rarity: 'common', earned: true, progress: 100, category: 'achievement'},
+                {id: 'streak_3', name_zh: '小試牛刀', icon_emoji: '💪', points: 10, rarity: 'common', earned: true, progress: 100, category: 'streak'},
+                {id: 'expression_master', name_zh: '表達大師', icon_emoji: '🎤', points: 20, rarity: 'rare', earned: false, progress: 60, category: 'achievement'},
+                {id: 'logic_genius', name_zh: '邏輯小天才', icon_emoji: '🧠', points: 30, rarity: 'rare', earned: false, progress: 33, category: 'achievement'},
+                {id: 'polite_star', name_zh: '禮貌之星', icon_emoji: '🙇', points: 15, rarity: 'common', earned: false, progress: 0, category: 'achievement'},
+                {id: 'diligent_practitioner', name_zh: '勤奮練習者', icon_emoji: '📚', points: 25, rarity: 'rare', earned: false, progress: 70, category: 'achievement'},
+                {id: 'week_warrior', name_zh: '週冠軍', icon_emoji: '🔥', points: 50, rarity: 'rare', earned: false, progress: 43, category: 'milestone'},
+                {id: 'month_master', name_zh: '月冠軍', icon_emoji: '👑', points: 100, rarity: 'legendary', earned: false, progress: 10, category: 'milestone'},
+                {id: 'streak_5', name_zh: '五天不懈', icon_emoji: '⭐', points: 15, rarity: 'common', earned: false, progress: 60, category: 'streak'},
+                {id: 'streak_10', name_zh: '十天突破', icon_emoji: '🏆', points: 30, rarity: 'rare', earned: false, progress: 30, category: 'streak'},
+                {id: 'interview_master', name_zh: '面試大師', icon_emoji: '🎓', points: 100, rarity: 'legendary', earned: false, progress: 11, category: 'master'},
+                {id: 'perfect_score', name_zh: '滿分達人', icon_emoji: '💯', points: 40, rarity: 'epic', earned: false, progress: 0, category: 'master'},
+                {id: 'explorer', name_zh: '勇敢探索者', icon_emoji: '🗺️', points: 20, rarity: 'common', earned: false, progress: 40, category: 'master'},
+            ];
+
+            badgesData = mockBadges;
+
+            updateStats({
+                total_points: 20,
+                earned_badges: 2,
+                total_badges: 13
+            });
+
+            renderBadges(mockBadges);
+        }
+
+        function showBadgeModal(badge) {
+            const modal = document.getElementById('badge-modal');
+            const icon = document.getElementById('modal-icon');
+            const name = document.getElementById('modal-name');
+            const description = document.getElementById('modal-description');
+            const status = document.getElementById('modal-status');
+            const progressContainer = document.getElementById('modal-progress-container');
+            const progressText = document.getElementById('modal-progress-text');
+            const progressFill = document.getElementById('modal-progress-fill');
+
+            icon.textContent = badge.icon_emoji || '🏆';
+            name.textContent = badge.name_zh || '徽章';
+            description.textContent = badge.description || '';
+
+            if (badge.earned) {
+                status.className = 'modal-badge-status earned';
+                status.innerHTML = '<span class="material-symbols-outlined">check_circle</span> 已解鎖';
+                progressContainer.style.display = 'none';
+            } else {
+                status.className = 'modal-badge-status locked';
+                status.innerHTML = '<span class="material-symbols-outlined">lock</span> 未解鎖';
+                progressContainer.style.display = 'block';
+                progressText.textContent = badge.progress || 0;
+                progressFill.style.width = (badge.progress || 0) + '%';
+            }
+
+            // Set rarity color for modal icon
+            const rarityColors = {
+                'common': 'linear-gradient(135deg, #e5e7eb, #d1d5db)',
+                'rare': 'linear-gradient(135deg, #93c5fd, #60a5fa)',
+                'epic': 'linear-gradient(135deg, #c4b5fd, #8b5cf6)',
+                'legendary': 'linear-gradient(135deg, #fcd34d, #f59e0b)'
+            };
+            icon.style.background = rarityColors[badge.rarity] || rarityColors.common;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('badge-modal').classList.remove('active');
+        }
+
+        // Close modal on outside click
+        document.getElementById('badge-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Filter tabs
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                const filter = this.dataset.filter;
+
+                if (filter === 'all') {
+                    renderBadges(badgesData);
+                } else {
+                    const filtered = badgesData.filter(b => b.category === filter);
+                    renderBadges(filtered);
+                }
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadAchievements);
+    </script>
+</body>
+</html>
