@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze']
 
 
 def login_required(f):
