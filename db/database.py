@@ -44,11 +44,11 @@ def execute_query(query, params=None, fetch=False):
         conn = get_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(query, params)
+            conn.commit()  # Always commit the transaction
             if fetch:
                 result = cursor.fetchall()
                 # Convert to regular dict for JSON serialization
                 return [dict(row) for row in result]
-            conn.commit()
             return cursor.rowcount
     except Exception as e:
         print(f"Query error: {e}")
