@@ -1,13 +1,13 @@
 """
 Question Bank Service
 面试真题库服务
+使用PostgreSQL数据库
 """
 
 import random
-from db.database import get_db_connection
 
 
-# Sample questions as fallback when database is not available
+# Sample questions as primary data source (works without database)
 SAMPLE_QUESTIONS = [
     {'question_id': 'Q00001', 'category': 'self_intro', 'category_name_zh': '自我介绍',
      'question_zh': '你叫什么名字？', 'question_en': 'What is your name?',
