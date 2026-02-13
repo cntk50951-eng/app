@@ -211,3 +211,38 @@ COMMENT ON TABLE user_badges IS 'User earned badges';
 COMMENT ON TABLE user_progress IS 'User learning progress by topic';
 COMMENT ON TABLE practice_sessions IS 'Practice session history';
 COMMENT ON TABLE learning_reports IS 'Generated learning reports';
+
+-- Interview Question Bank
+-- 面试真题库 - 存储各类面试题目
+CREATE TABLE interview_questions (
+    id SERIAL PRIMARY KEY,
+    question_id VARCHAR(50) UNIQUE NOT NULL,
+    category VARCHAR(50) NOT NULL, -- 'self_intro', 'family', 'hobbies', 'school', 'life', 'science', 'society', 'creative', 'situational', 'group'
+    category_name_zh VARCHAR(100) NOT NULL,
+    question_zh TEXT NOT NULL,
+    question_en TEXT,
+    answer_tips TEXT,
+    school_types VARCHAR(100), -- comma-separated: academic,holistic,international,traditional
+    frequency VARCHAR(20) DEFAULT 'medium', -- 'high', 'medium', 'low'
+    difficulty VARCHAR(20) DEFAULT 'medium', -- 'easy', 'medium', 'hard'
+    language VARCHAR(20) DEFAULT 'both', -- 'zh', 'en', 'both'
+    age_group VARCHAR(20) DEFAULT 'K3', -- 'K1', 'K2', 'K3'
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Question practice history
+CREATE TABLE question_practice_history (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    question_id VARCHAR(50) NOT NULL,
+    practiced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_answer TEXT,
+    needs_review BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX idx_questions_category ON interview_questions(category);
+CREATE INDEX idx_questions_school_types ON interview_questions(school_types);
+CREATE INDEX idx_questions_frequency ON interview_questions(frequency);
+CREATE INDEX idx_practice_history_user ON question_practice_history(user_id);

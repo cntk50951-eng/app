@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试真题库 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .banner {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .banner a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner h1 {
+            font-size: 20px;
+            color: #333;
+            margin-left: 12px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .hero {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .hero-icon span {
+            font-size: 40px;
+            color: white;
+        }
+
+        .hero h2 {
+            font-size: 26px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f5576c;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title span {
+            color: #f5576c;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .category-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .category-card:hover {
+            border-color: #f5576c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.2);
+        }
+
+        .category-card.selected {
+            border-color: #f5576c;
+            background: rgba(245, 87, 108, 0.1);
+        }
+
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .category-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .category-count {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .school-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .school-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .school-option:hover {
+            border-color: #f5576c;
+        }
+
+        .school-option.selected {
+            border-color: #f5576c;
+            background: rgba(245, 87, 108, 0.1);
+        }
+
+        .school-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .question-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .question-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #f5576c;
+        }
+
+        .question-text {
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .question-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .question-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .answer-tips {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff3cd;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .frequency-high { color: #dc2626; }
+        .frequency-medium { color: #f59e0b; }
+        .frequency-low { color: #22c55e; }
+
+        .difficulty-easy { background: #dcfce7; color: #16a34a; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .difficulty-medium { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .difficulty-hard { background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            border-radius: 8px;
+        }
+
+        .tab.active {
+            background: #f5576c;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .category-grid, .school-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1>面试真题库</h1>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <div class="hero-icon">
+                <span class="material-symbols-outlined">quiz</span>
+            </div>
+            <h2>校长视角·面试真题库</h2>
+            <p>基于香港各小学面试真题整理，按学校类型、分类、频率分类，助力孩子针对性练习</p>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.total }}</div>
+                    <div class="stat-label">总题数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.by_category|length }}</div>
+                    <div class="stat-label">分类</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">学校类型</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">school</span>
+                选择目标学校类型
+            </h3>
+            <div class="school-selector">
+                <label class="school-option {% if school_type == 'academic' %}selected{% endif %}" data-value="academic">
+                    <div class="school-name">学术型</div>
+                </label>
+                <label class="school-option {% if school_type == 'holistic' %}selected{% endif %}" data-value="holistic">
+                    <div class="school-name">全人型</div>
+                </label>
+                <label class="school-option {% if school_type == 'international' %}selected{% endif %}" data-value="international">
+                    <div class="school-name">国际型</div>
+                </label>
+                <label class="school-option {% if school_type == 'traditional' %}selected{% endif %}" data-value="traditional">
+                    <div class="school-name">传统名校</div>
+                </label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">
+                <span class="material-symbols-outlined">category</span>
+                选择题目分类
+            </h3>
+            <div class="category-grid">
+                {% for cat in categories %}
+                <label class="category-card {% if cat.category in selected_categories %}selected{% endif %}" data-value="{{ cat.category }}">
+                    <div class="category-icon">
+                        {% if cat.category == 'self_intro' %}👤
+                        {% elif cat.category == 'family' %}👨‍👩‍👧
+                        {% elif cat.category == 'hobbies' %}🎨
+                        {% elif cat.category == 'school' %}🏫
+                        {% elif cat.category == 'life' %}🏠
+                        {% elif cat.category == 'science' %}🔬
+                        {% elif cat.category == 'society' %}🌆
+                        {% elif cat.category == 'creative' %}💡
+                        {% elif cat.category == 'situational' %}⚡
+                        {% elif cat.category == 'group' %}👥
+                        {% endif %}
+                    </div>
+                    <div class="category-name">{{ cat.category_name_zh }}</div>
+                    <div class="category-count">{{ cat.count }} 题</div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button class="action-btn" onclick="startPractice()">
+                <span class="material-symbols-outlined">play_arrow</span>
+                开始练习
+            </button>
+        </div>
+
+        {% if questions %}
+        <div class="section">
+            <h3 class=" <span class="material-symbols-outsection-title">
+               lined">format_list_numbered</span>
+                练习题目
+            </h3>
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('all')">全部</div>
+                <div class="tab" onclick="showTab('high')">高频</div>
+            </div>
+            <div class="question-list" id="questionList">
+                {% for q in questions %}
+                <div class="question-card" data-frequency="{{ q.frequency }}">
+                    <div class="question-text">{{ q.question_zh }}</div>
+                    {% if q.question_en %}
+                    <div class="question-text" style="color: #666; font-size: 14px;">{{ q.question_en }}</div>
+                    {% endif %}
+                    <div class="question-meta">
+                        <span class="frequency-{{ q.frequency }}">{{ q.frequency }}</span>
+                        <span class="difficulty-{{ q.difficulty }}">{{ q.difficulty }}</span>
+                        <span>{{ q.category_name_zh }}</span>
+                    </div>
+                    {% if q.answer_tips %}
+                    <div class="answer-tips">
+                        <strong>答题提示：</strong>{{ q.answer_tips }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>首页</span>
+        </a>
+        <a href="/mock-interview">
+            <span class="material-symbols-outlined">psychology</span>
+            <span>模拟面试</span>
+        </a>
+        <a href="/school-advisor">
+            <span class="material-symbols-outlined">school</span>
+            <span>择校顾问</span>
+        </a>
+        <a href="/question-bank" class="active">
+            <span class="material-symbols-outlined">quiz</span>
+            <span>真题库</span>
+        </a>
+    </nav>
+
+    <style>
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .bottom-nav a {
+            text-decoration: none;
+            color: #999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span.material-symbols-outlined {
+            font-size: 24px;
+        }
+    </style>
+
+    <script>
+        let selectedSchoolType = '{{ school_type }}';
+        let selectedCategories = [];
+
+        // Initialize
+        document.querySelectorAll('.category-card').forEach(card => {
+            if (card.classList.contains('selected')) {
+                selectedCategories.push(card.dataset.value);
+            }
+            card.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                if (this.classList.contains('selected')) {
+                    selectedCategories.push(this.dataset.value);
+                } else {
+                    selectedCategories = selectedCategories.filter(c => c !== this.dataset.value);
+                }
+            });
+        });
+
+        document.querySelectorAll('.school-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.school-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedSchoolType = this.dataset.value;
+            });
+        });
+
+        function startPractice() {
+            const params = new URLSearchParams();
+            if (selectedSchoolType) params.set('school_type', selectedSchoolType);
+            if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
+            params.set('limit', '20');
+
+            window.location.href = '/question-bank/practice?' + params.toString();
+        }
+
+        function showTab(type) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.question-card').forEach(card => {
+                if (type === 'all' || card.dataset.frequency === type) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

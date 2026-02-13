@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice']
 
 
 def login_required(f):
@@ -1692,6 +1692,93 @@ def capability_radar():
         dimension_names=dimension_names,
         dimension_descriptions=dimension_descriptions
     )
+
+
+# ============ Question Bank Routes ============
+
+@app.route('/question-bank')
+def question_bank():
+    """面试真题库主页."""
+    from services.question_bank_service import get_all_categories, get_question_statistics
+
+    school_type = request.args.get('school_type', '')
+    categories = get_all_categories()
+    stats = get_question_statistics()
+
+    selected_categories = []
+
+    return render_template(
+        'question-bank.html',
+        school_type=school_type,
+        categories=categories,
+        stats=stats,
+        selected_categories=selected_categories,
+        questions=None
+    )
+
+
+@app.route('/question-bank/practice')
+def question_bank_practice():
+    """真题练习页面."""
+    from services.question_bank_service import get_random_questions, get_all_categories
+
+    school_type = request.args.get('school_type', '')
+    categories_str = request.args.get('categories', '')
+    categories = categories_str.split(',') if categories_str else []
+    limit = int(request.args.get('limit', 20))
+
+    all_categories = get_all_categories()
+
+    if categories and len(categories) > 0:
+        questions = get_random_questions(school_type=school_type if school_type else None,
+                                         categories=categories, limit=limit)
+    elif school_type:
+        questions = get_random_questions(school_type=school_type, limit=limit)
+    else:
+        questions = get_random_questions(limit=limit)
+
+    stats = {'total': 3000, 'by_category': all_categories}
+
+    return render_template(
+        'question-bank.html',
+        school_type=school_type,
+        categories=all_categories,
+        stats=stats,
+        selected_categories=categories,
+        questions=questions
+    )
+
+
+@app.route('/api/questions/random', methods=['GET'])
+def api_questions_random():
+    """获取随机题目API."""
+    from services.question_bank_service import get_random_questions
+
+    school_type = request.args.get('school_type', '')
+    categories_str = request.args.get('categories', '')
+    categories = categories_str.split(',') if categories_str else []
+    limit = int(request.args.get('limit', 10))
+
+    questions = get_random_questions(school_type=school_type if school_type else None,
+                                     categories=categories, limit=limit)
+
+    return jsonify({
+        'success': True,
+        'questions': questions
+    })
+
+
+@app.route('/api/questions/statistics')
+def api_questions_statistics():
+    """获取题目统计API."""
+    from services.question_bank_service import get_question_statistics
+
+    stats = get_question_statistics()
+
+    return jsonify({
+        'success': True,
+        'statistics': stats
+    })
 
 
 # ============ Mock Interview API ============
