@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide']
 
 
 def login_required(f):
@@ -1958,6 +1958,29 @@ def api_mark_wrong():
     result = mark_wrong(user_id, question_id)
 
     return jsonify({'success': result})
+
+
+# ============ Interview Guide Routes ============
+
+@app.route('/interview-guide')
+def interview_guide():
+    """面试指南页面"""
+    from services.interview_guide_service import (
+        get_etiquette_guide,
+        get_all_school_strategies,
+        get_parent_guide
+    )
+
+    etiquette = get_etiquette_guide()
+    school_strategies = get_all_school_strategies()
+    parent_guide = get_parent_guide()
+
+    return render_template(
+        'interview-guide.html',
+        etiquette=etiquette,
+        school_strategies=school_strategies,
+        parent_guide=parent_guide
+    )
 
 
 # ============ Mock Interview API ============

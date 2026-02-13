@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试指南 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .banner {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .banner a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner h1 {
+            font-size: 20px;
+            color: #333;
+            margin-left: 12px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .hero-icon span {
+            font-size: 40px;
+            color: white;
+        }
+
+        .hero h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Guide Cards */
+        .guide-section {
+            margin-bottom: 20px;
+        }
+
+        .guide-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .guide-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .guide-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .guide-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .guide-icon.etiquette { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .guide-icon.school { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .guide-icon.parent { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+
+        .guide-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .guide-desc {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Detail Sections */
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title span {
+            color: #11998e;
+        }
+
+        .section-item {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .item-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-content {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            padding-left: 24px;
+        }
+
+        /* School Strategy Cards */
+        .school-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .school-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .school-option:hover {
+            border-color: #11998e;
+            transform: translateY(-2px);
+        }
+
+        .school-option.selected {
+            border-color: #11998e;
+            background: rgba(17, 153, 142, 0.1);
+        }
+
+        .school-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .school-examples {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Strategy Detail */
+        .strategy-detail {
+            margin-top: 20px;
+        }
+
+        .strategy-section {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .strategy-section h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .strategy-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .strategy-section li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .strategy-section li:last-child {
+            border-bottom: none;
+        }
+
+        .strategy-section li::before {
+            content: "✓";
+            color: #11998e;
+            font-weight: bold;
+        }
+
+        .questions-list {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .questions-list li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #ddd;
+            font-size: 14px;
+        }
+
+        .questions-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .bottom-nav a {
+            text-decoration: none;
+            color: #999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .bottom-nav a.active {
+            color: #11998e;
+        }
+
+        .bottom-nav span.material-symbols-outlined {
+            font-size: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .school-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1>面试指南</h1>
+    </div>
+
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-icon">
+                <span class="material-symbols-outlined">menu_book</span>
+            </div>
+            <h2>面试攻略大全</h2>
+            <p>从礼仪到学校攻略，从家长准备到面试技巧，全面提升面试成功率</p>
+        </div>
+
+        <!-- Guide Cards -->
+        <div class="guide-section">
+            <div class="guide-card" onclick="showEtiquette()">
+                <div class="guide-card-header">
+                    <div class="guide-icon etiquette">
+                        <span class="material-symbols-outlined" style="color: white;">person</span>
+                    </div>
+                    <div>
+                        <div class="guide-title">面试礼仪大全</div>
+                        <div class="guide-desc">服装、礼貌、行为举止全面指南</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-card" onclick="showSchoolStrategy()">
+                <div class="guide-card-header">
+                    <div class="guide-icon school">
+                        <span class="material-symbols-outlined" style="color: white;">school</span>
+                    </div>
+                    <div>
+                        <div class="guide-title">学校类型攻略</div>
+                        <div class="guide-desc">针对不同类型学校的面试技巧</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-card" onclick="showParentGuide()">
+                <div class="guide-card-header">
+                    <div class="guide-icon parent">
+                        <span class="material-symbols-outlined" style="color: white;">family_restroom</span>
+                    </div>
+                    <div>
+                        <div class="guide-title">家长准备指南</div>
+                        <div class="guide-desc">家长必知的面试准备要点</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Etiquette Section -->
+        <div id="etiquetteSection" style="display: none;">
+            <div class="section-card">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">person</span>
+                    面试礼仪大全
+                </h3>
+                {% for section in etiquette.sections %}
+                <div class="section-item">
+                    <div class="item-title">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: #667eea;">{{ section.icon }}</span>
+                        {{ section.title }}
+                    </div>
+                    {% for item in section.tips %}
+                    <div class="item-content">
+                        <strong>{{ item.title }}:</strong> {{ item.content }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- School Strategy Section -->
+        <div id="schoolStrategySection" style="display: none;">
+            <div class="section-card">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">school</span>
+                    选择学校类型
+                </h3>
+                <div class="school-grid">
+                    {% for key, strategy in school_strategies.items() %}
+                    <div class="school-option {% if loop.first %}selected{% endif %}" onclick="selectSchool('{{ key }}', this)">
+                        <div class="school-name">{{ strategy.name }}</div>
+                        <div class="school-examples">{{ strategy.examples }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="strategyDetail" class="strategy-detail">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Parent Guide Section -->
+        <div id="parentGuideSection" style="display: none;">
+            <div class="section-card">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">family_restroom</span>
+                    家长面试准备指南
+                </h3>
+                {% for section in parent_guide.sections %}
+                <div class="section-item">
+                    <div class="item-title">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: #11998e;">{{ section.icon }}</span>
+                        {{ section.title }}
+                    </div>
+                    {% for item in section.tips %}
+                    <div class="item-content" style="margin-bottom: 8px;">
+                        <strong>{{ item.title }}:</strong> {{ item.content }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>首页</span>
+        </a>
+        <a href="/question-bank">
+            <span class="material-symbols-outlined">quiz</span>
+            <span>真题库</span>
+        </a>
+        <a href="/practice">
+            <span class="material-symbols-outlined">fitness_center</span>
+            <span>练习</span>
+        </a>
+        <a href="/interview-guide" class="active">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span>指南</span>
+        </a>
+    </nav>
+
+    <script>
+        const schoolData = {{ school_strategies | tojson }};
+
+        function hideAllSections() {
+            document.getElementById('etiquetteSection').style.display = 'none';
+            document.getElementById('schoolStrategySection').style.display = 'none';
+            document.getElementById('parentGuideSection').style.display = 'none';
+        }
+
+        function showEtiquette() {
+            hideAllSections();
+            document.getElementById('etiquetteSection').style.display = 'block';
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+        }
+
+        function showSchoolStrategy() {
+            hideAllSections();
+            document.getElementById('schoolStrategySection').style.display = 'block';
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+            // Show first school by default
+            if (document.querySelector('.school-option.selected')) {
+                selectSchool('academic', document.querySelector('.school-option.selected'));
+            }
+        }
+
+        function showParentGuide() {
+            hideAllSections();
+            document.getElementById('parentGuideSection').style.display = 'block';
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+        }
+
+        function selectSchool(type, element) {
+            // Update selected state
+            document.querySelectorAll('.school-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+
+            // Show strategy detail
+            const strategy = schoolData[type];
+            const detailHtml = `
+                <div class="strategy-section">
+                    <h4><span class="material-symbols-outlined">lightbulb</span> 学校特点</h4>
+                    <ul>
+                        ${strategy.characteristics.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="strategy-section">
+                    <h4><span class="material-symbols-outlined">tips_and_updates</span> 面试技巧</h4>
+                    <ul>
+                        ${strategy.tips.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="strategy-section">
+                    <h4><span class="material-symbols-outlined">quiz</span> 常见问题</h4>
+                    <ul class="questions-list">
+                        ${strategy.common_questions.map(q => `<li>${q}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            document.getElementById('strategyDetail').innerHTML = detailHtml;
+        }
+    </script>
+</body>
+</html>
