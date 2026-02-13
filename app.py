@@ -503,7 +503,13 @@ def child_profile_step2():
     selected_interests = session.get('child_interests', [])
 
     if request.method == 'POST':
-        selected_interests = request.form.getlist('interests')
+        # Support both getlist (multiple values) and comma-separated string
+        interests_value = request.form.get('interests', '')
+        if interests_value:
+            # Handle comma-separated string
+            selected_interests = [i.strip() for i in interests_value.split(',') if i.strip()]
+        else:
+            selected_interests = request.form.getlist('interests')
 
         db = get_db_functions()
         if db and profile_id:
