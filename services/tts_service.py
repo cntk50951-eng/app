@@ -17,7 +17,7 @@ import requests
 # ============ 配置 ============
 
 MINIMAX_API_KEY = os.getenv('MINIMAX_API_KEY', '')
-MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat/v1')
+MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat')
 
 # Cloudflare R2 配置
 R2_ACCOUNT_ID = os.getenv('R2_ACCOUNT_ID', '')
@@ -92,62 +92,112 @@ def upload_to_r2(audio_data, content_type='audio/mp3'):
 
 # ============ MiniMax TTS API ============
 
-def call_tts_api(text, voice='Canto-Female-1', speed=0.9):
+def call_tts_api(text, voice='male-qn-qingse', speed=1.0):
     """
-    調用 MiniMax TTS API.
-    
+    調用 MiniMax TTS API (異步版本).
+
     Args:
         text: 要轉換的文字
-        voice: 語音名稱
+        voice: 語音名稱 (male-qn-qingse, female-shaonv 等)
         speed: 播放速度 (0.5-2.0)
-    
+
     Returns:
         bytes: 音頻數據 或 None
     """
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API key not configured")
         return None
-    
+
     try:
         headers = {
             'Authorization': f'Bearer {MINIMAX_API_KEY}',
             'Content-Type': 'application/json'
         }
-        
+
+        # 使用異步 TTS API
         payload = {
-            "model": "speech-01",
-            "input": text,
-            "voice": voice,
-            "speed": speed,
-            "stream": False
+            "model": "speech-2.6-hd",
+            "text": text,
+            "voice_setting": {
+                "voice_id": voice,
+                "speed": speed
+            },
+            "audio_setting": {
+                "sample_rate": 32000,
+                "bitrate": 128000,
+                "format": "mp3",
+                "channel": 1
+            }
         }
-        
+
+        # 創建異步任務
         response = requests.post(
-            f"{MINIMAX_BASE_URL}/audio/speech",
+            f"{MINIMAX_BASE_URL}/v1/t2a_async_v2",
             json=payload,
             headers=headers,
-            timeout=60
+            timeout=30
         )
-        
-        if response.status_code == 200:
-            return response.content
-        else:
+
+        if response.status_code != 200:
             print(f"❌ TTS API error: {response.status_code} - {response.text[:200]}")
             return None
-            
+
+        result = response.json()
+        file_id = result.get('file_id')
+
+        if not file_id:
+            print(f"⚠️ TTS API 未返回 file_id: {result}")
+            return None
+
+        # 輪詢等待音頻生成完成
+        max_retries = 10
+        for i in range(max_retries):
+            time.sleep(2)
+
+            file_resp = requests.get(
+                f"{MINIMAX_BASE_URL}/v1/files/retrieve?file_id={file_id}",
+                headers=headers,
+                timeout=30
+            )
+
+            if file_resp.status_code == 200:
+                file_result = file_resp.json()
+                file_info = file_result.get('file')
+
+                if file_info:
+                    download_url = file_info.get('download_url')
+                    if download_url:
+                        # 下載音頻
+                        audio_resp = requests.get(download_url, timeout=60)
+                        if audio_resp.status_code == 200:
+                            print(f"✅ TTS 成功生成音頻，大小: {len(audio_resp.content)} bytes")
+                            return audio_resp.content
+                        else:
+                            print(f"❌ 下載音頻失敗: {audio_resp.status_code}")
+                else:
+                    print(f"⚠️ 文件尚未準備好: {file_result}")
+
+        print(f"❌ TTS 輪詢超時")
+        return None
+
     except Exception as e:
         print(f"❌ TTS API exception: {e}")
         return None
 
 
-def generate_cantonese_audio(text, speed=0.9):
+def generate_cantonese_audio(text, speed=1.0):
     """生成粵語語音."""
     return call_tts_api(text, voice='Canto-Female-1', speed=speed)
 
 
-def generate_mandarin_audio(text, speed=0.9):
+def generate_mandarin_audio(text, speed=1.0):
     """生成普通話語音."""
     return call_tts_api(text, voice='Mandarin-Female-1', speed=speed)
+
+
+def generate_english_audio(text, speed=1.0):
+    """生成英語語音."""
+    return call_tts_api(text, voice='English_expressive_narrator', speed=speed)
 
 
 # ============ 主生成函數 ============

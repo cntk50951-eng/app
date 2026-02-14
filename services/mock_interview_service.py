@@ -130,6 +130,68 @@ QUESTION_TEMPLATES = {
 }
 
 
+# ============ 英文问题模板 ============
+
+ENGLISH_QUESTION_TEMPLATES = {
+    'self_introduction': [
+        'Hello! What is your name?',
+        'How old are you?',
+        'Which kindergarten do you go to?',
+        'What do you like most about your kindergarten?',
+        'Which primary school would you like to go to when you grow up?',
+    ],
+    'family': [
+        'How many people are there in your family?',
+        'Who is your favorite family member? Why?',
+        'What do your parents do for work?',
+        'What do you like to do with your parents?',
+        'How old are your grandparents?',
+    ],
+    'interests': [
+        'What do you like to do in your free time?',
+        'What games do you like to play?',
+        'What extracurricular activities do you take?',
+        'What cartoons do you like to watch?',
+        'If you could learn something new, what would it be?',
+    ],
+    'school': [
+        'What do you like most about your school?',
+        'Which grade are you in? (K1, K2, K3)',
+        'Who is your best friend at school?',
+        'What has your teacher taught you?',
+        'Do you like studying? Why or why not?',
+    ],
+    'daily_life': [
+        'What did you have for breakfast today?',
+        'Did you sleep well last night?',
+        'What is your favorite food?',
+        'What time do you usually wake up?',
+        'Which season do you like best? Why?',
+    ],
+    'future': [
+        'What do you want to be when you grow up?',
+        'If you could make one wish, what would it be?',
+        'Do you know what an interview is?',
+        'What are you looking forward to in primary school?',
+        'How do you think you should prepare for your interview?',
+    ],
+    'problem_solving': [
+        'If you have a problem with a classmate, what would you do?',
+        'If you feel sad, what do you do?',
+        'If you are late for something, what would you do?',
+        'If you do not understand your homework, what would you do?',
+        'If an adult tells you something not true, what would you do?',
+    ],
+    'values': [
+        'What does sharing mean to you?',
+        'Do you like helping others? Why?',
+        'Have you ever done something wrong? How did you fix it?',
+        'What do you think a good child should do?',
+        'Who are you most grateful for? Why?',
+    ]
+}
+
+
 # ============ MiniMax API 调用 ============
 
 def call_minimax_api(endpoint, payload):
@@ -217,16 +279,39 @@ def generate_interview_questions(profile, school_type, num_questions=5):
 
         # 从模板中随机选择一个问题
         template_questions = QUESTION_TEMPLATES.get(category, [])
+        english_template_questions = ENGLISH_QUESTION_TEMPLATES.get(category, [])
+
         if template_questions:
             question = random.choice(template_questions)
+            # 获取对应索引的英文问题（如果英文模板足够长）
+            eng_idx = template_questions.index(question) if question in template_questions else random.randint(0, len(english_template_questions) - 1)
+            english_question = english_template_questions[eng_idx] if eng_idx < len(english_template_questions) else english_template_questions[0] if english_template_questions else "Tell me more about that."
+
             questions.append({
                 'id': i + 1,
                 'category': category,
                 'question': question,
-                'category_zh': get_category_name(category)
+                'question_en': english_question,
+                'category_zh': get_category_name(category),
+                'category_en': get_category_name_en(category)
             })
 
     return questions
+
+
+def get_category_name_en(category_id):
+    """获取类别英文名称."""
+    names = {
+        'self_introduction': 'Self Introduction',
+        'family': 'Family',
+        'interests': 'Interests & Hobbies',
+        'school': 'School Life',
+        'daily_life': 'Daily Life',
+        'future': 'Future Plans',
+        'problem_solving': 'Problem Solving',
+        'values': 'Values & Morals'
+    }
+    return names.get(category_id, category_id)
 
 
 def get_category_name(category_id):
@@ -381,7 +466,7 @@ def generate_suggestions(question, answer, school_config):
 
 
 def generate_mock_interview_questions(profile, school_type, num_questions=5):
-    """生成模拟面试问题（不使用 AI API）。"""
+    """生成模拟面试问题（支持中英文）。"""
     # 获取学校类型配置
     school_config = SCHOOL_TYPES.get(school_type, SCHOOL_TYPES['holistic'])
 
@@ -401,12 +486,14 @@ def generate_mock_interview_questions(profile, school_type, num_questions=5):
     # 选择问题类别
     selected_categories = random.choices(all_categories, weights=weights, k=num_questions)
 
-    # 生成问题列表
+    # 生成问题列表（包含中英文）
     questions = []
     used_questions = set()
 
     for i, category in enumerate(selected_categories):
         template_questions = QUESTION_TEMPLATES.get(category, [])
+        english_template_questions = ENGLISH_QUESTION_TEMPLATES.get(category, [])
+
         # 随机选择未使用的问题
         available = [q for q in template_questions if q not in used_questions]
         if available:
@@ -415,11 +502,20 @@ def generate_mock_interview_questions(profile, school_type, num_questions=5):
         else:
             question = random.choice(template_questions)
 
+        # 获取对应索引的英文问题
+        try:
+            eng_idx = template_questions.index(question)
+            english_question = english_template_questions[eng_idx] if eng_idx < len(english_template_questions) else random.choice(english_template_questions) if english_template_questions else "Tell me more about that."
+        except (ValueError, IndexError):
+            english_question = random.choice(english_template_questions) if english_template_questions else "Tell me more about that."
+
         questions.append({
             'id': i + 1,
             'category': category,
             'question': question,
-            'category_zh': get_category_name(category)
+            'question_en': english_question,
+            'category_zh': get_category_name(category),
+            'category_en': get_category_name_en(category)
         })
 
     return questions
@@ -427,32 +523,76 @@ def generate_mock_interview_questions(profile, school_type, num_questions=5):
 
 # ============ TTS 集成 ============
 
-def generate_question_audio(question_text):
+def generate_question_audio(question_text, language='cantonese'):
     """
-    生成问题语音。
+    生成问题语音（使用真实 MiniMax TTS API）。
 
     Args:
         question_text: 问题文字
+        language: 语言类型 ('cantonese', 'mandarin', 'english')
 
     Returns:
-        str: 音频 URL
+        str: 音频 URL 或 None
     """
     try:
-        from services.tts_service import generate_cantonese_audio, upload_to_r2
+        from services.tts_service import (
+            generate_cantonese_audio,
+            generate_mandarin_audio,
+            generate_english_audio,
+            upload_to_r2
+        )
         import uuid
 
-        audio_data = generate_cantonese_audio(question_text, speed=0.9)
+        # 根据语言选择生成函数
+        if language == 'english':
+            audio_data = generate_english_audio(question_text, speed=1.0)
+        elif language == 'mandarin':
+            audio_data = generate_mandarin_audio(question_text, speed=1.0)
+        else:
+            audio_data = generate_cantonese_audio(question_text, speed=1.0)
 
         if audio_data:
             url = upload_to_r2(audio_data)
-            return url
+            if url:
+                print(f"✅ Generated {language} audio: {url[:50]}...")
+                return url
+            else:
+                print(f"❌ Failed to upload {language} audio")
+                return None
         else:
-            # 返回 mock URL
-            return f"https://mock-audio.example.com/interview/{uuid.uuid4().hex[:8]}.mp3"
+            print(f"❌ Failed to generate {language} audio - using base64 fallback")
+            # 返回 None，让前端处理
+            return None
 
     except Exception as e:
         print(f"❌ Error generating question audio: {e}")
         return None
+
+
+def generate_bilingual_audio(question_text, question_en):
+    """
+    生成中英文双语问题语音。
+
+    Args:
+        question_text: 粤语问题文字
+        question_en: 英文问题文字
+
+    Returns:
+        dict: {'cantonese_url': str, 'english_url': str}
+    """
+    result = {
+        'cantonese_url': None,
+        'english_url': None
+    }
+
+    # 生成粤语语音
+    result['cantonese_url'] = generate_question_audio(question_text, 'cantonese')
+
+    # 生成英文语音
+    # 生成英文语音
+    result['english_url'] = generate_question_audio(question_en, 'english')
+
+    return result
 
 
 # ============ 面试记录存储 ============

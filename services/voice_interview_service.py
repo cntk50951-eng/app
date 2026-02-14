@@ -21,7 +21,7 @@ import requests
 # ============ 配置 ============
 
 MINIMAX_API_KEY = os.getenv('MINIMAX_API_KEY', '')
-MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat/v1')
+MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat')
 
 
 # ============ 语音识别 (ASR) ============
@@ -53,7 +53,7 @@ def call_asr_api(audio_data, language=' Cantonese'):
             'language': (None, language),
         }
 
-        url = f"{MINIMAX_BASE_URL}/audio/asr"
+        url = f"{MINIMAX_BASE_URL}/v1/audio/asr"
 
         print(f"📡 Calling MiniMax ASR API...")
 
@@ -133,7 +133,7 @@ def call_minimax_chat(system_prompt, user_prompt):
             "max_tokens": 150
         }
 
-        url = f"{MINIMAX_BASE_URL}/text/chatcompletion_v2"
+        url = f"{MINIMAX_BASE_URL}/v1/text/chatcompletion_v2"
 
         response = requests.post(
             url,
@@ -224,17 +224,17 @@ def generate_voice_follow_up(base_question, previous_answer, profile, question_h
 
 # ============ TTS 语音生成 ============
 
-def generate_voice_audio(text, voice='Canto-Female-1', speed=0.9):
+def generate_voice_audio(text, voice='male-qn-qingse', speed=1.0):
     """
-    生成语音面试的 TTS 音频。
+    生成语音面试的 TTS 音频（使用 MiniMax 异步 TTS API）。
 
     Args:
         text: 要转换的文字
-        voice: 语音名称
-        speed: 播放速度
+        voice: 语音名称 (male-qn-qingse, female-shaonv 等)
+        speed: 播放速度 (0.5-2.0)
 
     Returns:
-        dict: {'audio_url': '音频URL', 'audio_data': bytes}
+        dict: {'audio_url': '音频URL', 'audio_data': base64编码的音频数据}
     """
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API Key not configured")
@@ -246,37 +246,76 @@ def generate_voice_audio(text, voice='Canto-Female-1', speed=0.9):
             'Content-Type': 'application/json'
         }
 
+        # 使用异步 TTS API
         payload = {
-            "model": "speech-01",
-            "input": text,
-            "voice": voice,
-            "speed": speed,
-            "stream": False
+            "model": "speech-2.6-hd",
+            "text": text,
+            "voice_setting": {
+                "voice_id": voice,
+                "speed": speed
+            },
+            "audio_setting": {
+                "sample_rate": 32000,
+                "bitrate": 128000,
+                "format": "mp3",
+                "channel": 1
+            }
         }
 
-        url = f"{MINIMAX_BASE_URL}/audio/speech"
+        url = f"{MINIMAX_BASE_URL}/v1/t2a_async_v2"
 
-        print(f"📡 Calling MiniMax TTS API...")
+        print(f"📡 Creating MiniMax TTS async task with voice: {voice}...")
 
         response = requests.post(
             url,
             json=payload,
             headers=headers,
-            timeout=60
+            timeout=30
         )
 
-        if response.status_code == 200:
-            audio_data = response.content
-            # 上传到 R2
-            audio_url = upload_audio_to_storage(audio_data)
-
-            return {
-                'audio_url': audio_url,
-                'audio_data': base64.b64encode(audio_data).decode('utf-8') if audio_url is None else None
-            }
-        else:
-            print(f"❌ TTS API error: {response.status_code}")
+        if response.status_code != 200:
+            print(f"❌ TTS API error: {response.status_code} - {response.text[:200]}")
             return {'audio_url': None, 'audio_data': None}
+
+        result = response.json()
+        file_id = result.get('file_id')
+
+        if not file_id:
+            print(f"⚠️ TTS API 未返回 file_id: {result}")
+            return {'audio_url': None, 'audio_data': None}
+
+        # 轮询等待音频生成完成
+        max_retries = 10
+        for i in range(max_retries):
+            time.sleep(2)
+
+            file_resp = requests.get(
+                f"{MINIMAX_BASE_URL}/v1/files/retrieve?file_id={file_id}",
+                headers=headers,
+                timeout=30
+            )
+
+            if file_resp.status_code == 200:
+                file_result = file_resp.json()
+                download_url = file_result.get('file', {}).get('download_url')
+
+                if download_url:
+                    # 下载音频
+                    audio_resp = requests.get(download_url, timeout=60)
+                    if audio_resp.status_code == 200:
+                        audio_data = audio_resp.content
+                        print(f"✅ TTS 成功生成音频，大小: {len(audio_data)} bytes")
+
+                        # 上传到 R2
+                        audio_url = upload_audio_to_storage(audio_data)
+
+                        return {
+                            'audio_url': audio_url,
+                            'audio_data': base64.b64encode(audio_data).decode('utf-8') if audio_url is None else None
+                        }
+
+        print(f"❌ TTS 轮询超时")
+        return {'audio_url': None, 'audio_data': None}
 
     except Exception as e:
         print(f"❌ TTS API exception: {e}")
