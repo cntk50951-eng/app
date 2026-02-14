@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>智能学习路径 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-50: #EEF2FF;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f9fafb;
+            min-height: 100vh;
+        }
+
+        .page-container {
+            min-height: 100vh;
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            position: relative;
+        }
+
+        .header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%);
+            color: white;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-subtitle {
+            opacity: 0.9;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .content {
+            padding: 1.5rem;
+            padding-bottom: 5rem;
+        }
+
+        /* School Type Selection */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 1rem;
+        }
+
+        .school-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .school-type-card {
+            padding: 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .school-type-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-type-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-type-card h4 {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #111827;
+        }
+
+        .school-type-card p {
+            margin: 0.25rem 0 0;
+            font-size: 0.75rem;
+            color: #6B7280;
+        }
+
+        /* Diagnostic Test Button */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        /* Learning Map */
+        .learning-map {
+            position: relative;
+        }
+
+        .phase {
+            margin-bottom: 1.5rem;
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .phase-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .phase-info {
+            flex: 1;
+        }
+
+        .phase-name {
+            font-weight: 600;
+            color: #111827;
+            font-size: 0.875rem;
+        }
+
+        .phase-desc {
+            font-size: 0.75rem;
+            color: #6B7280;
+        }
+
+        .milestone-list {
+            padding-left: 1.25rem;
+            border-left: 2px solid #E5E7EB;
+        }
+
+        .milestone {
+            position: relative;
+            padding: 0.75rem 1rem;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .milestone::before {
+            content: '';
+            position: absolute;
+            left: -1.625rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background: #D1D5DB;
+            border: 2px solid white;
+        }
+
+        .milestone.completed::before {
+            background: var(--success);
+        }
+
+        .milestone.active::before {
+            background: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-50);
+        }
+
+        .milestone.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .milestone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .milestone-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #111827;
+        }
+
+        .milestone-status {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 500;
+        }
+
+        .milestone-status.completed {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .milestone-status.active {
+            background: var(--primary-50);
+            color: var(--primary);
+        }
+
+        .milestone-status.locked {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .milestone-desc {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-top: 0.25rem;
+        }
+
+        .milestone-skills {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .skill-tag {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            background: #F3F4F6;
+            border-radius: 0.25rem;
+            color: #4B5563;
+        }
+
+        /* Progress Card */
+        .progress-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .progress-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            height: 0.5rem;
+            background: #E5E7EB;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #8B5CF6);
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        /* Phase Progress */
+        .phase-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .phase-stat {
+            text-align: center;
+        }
+
+        .phase-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .phase-stat-label {
+            font-size: 0.625rem;
+            color: #6B7280;
+            text-transform: uppercase;
+        }
+
+        /* Start Diagnostic Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6B7280;
+        }
+
+        .test-question {
+            margin-bottom: 1.5rem;
+        }
+
+        .test-question h4 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        .test-question p {
+            font-size: 0.875rem;
+            color: #4B5563;
+            margin: 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            color: #111827;
+            margin: 0 0 0.5rem;
+        }
+
+        .empty-state p {
+            font-size: 0.875rem;
+            color: #6B7280;
+            margin: 0;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid #E5E7EB;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1F2937;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 200;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .school-types {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <a href="{{ url_for('dashboard') }}" class="back-btn">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    返回
+                </a>
+            </div>
+            <h1>智能学习路径</h1>
+            <p class="header-subtitle">基于目标学校类型，定制个性化学习方案</p>
+        </div>
+
+        <div class="content">
+            {% if not logged_in %}
+            <!-- Not logged in -->
+            <div class="empty-state">
+                <div class="empty-state-icon">🔐</div>
+                <h3>请先登录</h3>
+                <p>登录后可生成个性化学习路径</p>
+                <a href="{{ url_for('login') }}" class="btn btn-primary" style="margin-top: 1rem; text-decoration: none; display: inline-block;">
+                    立即登录
+                </a>
+            </div>
+            {% elif not progress_data or not progress_data.has_path %}
+            <!-- No path generated yet -->
+            <div class="section-title">选择目标学校类型</div>
+            <div class="school-types">
+                {% for st in school_types %}
+                <div class="school-type-card" data-school-type="{{ st.id }}">
+                    <h4>{{ st.name }}</h4>
+                    <p>{{ st.name_en }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button id="startDiagnosticBtn" class="btn btn-primary" disabled>
+                <span class="material-symbols-outlined">play_arrow</span>
+                开始能力诊断
+            </button>
+
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #6B7280;">
+                选择学校类型后开始诊断，约需5-10分钟
+            </p>
+
+            {% else %}
+            <!-- Has learning path -->
+            <!-- Progress Overview -->
+            <div class="progress-card">
+                <div class="progress-header">
+                    <span class="progress-label">总体进度</span>
+                    <span class="progress-value">{{ progress_data.overall_percent }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ progress_data.overall_percent }}%"></div>
+                </div>
+                <div class="phase-progress">
+                    <div class="phase-stat">
+                        <div class="phase-stat-value">{{ progress_data.total_completed }}</div>
+                        <div class="phase-stat-label">已完成</div>
+                    </div>
+                    <div class="phase-stat">
+                        <div class="phase-stat-value">{{ progress_data.total_milestones - progress_data.total_completed }}</div>
+                        <div class="phase-stat-label">进行中</div>
+                    </div>
+                    <div class="phase-stat">
+                        <div class="phase-stat-value">{{ progress_data.total_milestones }}</div>
+                        <div class="phase-stat-label">总里程碑</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Type Badge -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <span style="font-size: 0.75rem; color: #6B7280;">目标学校:</span>
+                <span style="background: var(--primary-50); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500;">
+                    {{ progress_data.school_type_name }}
+                </span>
+            </div>
+
+            <!-- Learning Map -->
+            <div class="section-title">学习地图</div>
+            <div class="learning-map" id="learningMap">
+                {% for phase in progress_data.phase_progress %}
+                <div class="phase">
+                    <div class="phase-header">
+                        <div class="phase-icon" style="background: {{ phases[phase.phase_id].color }}20;">
+                            {{ phases[phase.phase_id].icon }}
+                        </div>
+                        <div class="phase-info">
+                            <div class="phase-name">阶段 {{ phase.phase_id }}: {{ phase.phase_name }}</div>
+                            <div class="phase-desc">{{ phase.completed }}/{{ phase.total }} 里程碑完成</div>
+                        </div>
+                        <div style="font-size: 0.875rem; font-weight: 600; color: {{ phases[phase.phase_id].color }};">
+                            {{ phase.progress_percent }}%
+                        </div>
+                    </div>
+                    <div class="milestone-list">
+                        {% for milestone in path_data.phases[phase.phase_id - 1].milestones %}
+                        <div class="milestone {{ milestone.status }}" data-milestone-id="{{ milestone.id }}">
+                            <div class="milestone-header">
+                                <span class="milestone-name">{{ milestone.name }}</span>
+                                <span class="milestone-status {{ milestone.status }}">
+                                    {% if milestone.status == 'completed' %}已完成{% elif milestone.status == 'active' %}进行中{% else %}待开始{% endif %}
+                                </span>
+                            </div>
+                            <p class="milestone-desc">{{ milestone.description }}</p>
+                            <div class="milestone-skills">
+                                {% for skill in milestone.skills %}
+                                <span class="skill-tag">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group">
+                <button id="viewMapBtn" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">map</span>
+                    查看大图
+                </button>
+                <button id="optimizeBtn" class="btn btn-primary">
+                    <span class="material-symbols-outlined">auto_fix_high</span>
+                    优化路径
+                </button>
+            </div>
+
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Diagnostic Test Modal -->
+    <div class="modal-overlay" id="diagnosticModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">能力诊断测试</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div id="testContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="btn-group" id="modalActions" style="display: none;">
+                <button class="btn btn-secondary" id="skipTest">跳过诊断</button>
+                <button class="btn btn-primary" id="generatePath">生成路径</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Phase data from server
+        const PHASES = {{ phases|tojson }};
+
+        // Selected school type
+        let selectedSchoolType = null;
+
+        // DOM Elements
+        const schoolTypeCards = document.querySelectorAll('.school-type-card');
+        const startDiagnosticBtn = document.getElementById('startDiagnosticBtn');
+        const diagnosticModal = document.getElementById('diagnosticModal');
+        const closeModal = document.getElementById('closeModal');
+        const testContent = document.getElementById('testContent');
+        const modalActions = document.getElementById('modalActions');
+        const skipTest = document.getElementById('skipTest');
+        const generatePath = document.getElementById('generatePath');
+        const toast = document.getElementById('toast');
+
+        // School type selection
+        schoolTypeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                schoolTypeCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedSchoolType = card.dataset.schoolType;
+                startDiagnosticBtn.disabled = false;
+            });
+        });
+
+        // Start diagnostic test
+        if (startDiagnosticBtn) {
+            startDiagnosticBtn.addEventListener('click', () => {
+                if (!selectedSchoolType) {
+                    showToast('请先选择目标学校类型');
+                    return;
+                }
+                openDiagnosticModal();
+            });
+        }
+
+        // Open modal
+        function openDiagnosticModal() {
+            diagnosticModal.classList.add('active');
+            loadDiagnosticTest();
+        }
+
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            diagnosticModal.classList.remove('active');
+        });
+
+        skipTest.addEventListener('click', () => {
+            generateLearningPath();
+        });
+
+        generatePath.addEventListener('click', () => {
+            generateLearningPath();
+        });
+
+        // Load diagnostic test
+        async function loadDiagnosticTest() {
+            testContent.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            modalActions.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/learning-path/diagnostic-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        school_type: selectedSchoolType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    renderTestQuestions(data.test.questions);
+                } else {
+                    testContent.innerHTML = '<p>加载测试失败，请重试</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                testContent.innerHTML = '<p>加载测试失败，请重试</p>';
+            }
+        }
+
+        // Render test questions
+        function renderTestQuestions(questions) {
+            let html = '';
+            questions.forEach((q, index) => {
+                html += `
+                    <div class="test-question">
+                        <h4>问题 ${index + 1}</h4>
+                        <p>${q.question}</p>
+                    </div>
+                `;
+            });
+
+            html += `
+                <p style="font-size: 0.75rem; color: #6B7280; margin-top: 1rem;">
+                    家长可根据孩子表现评估能力，也可直接生成路径（系统会根据孩子画像自动分析能力）
+                </p>
+            `;
+
+            testContent.innerHTML = html;
+            modalActions.style.display = 'flex';
+        }
+
+        // Generate learning path
+        async function generateLearningPath() {
+            try {
+                const response = await fetch('/api/learning-path/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        school_type: selectedSchoolType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    diagnosticModal.classList.remove('active');
+                    showToast('学习路径生成成功！');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast('生成失败，请重试');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('生成失败，请重试');
+            }
+        }
+
+        // Optimize path
+        const optimizeBtn = document.getElementById('optimizeBtn');
+        if (optimizeBtn) {
+            optimizeBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/learning-path/optimize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast('路径优化完成！');
+                    } else {
+                        showToast('优化失败，请重试');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('优化失败，请重试');
+                }
+            });
+        }
+
+        // Milestone click
+        document.querySelectorAll('.milestone').forEach(milestone => {
+            milestone.addEventListener('click', async () => {
+                const milestoneId = milestone.dataset.milestoneId;
+                const status = milestone.classList.contains('active') || milestone.classList.contains('completed');
+
+                if (!status) {
+                    showToast('请按顺序完成里程碑');
+                    return;
+                }
+
+                // Mark as completed
+                try {
+                    const response = await fetch('/api/learning-path/milestone', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            milestone_id: milestoneId,
+                            status: 'completed'
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast('里程碑已完成！');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+
+        // Toast function
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

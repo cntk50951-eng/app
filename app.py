@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path']
 
 
 def login_required(f):
@@ -2563,6 +2563,283 @@ def api_voice_history():
 
     except Exception as e:
         print(f"Error getting voice history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Learning Path Routes ============
+
+@app.route('/learning-path')
+def learning_path_page():
+    """智能学习路径规划页面"""
+    from services.learning_path_service import get_school_type_info, get_all_phases
+
+    logged_in = 'user_id' in session
+    user_id = session.get('user_id')
+
+    # 获取可用的学校类型
+    school_types = []
+    from services.mock_interview_service import SCHOOL_TYPES
+    for st_id, st_info in SCHOOL_TYPES.items():
+        school_types.append({
+            'id': st_id,
+            'name': st_info.get('name', ''),
+            'name_en': st_info.get('name_en', ''),
+            'description': st_info.get('description', '')
+        })
+
+    # 获取阶段信息
+    phases = get_all_phases()
+
+    # 如果已登录，获取学习路径数据
+    path_data = None
+    progress_data = None
+
+    if logged_in and user_id:
+        try:
+            from services.learning_path_service import get_learning_path, get_progress_data
+            path_data = get_learning_path(user_id)
+            progress_data = get_progress_data(user_id)
+        except Exception as e:
+            print(f"Error loading learning path: {e}")
+
+    return render_template(
+        'learning-path.html',
+        logged_in=logged_in,
+        school_types=school_types,
+        phases=phases,
+        path_data=path_data,
+        progress_data=progress_data
+    )
+
+
+# ============ Learning Path API Endpoints ============
+
+@app.route('/api/learning-path/diagnostic-test', methods=['POST'])
+@login_required
+def api_diagnostic_test():
+    """生成入门测试题目"""
+    user_id = session.get('user_id')
+    data = request.json or {}
+    school_type = data.get('school_type', 'academic')
+
+    try:
+        from services.learning_path_service import generate_diagnostic_test
+
+        result = generate_diagnostic_test(user_id, school_type)
+
+        return jsonify({
+            'success': True,
+            'test': result
+        })
+    except Exception as e:
+        print(f"Error generating diagnostic test: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/assessment', methods=['POST'])
+@login_required
+def api_assessment():
+    """能力评估"""
+    user_id = session.get('user_id')
+    data = request.json or {}
+    answers = data.get('answers', [])
+
+    # 获取用户画像数据
+    profile_data = {
+        'interests': session.get('child_interests', []),
+        'strengths': [],
+        'personality': ''
+    }
+
+    try:
+        from services.learning_path_service import assess_capabilities
+
+        result = assess_capabilities(user_id, answers, profile_data)
+
+        return jsonify({
+            'success': True,
+            'assessment': result
+        })
+    except Exception as e:
+        print(f"Error in assessment: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/generate', methods=['POST'])
+@login_required
+def api_generate_path():
+    """生成学习路径"""
+    user_id = session.get('user_id')
+    data = request.json or {}
+    school_type = data.get('school_type', 'academic')
+    capabilities = data.get('capabilities', {})
+
+    # 如果没有提供能力数据，从画像中获取
+    if not capabilities:
+        try:
+            from services.capability_radar_service import analyze_capabilities
+            profile_data = {
+                'interests': session.get('child_interests', []),
+                'strengths': [],
+                'personality': ''
+            }
+            analysis = analyze_capabilities(profile_data, None, school_type)
+            capabilities = analysis.get('capabilities', {})
+        except Exception as e:
+            print(f"Error getting capabilities: {e}")
+            # 使用默认能力值
+            capabilities = {
+                'communication': 50,
+                'logic': 50,
+                'creativity': 50,
+                'confidence': 50,
+                'eye_contact': 50,
+                'manners': 50
+            }
+
+    try:
+        from services.learning_path_service import generate_learning_path
+
+        path = generate_learning_path(user_id, school_type, capabilities)
+
+        return jsonify({
+            'success': True,
+            'path': path
+        })
+    except Exception as e:
+        print(f"Error generating path: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/map', methods=['GET'])
+@login_required
+def api_learning_map():
+    """获取学习地图"""
+    user_id = session.get('user_id')
+
+    try:
+        from services.learning_path_service import get_learning_map
+
+        map_data = get_learning_map(user_id)
+
+        if not map_data:
+            return jsonify({
+                'success': False,
+                'message': '尚未生成学习路径，请先进行能力诊断'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'map': map_data
+        })
+    except Exception as e:
+        print(f"Error getting learning map: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/progress', methods=['GET'])
+@login_required
+def api_learning_progress():
+    """获取进度数据"""
+    user_id = session.get('user_id')
+
+    try:
+        from services.learning_path_service import get_progress_data
+
+        progress = get_progress_data(user_id)
+
+        return jsonify({
+            'success': True,
+            'progress': progress
+        })
+    except Exception as e:
+        print(f"Error getting progress: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/optimize', methods=['POST'])
+@login_required
+def api_optimize_path():
+    """优化学习路径"""
+    user_id = session.get('user_id')
+    data = request.json or {}
+
+    # 提取练习数据
+    practice_data = {
+        'strong_skills': data.get('strong_skills', []),
+        'weak_skills': data.get('weak_skills', [])
+    }
+
+    try:
+        from services.learning_path_service import optimize_path
+
+        optimized_path = optimize_path(user_id, practice_data)
+
+        if not optimized_path:
+            return jsonify({
+                'success': False,
+                'message': '尚未生成学习路径'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'path': optimized_path
+        })
+    except Exception as e:
+        print(f"Error optimizing path: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/milestone', methods=['POST'])
+@login_required
+def api_update_milestone():
+    """更新里程碑进度"""
+    user_id = session.get('user_id')
+    data = request.json or {}
+
+    milestone_id = data.get('milestone_id')
+    status = data.get('status', 'completed')
+
+    if not milestone_id:
+        return jsonify({'error': 'milestone_id is required'}), 400
+
+    try:
+        from services.learning_path_service import update_milestone_progress
+
+        result = update_milestone_progress(user_id, milestone_id, status)
+
+        if not result:
+            return jsonify({
+                'success': False,
+                'message': '更新失败，学习路径不存在'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'message': '里程碑进度已更新'
+        })
+    except Exception as e:
+        print(f"Error updating milestone: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-path/reset', methods=['POST'])
+@login_required
+def api_reset_path():
+    """重置学习路径"""
+    user_id = session.get('user_id')
+
+    try:
+        from services.learning_path_service import reset_learning_path
+
+        reset_learning_path(user_id)
+
+        return jsonify({
+            'success': True,
+            'message': '学习路径已重置'
+        })
+    except Exception as e:
+        print(f"Error resetting path: {e}")
         return jsonify({'error': str(e)}), 500
 
 
