@@ -589,6 +589,283 @@ def get_latest_report(user_id, report_type):
     return result[0] if result else None
 
 
+# ============ Debrief Session Operations ============
+
+def create_debrief_session(user_id, interview_session_id=None, interview_type='mock', school_type=None):
+    """创建新的复盘会话."""
+    import uuid
+    query = """
+        INSERT INTO debrief_sessions (id, user_id, interview_session_id, interview_type, school_type)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    session_id = str(uuid.uuid4())
+    result = execute_query(query, (session_id, user_id, interview_session_id, interview_type, school_type), fetch=True)
+    return result[0] if result else None
+
+
+def update_debrief_session(session_id, finished_at=None, duration_seconds=None, total_questions=None, overall_score=None, status=None):
+    """更新复盘会话."""
+    updates = []
+    params = []
+
+    if finished_at:
+        updates.append("finished_at = %s")
+        params.append(finished_at)
+    if duration_seconds is not None:
+        updates.append("duration_seconds = %s")
+        params.append(duration_seconds)
+    if total_questions is not None:
+        updates.append("total_questions = %s")
+        params.append(total_questions)
+    if overall_score is not None:
+        updates.append("overall_score = %s")
+        params.append(overall_score)
+    if status:
+        updates.append("status = %s")
+        params.append(status)
+
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+
+    if not updates:
+        return None
+
+    params.append(session_id)
+    query = f"""
+        UPDATE debrief_sessions
+        SET {', '.join(updates)}
+        WHERE id = %s
+        RETURNING *;
+    """
+    result = execute_query(query, params, fetch=True)
+    return result[0] if result else None
+
+
+def get_debrief_session(session_id):
+    """获取单个复盘会话."""
+    query = "SELECT * FROM debrief_sessions WHERE id = %s;"
+    result = execute_query(query, (session_id,), fetch=True)
+    return result[0] if result else None
+
+
+def get_debrief_sessions(user_id, limit=20, status=None):
+    """获取用户的复盘会话列表."""
+    if status:
+        query = """
+            SELECT * FROM debrief_sessions
+            WHERE user_id = %s AND status = %s
+            ORDER BY created_at DESC
+            LIMIT %s;
+        """
+        return execute_query(query, (user_id, status, limit), fetch=True)
+    else:
+        query = """
+            SELECT * FROM debrief_sessions
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s;
+        """
+        return execute_query(query, (user_id, limit), fetch=True)
+
+
+def get_debrief_sessions_in_period(user_id, start_date, end_date):
+    """获取指定时间范围内的复盘会话."""
+    query = """
+        SELECT * FROM debrief_sessions
+        WHERE user_id = %s AND created_at >= %s AND created_at <= %s
+        ORDER BY created_at DESC;
+    """
+    return execute_query(query, (user_id, start_date, end_date), fetch=True)
+
+
+# ============ Voice Analysis Operations ============
+
+def add_voice_analysis(debrief_session_id, question_index, speaking_rate=None, fluency_score=None,
+                      pause_count=None, pause_duration=None, clarity_score=None, sentiment=None,
+                      audio_duration=None):
+    """添加语音分析结果."""
+    import uuid
+    query = """
+        INSERT INTO debrief_voice_analysis
+        (id, debrief_session_id, question_index, speaking_rate_words_per_minute, fluency_score,
+         pause_count, pause_duration_seconds, clarity_score, sentiment, audio_duration_seconds)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    analysis_id = str(uuid.uuid4())
+    result = execute_query(query, (analysis_id, debrief_session_id, question_index, speaking_rate,
+                            fluency_score, pause_count, pause_duration, clarity_score, sentiment,
+                            audio_duration), fetch=True)
+    return result[0] if result else None
+
+
+def get_voice_analyses(debrief_session_id):
+    """获取会话的所有语音分析结果."""
+    query = """
+        SELECT * FROM debrief_voice_analysis
+        WHERE debrief_session_id = %s
+        ORDER BY question_index;
+    """
+    return execute_query(query, (debrief_session_id,), fetch=True)
+
+
+# ============ Content Analysis Operations ============
+
+def add_content_analysis(debrief_session_id, question_index, question, answer, logic_score,
+                        completeness_score, creativity_score, relevance_score, total_score,
+                        feedback, strengths=None, improvements=None):
+    """添加内容分析结果."""
+    import uuid
+    query = """
+        INSERT INTO debrief_content_analysis
+        (id, debrief_session_id, question_index, question, answer, logic_score, completeness_score,
+         creativity_score, relevance_score, total_score, feedback, strengths, improvements)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    analysis_id = str(uuid.uuid4())
+    result = execute_query(query, (analysis_id, debrief_session_id, question_index, question, answer,
+                            logic_score, completeness_score, creativity_score, relevance_score,
+                            total_score, feedback, strengths, improvements), fetch=True)
+    return result[0] if result else None
+
+
+def get_content_analyses(debrief_session_id):
+    """获取会话的所有内容分析结果."""
+    query = """
+        SELECT * FROM debrief_content_analysis
+        WHERE debrief_session_id = %s
+        ORDER BY question_index;
+    """
+    return execute_query(query, (debrief_session_id,), fetch=True)
+
+
+# ============ Recommendations Operations ============
+
+def add_recommendation(debrief_session_id, category, priority, title, description=None,
+                      exercises=None, resources=None):
+    """添加改进建议."""
+    import uuid
+    query = """
+        INSERT INTO debrief_recommendations
+        (id, debrief_session_id, category, priority, title, description, exercises, resources)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    rec_id = str(uuid.uuid4())
+    result = execute_query(query, (rec_id, debrief_session_id, category, priority, title,
+                            description, exercises, resources), fetch=True)
+    return result[0] if result else None
+
+
+def get_recommendations(debrief_session_id):
+    """获取会话的所有改进建议."""
+    query = """
+        SELECT * FROM debrief_recommendations
+        WHERE debrief_session_id = %s
+        ORDER BY priority, created_at;
+    """
+    return execute_query(query, (debrief_session_id,), fetch=True)
+
+
+def mark_recommendation_completed(recommendation_id):
+    """标记建议为已完成."""
+    query = """
+        UPDATE debrief_recommendations
+        SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+        RETURNING *;
+    """
+    result = execute_query(query, (recommendation_id,), fetch=True)
+    return result[0] if result else None
+
+
+def get_user_pending_recommendations(user_id, limit=10):
+    """获取用户待完成的改进建议."""
+    query = """
+        SELECT r.*, d.created_at as session_created_at
+        FROM debrief_recommendations r
+        JOIN debrief_sessions d ON r.debrief_session_id = d.id
+        WHERE d.user_id = %s AND r.is_completed = FALSE
+        ORDER BY r.priority, d.created_at DESC
+        LIMIT %s;
+    """
+    return execute_query(query, (user_id, limit), fetch=True)
+
+
+# ============ Comparison Operations ============
+
+def save_comparison(user_id, comparison_type, period_start, period_end, data, insights=None):
+    """保存历史对比数据."""
+    import uuid
+    query = """
+        INSERT INTO debrief_comparison
+        (id, user_id, comparison_type, period_start, period_end, data, insights)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        RETURNING *;
+    """
+    comp_id = str(uuid.uuid4())
+    result = execute_query(query, (comp_id, user_id, comparison_type, period_start, period_end,
+                            data, insights), fetch=True)
+    return result[0] if result else None
+
+
+def get_comparisons(user_id, comparison_type=None, limit=10):
+    """获取历史对比数据."""
+    if comparison_type:
+        query = """
+            SELECT * FROM debrief_comparison
+            WHERE user_id = %s AND comparison_type = %s
+            ORDER BY created_at DESC
+            LIMIT %s;
+        """
+        return execute_query(query, (user_id, comparison_type, limit), fetch=True)
+    else:
+        query = """
+            SELECT * FROM debrief_comparison
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s;
+        """
+        return execute_query(query, (user_id, limit), fetch=True)
+
+
+# ============ Statistics Operations ============
+
+def get_debrief_statistics(user_id):
+    """获取用户的复盘统计信息."""
+    # 获取总复盘次数
+    query1 = "SELECT COUNT(*) as total FROM debrief_sessions WHERE user_id = %s AND status = 'completed';"
+    result1 = execute_query(query1, (user_id,), fetch=True)
+    total_sessions = result1[0]['total'] if result1 else 0
+
+    # 获取平均分
+    query2 = "SELECT AVG(overall_score) as avg_score FROM debrief_sessions WHERE user_id = %s AND status = 'completed' AND overall_score IS NOT NULL;"
+    result2 = execute_query(query2, (user_id,), fetch=True)
+    avg_score = result2[0]['avg_score'] if result2 and result2[0]['avg_score'] else 0
+
+    # 获取总练习时长
+    query3 = "SELECT COALESCE(SUM(duration_seconds), 0) as total_time FROM debrief_sessions WHERE user_id = %s AND status = 'completed';"
+    result3 = execute_query(query3, (user_id,), fetch=True)
+    total_time = result3[0]['total_time'] if result3 else 0
+
+    # 获取最近7天的复盘次数
+    query4 = """
+        SELECT COUNT(*) as week_count FROM debrief_sessions
+        WHERE user_id = %s AND status = 'completed'
+        AND created_at >= CURRENT_DATE - INTERVAL '7 days';
+    """
+    result4 = execute_query(query4, (user_id,), fetch=True)
+    week_count = result4[0]['week_count'] if result4 else 0
+
+    return {
+        'total_sessions': total_sessions,
+        'average_score': round(avg_score, 1) if avg_score else 0,
+        'total_practice_time': total_time,
+        'week_sessions': week_count
+    }
+
+
 if __name__ == '__main__':
     print("Database utilities loaded.")
     if DATABASE_URL:

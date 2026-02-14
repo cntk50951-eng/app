@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}面试复盘详情{% endblock %}
+
+{% block extra_head %}
+<style>
+    .debrief-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 1rem;
+        text-align: center;
+    }
+
+    .back-btn {
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        color: white;
+        text-decoration: none;
+        font-size: 1.5rem;
+    }
+
+    .overall-score {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .overall-score .score {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .overall-score .label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .section {
+        padding: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dimensions-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+
+    .dimension-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .dimension-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .dimension-card .label {
+        font-size: 0.75rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .dimension-card.highlight {
+        border: 2px solid #667eea;
+    }
+
+    .dimension-card.highlight .value {
+        color: #667eea;
+    }
+
+    .question-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .question-number {
+        background: #667eea;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .question-score {
+        font-weight: 700;
+    }
+
+    .question-text {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .answer-text {
+        color: #666;
+        font-size: 0.9rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .analysis-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tag {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    .tag-strength { background: #d4edda; color: #155724; }
+    .tag-improvement { background: #fff3cd; color: #856404; }
+
+    .voice-analysis {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+
+    .voice-metric {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .voice-metric .value {
+        font-weight: 600;
+        color: #667eea;
+    }
+
+    .voice-metric .label {
+        font-size: 0.7rem;
+        color: #666;
+    }
+
+    .recommendation-item {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+    }
+
+    .recommendation-item h4 {
+        margin: 0 0 0.5rem;
+    }
+
+    .recommendation-item p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .exercise-list {
+        margin-top: 0.75rem;
+        padding-left: 1rem;
+    }
+
+    .exercise-list li {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="debrief-header">
+    <a href="{{ url_for('debrief_index') }}" class="back-btn">‹</a>
+    <h1>复盘详情</h1>
+    <p>面试表现分析报告</p>
+    <div class="overall-score">
+        <div class="score" id="overallScore">-</div>
+        <div class="label">综合得分</div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">
+        <span>📊 多维度分析</span>
+    </div>
+    <div class="dimensions-grid" id="dimensionsGrid">
+        <div class="loading">加载中...</div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">
+        <span>💬 问题分析</span>
+    </div>
+    <div id="questionsList">
+        <div class="loading">加载中...</div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">
+        <span>🎯 改进建议</span>
+    </div>
+    <div id="recommendationsList">
+        <div class="loading">加载中...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sessionId = '{{ session_id }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSessionDetail();
+});
+
+async function loadSessionDetail() {
+    try {
+        const response = await fetch(`/api/debrief/session/${sessionId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const session = data.session;
+            const contentAnalyses = data.content_analyses || [];
+            const voiceAnalyses = data.voice_analyses || [];
+            const recommendations = data.recommendations || [];
+
+            // Overall score
+            document.getElementById('overallScore').textContent = session.overall_score || 0;
+
+            // Dimensions (mock data for demo)
+            renderDimensions();
+
+            // Questions
+            renderQuestions(contentAnalyses, voiceAnalyses);
+
+            // Recommendations
+            renderRecommendations(recommendations);
+        }
+    } catch (error) {
+        console.error('Error loading session detail:', error);
+    }
+}
+
+function renderDimensions() {
+    const dimensions = [
+        { name: '逻辑性', value: 75, key: 'logic' },
+        { name: '完整性', value: 72, key: 'completeness' },
+        { name: '创新性', value: 68, key: 'creativity' },
+        { name: '相关性', value: 82, key: 'relevance' },
+        { name: '清晰度', value: 85, key: 'clarity' },
+        { name: '流畅度', value: 78, key: 'fluency' }
+    ];
+
+    const container = document.getElementById('dimensionsGrid');
+    const maxValue = Math.max(...dimensions.map(d => d.value));
+    const minValue = Math.min(...dimensions.map(d => d.value));
+
+    container.innerHTML = dimensions.map(dim => {
+        const isHighlight = dim.value === maxValue || dim.value === minValue;
+        const valueColor = dim.value >= 75 ? '#28a745' : (dim.value >= 60 ? '#ffc107' : '#dc3545');
+
+        return `
+            <div class="dimension-card ${isHighlight ? 'highlight' : ''}">
+                <div class="value" style="color: ${valueColor}">${dim.value}</div>
+                <div class="label">${dim.name}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderQuestions(contentAnalyses, voiceAnalyses) {
+    const container = document.getElementById('questionsList');
+
+    if (!contentAnalyses || contentAnalyses.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#999">暂无问题分析数据</p>';
+        return;
+    }
+
+    container.innerHTML = contentAnalyses.map((q, idx) => {
+        const voice = voiceAnalyses[idx] || {};
+        const scoreColor = q.total_score >= 75 ? '#28a745' : (q.total_score >= 60 ? '#ffc107' : '#dc3545');
+
+        return `
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-number">问题 ${idx + 1}</span>
+                    <span class="question-score" style="color: ${scoreColor}">${q.total_score}分</span>
+                </div>
+                <div class="question-text">${q.question || ''}</div>
+                <div class="answer-text">${q.answer || ''}</div>
+
+                <div class="analysis-tags">
+                    ${(q.strengths || []).map(s => `<span class="tag tag-strength">✓ ${s}</span>`).join('')}
+                    ${(q.improvements || []).map(i => `<span class="tag tag-improvement">✗ ${i}</span>`).join('')}
+                </div>
+
+                <div class="voice-analysis">
+                    <div class="voice-metric">
+                        <div class="value">${voice.speaking_rate || 0}</div>
+                        <div class="label">语速(字/分)</div>
+                    </div>
+                    <div class="voice-metric">
+                        <div class="value">${voice.fluency_score || 0}</div>
+                        <div class="label">流畅度</div>
+                    </div>
+                    <div class="voice-metric">
+                        <div class="value">${voice.clarity_score || 0}</div>
+                        <div class="label">清晰度</div>
+                    </div>
+                    <div class="voice-metric">
+                        <div class="value">${voice.pause_count || 0}</div>
+                        <div class="label">停顿次数</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderRecommendations(recommendations) {
+    const container = document.getElementById('recommendationsList');
+
+    if (!recommendations || recommendations.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#999">暂无改进建议</p>';
+        return;
+    }
+
+    container.innerHTML = recommendations.map(rec => {
+        const exercises = rec.exercises || [];
+        const priorityColor = rec.priority === 1 ? '#dc3545' : (rec.priority === 2 ? '#ffc107' : '#28a745');
+
+        return `
+            <div class="recommendation-item" style="border-left-color: ${priorityColor}">
+                <h4>${rec.title}</h4>
+                <p>${rec.description || ''}</p>
+                ${exercises.length > 0 ? `
+                    <ul class="exercise-list">
+                        ${exercises.map(ex => `<li>${ex.content}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+</script>
+{% endblock %}

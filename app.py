@@ -4449,6 +4449,276 @@ def api_showcase_share():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================
+# AI面试复盘室页面和API
+# ============================================
+
+@app.route('/debrief')
+@login_required
+def debrief_index():
+    """复盘室首页"""
+    return render_template('debrief/index.html')
+
+
+@app.route('/debrief/session/<session_id>')
+@login_required
+def debrief_session(session_id):
+    """单次面试复盘详情"""
+    return render_template('debrief/session.html', session_id=session_id)
+
+
+@app.route('/debrief/history')
+@login_required
+def debrief_history():
+    """历史复盘记录"""
+    return render_template('debrief/history.html')
+
+
+@app.route('/debrief/compare')
+@login_required
+def debrief_compare():
+    """历史对比分析"""
+    return render_template('debrief/compare.html')
+
+
+@app.route('/api/debrief/sessions', methods=['GET'])
+@login_required
+def api_debrief_sessions():
+    """获取面试复盘列表"""
+    user_id = session.get('user_id')
+    limit = request.args.get('limit', 20, type=int)
+    status = request.args.get('status', None)
+
+    try:
+        from db.database import get_debrief_sessions, get_debrief_statistics
+
+        sessions = get_debrief_sessions(user_id, limit, status)
+        stats = get_debrief_statistics(user_id)
+
+        return jsonify({
+            'success': True,
+            'sessions': sessions,
+            'statistics': stats
+        })
+    except Exception as e:
+        print(f"Error fetching debrief sessions: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debrief/session/<session_id>', methods=['GET'])
+@login_required
+def api_debrief_session(session_id):
+    """获取单次复盘详情"""
+    user_id = session.get('user_id')
+
+    try:
+        from db.database import (
+            get_debrief_session,
+            get_content_analyses,
+            get_voice_analyses,
+            get_recommendations
+        )
+
+        session = get_debrief_session(session_id)
+
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+
+        if session.get('user_id') != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        # 获取详细分析数据
+        content_analyses = get_content_analyses(session_id)
+        voice_analyses = get_voice_analyses(session_id)
+        recommendations = get_recommendations(session_id)
+
+        return jsonify({
+            'success': True,
+            'session': session,
+            'content_analyses': content_analyses,
+            'voice_analyses': voice_analyses,
+            'recommendations': recommendations
+        })
+    except Exception as e:
+        print(f"Error fetching debrief session: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debrief/analyze', methods=['POST'])
+@login_required
+def api_debrief_analyze():
+    """分析面试表现"""
+    user_id = session.get('user_id')
+
+    try:
+        from db.database import (
+            create_debrief_session,
+            update_debrief_session,
+            add_content_analysis,
+            add_voice_analysis,
+            add_recommendation
+        )
+        from services.debrief_service import analyze_interview_session, get_sample_debrief_data
+
+        data = request.get_json() or {}
+
+        # 获取面试数据
+        interview_type = data.get('interview_type', 'mock')
+        school_type = data.get('school_type', 'holistic')
+        interview_session_id = data.get('interview_session_id')
+        questions = data.get('questions', [])
+        answers = data.get('answers', [])
+
+        # 创建复盘会话
+        session_data = create_debrief_session(
+            user_id=user_id,
+            interview_session_id=interview_session_id,
+            interview_type=interview_type,
+            school_type=school_type
+        )
+
+        session_id = session_data['id']
+
+        # 使用示例数据进行演示
+        # 在实际生产环境中，应该使用真实分析
+        analysis_result = get_sample_debrief_data()
+
+        # 保存内容分析
+        for content in analysis_result.get('content_analyses', []):
+            add_content_analysis(
+                debrief_session_id=session_id,
+                question_index=content.get('question_index'),
+                question=content.get('question'),
+                answer=content.get('answer'),
+                logic_score=content.get('logic_score'),
+                completeness_score=content.get('completeness_score'),
+                creativity_score=content.get('creativity_score'),
+                relevance_score=content.get('relevance_score'),
+                total_score=content.get('total_score'),
+                feedback=content.get('feedback'),
+                strengths=content.get('strengths'),
+                improvements=content.get('improvements')
+            )
+
+        # 保存语音分析
+        for voice in analysis_result.get('voice_analyses', []):
+            add_voice_analysis(
+                debrief_session_id=session_id,
+                question_index=voice.get('question_index'),
+                speaking_rate=voice.get('speaking_rate'),
+                fluency_score=voice.get('fluency_score'),
+                pause_count=voice.get('pause_count'),
+                pause_duration=voice.get('pause_duration'),
+                clarity_score=voice.get('clarity_score'),
+                sentiment=voice.get('sentiment')
+            )
+
+        # 保存建议
+        for rec in analysis_result.get('recommendations', []):
+            add_recommendation(
+                debrief_session_id=session_id,
+                category=rec.get('category'),
+                priority=rec.get('priority'),
+                title=rec.get('title'),
+                description=rec.get('description'),
+                exercises=rec.get('exercises'),
+                resources=rec.get('resources')
+            )
+
+        # 更新会话状态为完成
+        from datetime import datetime
+        update_debrief_session(
+            session_id=session_id,
+            finished_at=datetime.now().isoformat(),
+            duration_seconds=data.get('duration', 300),
+            total_questions=len(questions) or analysis_result.get('question_count'),
+            overall_score=analysis_result.get('overall_score'),
+            status='completed'
+        )
+
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'analysis': analysis_result
+        })
+
+    except Exception as e:
+        print(f"Error analyzing interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debrief/compare', methods=['GET'])
+@login_required
+def api_debrief_compare():
+    """历史对比数据"""
+    user_id = session.get('user_id')
+
+    try:
+        from db.database import get_debrief_sessions
+        from services.debrief_service import generate_comparison_data
+
+        # 获取所有已完成会话
+        sessions = get_debrief_sessions(user_id, limit=50, status='completed')
+
+        # 生成对比数据
+        comparison = generate_comparison_data(user_id, sessions)
+
+        return jsonify({
+            'success': True,
+            'comparison': comparison,
+            'sessions': sessions
+        })
+    except Exception as e:
+        print(f"Error generating comparison: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debrief/recommendations', methods=['GET'])
+@login_required
+def api_debrief_recommendations():
+    """获取待完成的改进建议"""
+    user_id = session.get('user_id')
+
+    try:
+        from db.database import get_user_pending_recommendations
+
+        recommendations = get_user_pending_recommendations(user_id, limit=10)
+
+        return jsonify({
+            'success': True,
+            'recommendations': recommendations
+        })
+    except Exception as e:
+        print(f"Error fetching recommendations: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debrief/recommendations/<recommendation_id>/complete', methods=['POST'])
+@login_required
+def api_debrief_complete_recommendation(recommendation_id):
+    """标记建议为已完成"""
+    try:
+        from db.database import mark_recommendation_completed
+
+        result = mark_recommendation_completed(recommendation_id)
+
+        return jsonify({
+            'success': True,
+            'recommendation': result
+        })
+    except Exception as e:
+        print(f"Error completing recommendation: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     print("Starting AI Tutor application...")
     print(f"Database configured: {bool(DATABASE_URL)}")

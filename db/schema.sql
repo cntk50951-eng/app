@@ -332,3 +332,93 @@ CREATE TABLE IF NOT EXISTS showcase_shares (
 
 CREATE INDEX idx_showcase_shares_user ON showcase_shares(user_id);
 CREATE INDEX idx_showcase_shares_created ON showcase_shares(created_at);
+
+-- ============================================
+-- AI面试复盘室表结构
+-- ============================================
+
+-- 面试复盘主表
+CREATE TABLE IF NOT EXISTS debrief_sessions (
+    id UUID PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    interview_session_id VARCHAR(100),
+    interview_type VARCHAR(50) NOT NULL DEFAULT 'mock',
+    school_type VARCHAR(50),
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP,
+    duration_seconds INTEGER,
+    total_questions INTEGER DEFAULT 0,
+    overall_score INTEGER,
+    status VARCHAR(20) DEFAULT 'in_progress',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 语音表现分析表
+CREATE TABLE IF NOT EXISTS debrief_voice_analysis (
+    id UUID PRIMARY KEY,
+    debrief_session_id UUID REFERENCES debrief_sessions(id) ON DELETE CASCADE,
+    question_index INTEGER,
+    speaking_rate_words_per_minute DECIMAL(5,2),
+    fluency_score INTEGER,
+    pause_count INTEGER,
+    pause_duration_seconds DECIMAL(6,2),
+    clarity_score INTEGER,
+    sentiment VARCHAR(20),
+    audio_duration_seconds DECIMAL(6,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 内容维度分析表
+CREATE TABLE IF NOT EXISTS debrief_content_analysis (
+    id UUID PRIMARY KEY,
+    debrief_session_id UUID REFERENCES debrief_sessions(id) ON DELETE CASCADE,
+    question_index INTEGER,
+    question TEXT,
+    answer TEXT,
+    logic_score INTEGER,
+    completeness_score INTEGER,
+    creativity_score INTEGER,
+    relevance_score INTEGER,
+    total_score INTEGER,
+    feedback TEXT,
+    strengths TEXT[],
+    improvements TEXT[],
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 改进建议表
+CREATE TABLE IF NOT EXISTS debrief_recommendations (
+    id UUID PRIMARY KEY,
+    debrief_session_id UUID REFERENCES debrief_sessions(id) ON DELETE CASCADE,
+    category VARCHAR(50) NOT NULL,
+    priority INTEGER DEFAULT 1,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    exercises JSONB,
+    resources JSONB,
+    is_completed BOOLEAN DEFAULT FALSE,
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 历史对比数据表
+CREATE TABLE IF NOT EXISTS debrief_comparison (
+    id UUID PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    comparison_type VARCHAR(50) NOT NULL,
+    period_start DATE,
+    period_end DATE,
+    data JSONB NOT NULL,
+    insights TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 索引
+CREATE INDEX idx_debrief_sessions_user ON debrief_sessions(user_id);
+CREATE INDEX idx_debrief_sessions_status ON debrief_sessions(status);
+CREATE INDEX idx_debrief_sessions_created ON debrief_sessions(created_at);
+CREATE INDEX idx_debrief_voice_analysis_session ON debrief_voice_analysis(debrief_session_id);
+CREATE INDEX idx_debrief_content_analysis_session ON debrief_content_analysis(debrief_session_id);
+CREATE INDEX idx_debrief_recommendations_session ON debrief_recommendations(debrief_session_id);
+CREATE INDEX idx_debrief_comparison_user ON debrief_comparison(user_id);

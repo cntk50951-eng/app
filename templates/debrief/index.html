@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}AI面试复盘室{% endblock %}
+
+{% block extra_head %}
+<style>
+    .debrief-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 1rem;
+        text-align: center;
+        border-radius: 0 0 20px 20px;
+        margin-bottom: 1.5rem;
+    }
+
+    .debrief-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .debrief-header p {
+        margin: 0.5rem 0 0;
+        opacity: 0.9;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 0 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .stat-card .label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-title a {
+        font-size: 0.85rem;
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .recent-sessions {
+        padding: 0 1rem;
+    }
+
+    .session-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .session-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .session-score {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .score-high { background: #d4edda; color: #155724; }
+    .score-medium { background: #fff3cd; color: #856404; }
+    .score-low { background: #f8d7da; color: #721c24; }
+
+    .session-info {
+        flex: 1;
+    }
+
+    .session-info .date {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .session-info .type {
+        font-weight: 500;
+        margin: 0.25rem 0;
+    }
+
+    .session-arrow {
+        color: #999;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #999;
+    }
+
+    .empty-state .icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .start-btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        margin-top: 1rem;
+    }
+
+    .recommendations-section {
+        padding: 0 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .recommendation-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+    }
+
+    .recommendation-card.completed {
+        border-left-color: #28a745;
+        opacity: 0.7;
+    }
+
+    .recommendation-card h4 {
+        margin: 0 0 0.5rem;
+        font-size: 1rem;
+    }
+
+    .recommendation-card p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .priority-tag {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+    }
+
+    .priority-high { background: #f8d7da; color: #721c24; }
+    .priority-medium { background: #fff3cd; color: #856404; }
+    .priority-low { background: #d4edda; color: #155724; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="debrief-header">
+    <h1>AI面试复盘室</h1>
+    <p>回顾面试表现，持续提升</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="value" id="totalSessions">-</div>
+        <div class="label">总复盘次数</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" id="avgScore">-</div>
+        <div class="label">>
+    </div平均分</div>
+    <div class="stat-card">
+        <div class="value" id="totalTime">-</div>
+        <div class="label">总练习时长(分)</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" id="weekSessions">-</div>
+        <div class="label">本周复盘</div>
+    </div>
+</div>
+
+<div class="section-title">
+    <span>最近复盘</span>
+    <a href="{{ url_for('debrief_history') }}">查看全部</a>
+</div>
+
+<div class="recent-sessions" id="recentSessions">
+    <div class="empty-state">
+        <div class="icon">📊</div>
+        <p>暂无复盘记录</p>
+        <a href="{{ url_for('mock_interview') }}" class="start-btn">开始模拟面试</a>
+    </div>
+</div>
+
+<div class="recommendations-section">
+    <div class="section-title">
+        <span>改进建议</span>
+    </div>
+    <div id="recommendationsList">
+        <!-- Recommendations will be loaded here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDebriefData();
+    loadRecommendations();
+});
+
+async function loadDebriefData() {
+    try {
+        const response = await fetch('/api/debrief/sessions?limit=5');
+        const data = await response.json();
+
+        if (data.success) {
+            const stats = data.statistics;
+            document.getElementById('totalSessions').textContent = stats.total_sessions || 0;
+            document.getElementById('avgScore').textContent = stats.average_score || 0;
+            document.getElementById('totalTime').textContent = Math.round((stats.total_practice_time || 0) / 60);
+            document.getElementById('weekSessions').textContent = stats.week_sessions || 0;
+
+            // Render sessions
+            const sessionsContainer = document.getElementById('recentSessions');
+            if (data.sessions && data.sessions.length > 0) {
+                sessionsContainer.innerHTML = data.sessions.map(session => {
+                    const score = session.overall_score || 0;
+                    const scoreClass = score >= 75 ? 'score-high' : (score >= 60 ? 'score-medium' : 'score-low');
+                    const date = new Date(session.created_at).toLocaleDateString('zh-HK');
+
+                    return `
+                        <div class="session-card" onclick="window.location.href='/debrief/session/${session.id}'">
+                            <div class="session-score ${scoreClass}">${score}</div>
+                            <div class="session-info">
+                                <div class="type">${session.school_type || '模拟面试'}</div>
+                                <div class="date">${date}</div>
+                            </div>
+                            <span class="session-arrow">›</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading debrief data:', error);
+    }
+}
+
+async function loadRecommendations() {
+    try {
+        const response = await fetch('/api/debrief/recommendations');
+        const data = await response.json();
+
+        if (data.success && data.recommendations && data.recommendations.length > 0) {
+            const container = document.getElementById('recommendationsList');
+            container.innerHTML = data.recommendations.map(rec => {
+                const priorityClass = rec.priority === 1 ? 'priority-high' : (rec.priority === 2 ? 'priority-medium' : 'priority-low');
+                const priorityLabel = rec.priority === 1 ? '高优先级' : (rec.priority === 2 ? '中优先级' : '建议');
+
+                return `
+                    <div class="recommendation-card ${rec.is_completed ? 'completed' : ''}">
+                        <h4>
+                            ${rec.title}
+                            <span class="priority-tag ${priorityClass}">${priorityLabel}</span>
+                        </h4>
+                        <p>${rec.description || ''}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
+    }
+}
+</script>
+{% endblock %}
