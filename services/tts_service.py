@@ -17,7 +17,8 @@ import requests
 # ============ 配置 ============
 
 MINIMAX_API_KEY = os.getenv('MINIMAX_API_KEY', '')
-MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat')
+# TTS使用专用URL (不带/v1)
+MINIMAX_TTS_BASE_URL = os.getenv('MINIMAX_TTS_BASE_URL', 'https://api.minimax.chat')
 
 # Cloudflare R2 配置
 R2_ACCOUNT_ID = os.getenv('R2_ACCOUNT_ID', '')
@@ -132,7 +133,7 @@ def call_tts_api(text, voice='male-qn-qingse', speed=1.0):
 
         # 創建異步任務
         response = requests.post(
-            f"{MINIMAX_BASE_URL}/v1/t2a_async_v2",
+            f"{MINIMAX_TTS_BASE_URL}/v1/t2a_async_v2",
             json=payload,
             headers=headers,
             timeout=30
@@ -155,7 +156,7 @@ def call_tts_api(text, voice='male-qn-qingse', speed=1.0):
             time.sleep(2)
 
             file_resp = requests.get(
-                f"{MINIMAX_BASE_URL}/v1/files/retrieve?file_id={file_id}",
+                f"{MINIMAX_TTS_BASE_URL}/v1/files/retrieve?file_id={file_id}",
                 headers=headers,
                 timeout=30
             )

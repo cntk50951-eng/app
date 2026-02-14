@@ -340,7 +340,7 @@ def generate_learning_path(user_id, school_type, capabilities):
 
     # 阶段1: 基础巩固 - 所有人都需要
     phase1_milestones = [
-        create_milestone_data(MILESTONES["1.1"], capabilities),
+        create_milestone_data(MILESTONES["1.1"], capabilities, is_first=True),
         create_milestone_data(MILESTONES["1.2"], capabilities)
     ]
     phases.append(create_phase_data(1, phase1_milestones, len(phase1_milestones)))
@@ -403,7 +403,7 @@ def generate_learning_path(user_id, school_type, capabilities):
     return path_data
 
 
-def create_milestone_data(milestone_template, capabilities):
+def create_milestone_data(milestone_template, capabilities, is_first=False):
     """创建里程碑数据"""
     milestone = dict(milestone_template)
 
@@ -416,9 +416,10 @@ def create_milestone_data(milestone_template, capabilities):
             "status": "ready" if score >= 50 else "needs_work"
         }
 
-    # 简化版里程碑（不包含依赖逻辑）
+    # 第一个里程碑设为active状态，其他为available
+    # 已完成的里程碑会在user_progress中标记
     milestone.update({
-        "status": "available",
+        "status": "active" if is_first else "available",
         "skills_status": skills_status,
         "completed_at": None
     })

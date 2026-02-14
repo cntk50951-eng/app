@@ -21,7 +21,10 @@ import requests
 # ============ 配置 ============
 
 MINIMAX_API_KEY = os.getenv('MINIMAX_API_KEY', '')
-MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat')
+# 标准API (用于text/chat, audio/asr) - 需要/v1后缀
+MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat/v1')
+# TTS专用API (不带/v1后缀)
+MINIMAX_TTS_BASE_URL = os.getenv('MINIMAX_TTS_BASE_URL', 'https://api.minimax.chat')
 
 
 # ============ 语音识别 (ASR) ============
@@ -262,7 +265,7 @@ def generate_voice_audio(text, voice='male-qn-qingse', speed=1.0):
             }
         }
 
-        url = f"{MINIMAX_BASE_URL}/v1/t2a_async_v2"
+        url = f"{MINIMAX_TTS_BASE_URL}/v1/t2a_async_v2"
 
         print(f"📡 Creating MiniMax TTS async task with voice: {voice}...")
 
@@ -290,7 +293,7 @@ def generate_voice_audio(text, voice='male-qn-qingse', speed=1.0):
             time.sleep(2)
 
             file_resp = requests.get(
-                f"{MINIMAX_BASE_URL}/v1/files/retrieve?file_id={file_id}",
+                f"{MINIMAX_TTS_BASE_URL}/v1/files/retrieve?file_id={file_id}",
                 headers=headers,
                 timeout=30
             )
