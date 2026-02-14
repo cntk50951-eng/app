@@ -4719,7 +4719,286 @@ def api_debrief_complete_recommendation(recommendation_id):
         return jsonify({'error': str(e)}), 500
 
 
-if __name__ == '__main__':
+# ============ AI Companion Routes ============
+
+@app.route('/companion')
+@login_required
+def companion_page():
+    """AI Companion main page."""
+    return render_template('companion.html')
+
+
+@app.route('/api/companion', methods=['GET'])
+@login_required
+def api_companion_info():
+    """Get user's AI companion information."""
+    try:
+        from services.ai_companion_service import get_companion_info, create_or_get_user_companion
+
+        user_id = session.get('user_id')
+
+        # Get or create companion
+        companion = create_or_get_user_companion(user_id)
+
+        if not companion:
+            return jsonify({'error': 'Failed to get companion'}), 500
+
+        # Get full info
+        info = get_companion_info(user_id)
+
+        return jsonify({
+            'success': True,
+            'data': info
+        })
+    except Exception as e:
+        print(f"Error getting companion info: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/create', methods=['POST'])
+@login_required
+def api_companion_create():
+    """Create a new AI companion."""
+    try:
+        from services.ai_companion_service import create_user_companion
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        name = data.get('name', '').strip()
+        character_type = data.get('characterType', 'dinosaur')
+
+        if not name:
+            return jsonify({'error': 'Please provide a name'}), 400
+
+        if len(name) > 10:
+            return jsonify({'error': 'Name must be 10 characters or less'}), 400
+
+        companion = create_user_companion(user_id, name, character_type)
+
+        if not companion:
+            return jsonify({'error': 'Failed to create companion'}), 500
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': str(companion['id']),
+                'name': companion['name'],
+                'characterType': companion['character_type'],
+                'level': companion['level'],
+                'experience': companion['experience'],
+                'totalExperience': companion['total_experience'],
+                'consecutiveDays': companion['consecutive_days'],
+                'currentMood': companion['current_mood'],
+                'unlockedSkills': companion['unlocked_skills'],
+                'createdAt': companion['created_at'].isoformat() if companion.get('created_at') else None
+            }
+        })
+    except Exception as e:
+        print(f"Error creating companion: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/experience', methods=['POST'])
+@login_required
+def api_companion_experience():
+    """Add experience to companion."""
+    try:
+        from services.ai_companion_service import add_experience
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        experience_type = data.get('experienceType', 'practice_time')
+        amount = data.get('amount', 0)
+        reason = data.get('reason', '')
+
+        if amount <= 0:
+            return jsonify({'error': 'Invalid experience amount'}), 400
+
+        result = add_experience(user_id, experience_type, amount, reason)
+
+        if not result:
+            return jsonify({'error': 'Failed to add experience'}), 500
+
+        return jsonify({
+            'success': True,
+            'data': result
+        })
+    except Exception as e:
+        print(f"Error adding experience: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/tasks', methods=['GET'])
+@login_required
+def api_companion_tasks():
+    """Get daily tasks for companion."""
+    try:
+        from services.ai_companion_service import get_daily_tasks
+
+        user_id = session.get('user_id')
+        date_str = request.args.get('date')
+
+        from datetime import datetime
+        task_date = None
+        if date_str:
+            try:
+                task_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        tasks = get_daily_tasks(user_id, task_date)
+
+        return jsonify({
+            'success': True,
+            'data': tasks
+        })
+    except Exception as e:
+        print(f"Error getting tasks: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/tasks/complete', methods=['POST'])
+@login_required
+def api_companion_task_complete():
+    """Complete a daily task."""
+    try:
+        from services.ai_companion_service import complete_task
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        task_id = data.get('taskId')
+
+        if not task_id:
+            return jsonify({'error': 'Task ID is required'}), 400
+
+        result = complete_task(user_id, task_id)
+
+        if not result:
+            return jsonify({'error': 'Task not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'data': result
+        })
+    except Exception as e:
+        print(f"Error completing task: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/skills', methods=['GET'])
+@login_required
+def api_companion_skills():
+    """Get companion skills."""
+    try:
+        from services.ai_companion_service import get_available_skills, get_companion_info
+
+        user_id = session.get('user_id')
+
+        # Get companion info first to ensure companion exists
+        companion_info = get_companion_info(user_id)
+        if not companion_info:
+            return jsonify({'error': 'Companion not found'}), 404
+
+        skills = get_available_skills(user_id)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'companion_level': companion_info['level'],
+                'skills': skills
+            }
+        })
+    except Exception as e:
+        print(f"Error getting skills: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/skills/unlock', methods=['POST'])
+@login_required
+def api_companion_skill_unlock():
+    """Unlock a companion skill."""
+    try:
+        from services.ai_companion_service import unlock_skill
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        skill_id = data.get('skillId')
+
+        if not skill_id:
+            return jsonify({'error': 'Skill ID is required'}), 400
+
+        result = unlock_skill(user_id, skill_id)
+
+        return jsonify({
+            'success': result.get('success', False),
+            'message': result.get('message', ''),
+            'data': result.get('skill')
+        })
+    except Exception as e:
+        print(f"Error unlocking skill: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/dialogue', methods=['GET'])
+@login_required
+def api_companion_dialogue():
+    """Get companion dialogue."""
+    try:
+        from services.ai_companion_service import get_companion_dialogue
+
+        user_id = session.get('user_id')
+        trigger_type = request.args.get('trigger', 'idle')
+        emotion = request.args.get('emotion')
+
+        dialogue = get_companion_dialogue(user_id, trigger_type, emotion)
+
+        return jsonify({
+            'success': True,
+            'data': dialogue
+        })
+    except Exception as e:
+        print(f"Error getting dialogue: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/companion/mood', methods=['POST'])
+@login_required
+def api_companion_mood():
+    """Update companion mood."""
+    try:
+        from services.ai_companion_service import update_mood, get_user_companion
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        mood = data.get('mood')
+
+        # If no mood provided, calculate automatically
+        if not mood:
+            from services.ai_companion_service import calculate_mood
+            mood = calculate_mood(user_id)
+        else:
+            update_mood(user_id, mood)
+
+        companion = get_user_companion(user_id)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'mood': mood,
+                'companion': {
+                    'name': companion['name'],
+                    'character_type': companion['character_type'] if companion else None
+                }
+            }
+        })
+    except Exception as e:
+        print(f"Error updating mood: {e}")
+        return jsonify({'error': str(e)}), 500
     print("Starting AI Tutor application...")
     print(f"Database configured: {bool(DATABASE_URL)}")
     app.run(host='0.0.0.0', port=5000, debug=True)
