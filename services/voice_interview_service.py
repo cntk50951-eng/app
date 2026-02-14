@@ -246,8 +246,13 @@ def generate_voice_audio(text, language='cantonese', speed=1.0):
     Returns:
         dict: {'audio_url': '音频URL', 'audio_data': base64编码的音频数据}
     """
-    # 根据语言选择voice
+    # 根据语言选择voice和language_boost
     voice = VOICE_MAP.get(language, 'male-qn-qingse')
+    language_boost = None
+    if language == 'cantonese':
+        language_boost = 'Chinese'
+    elif language == 'english':
+        language_boost = 'English'
 
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API Key not configured")
@@ -259,12 +264,13 @@ def generate_voice_audio(text, language='cantonese', speed=1.0):
             'Content-Type': 'application/json'
         }
 
-        print(f"🔧 Generating {language} audio with voice: {voice}")
+        print(f"🔧 Generating {language} audio with voice: {voice}, language_boost: {language_boost}")
 
         # 使用异步 TTS API
         payload = {
             "model": "speech-2.6-hd",
             "text": text,
+            "language_boost": language_boost,
             "voice_setting": {
                 "voice_id": voice,
                 "speed": speed
