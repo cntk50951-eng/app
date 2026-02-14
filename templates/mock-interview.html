@@ -238,6 +238,109 @@
             color: var(--text-secondary);
         }
 
+        /* Interview Mode Selection */
+        .mode-section {
+            margin-top: 2rem;
+        }
+
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .mode-card {
+            position: relative;
+            padding: 1.5rem 1rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .mode-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+        }
+
+        .mode-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .mode-card.selected::after {
+            content: '';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: var(--primary);
+            border-radius: 50%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+            background-size: 1rem;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .mode-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+
+        .mode-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            margin: 0 auto 0.75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .mode-card.voice .mode-icon {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .mode-card.text .mode-icon {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .mode-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .mode-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .mode-tag {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: #fef3c7;
+            color: #d97706;
+            border-radius: 999px;
+            font-size: 0.625rem;
+            font-weight: 600;
+        }
+
         /* Start Button */
         .start-section {
             margin-top: 2rem;
@@ -262,9 +365,18 @@
             gap: 0.5rem;
         }
 
+        .start-btn.voice {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
         .start-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .start-btn.voice:hover {
+            box-shadow: 0 15px 40px rgba(239, 68, 68, 0.4);
         }
 
         .start-btn:active {
@@ -469,6 +581,33 @@
                 </div>
             </div>
 
+            <!-- Interview Mode Selection -->
+            <div class="mode-section">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">touch_app</span>
+                    选择面试模式
+                </h3>
+                <div class="mode-grid">
+                    <label class="mode-card voice selected" id="mode-voice">
+                        <input type="radio" name="interview_mode" value="voice" checked>
+                        <div class="mode-icon">
+                            <span class="material-symbols-outlined">mic</span>
+                        </div>
+                        <div class="mode-name">语音面试</div>
+                        <div class="mode-desc">按住说话<br>AI实时对话</div>
+                        <span class="mode-tag">推荐</span>
+                    </label>
+                    <label class="mode-card text" id="mode-text">
+                        <input type="radio" name="interview_mode" value="text">
+                        <div class="mode-icon">
+                            <span class="material-symbols-outlined">edit_note</span>
+                        </div>
+                        <div class="mode-name">文字面试</div>
+                        <div class="mode-desc">打字输入回答<br>适合初学者</div>
+                    </label>
+                </div>
+            </div>
+
             <!-- School Type Selection -->
             <div class="school-section">
                 <h3 class="section-title">
@@ -503,11 +642,11 @@
 
             <!-- Start Button -->
             <div class="start-section">
-                <button class="start-btn" id="start-btn" onclick="startInterview()">
-                    <span class="material-symbols-outlined">play_arrow</span>
-                    开始模拟面试
+                <button class="start-btn voice" id="start-btn" onclick="startInterview()">
+                    <span class="material-symbols-outlined" id="start-icon">mic</span>
+                    <span id="start-text">开始语音面试</span>
                 </button>
-                <p class="start-hint">约 5-10 分钟，包含 5 个问题</p>
+                <p class="start-hint" id="start-hint">约 5-10 分钟，包含 5 个问题</p>
             </div>
 
             <!-- Recent Sessions -->
@@ -543,6 +682,36 @@
     </div>
 
     <script>
+        // Interview mode selection
+        const modeCards = document.querySelectorAll('.mode-card');
+        modeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected from all
+                modeCards.forEach(c => c.classList.remove('selected'));
+                // Add selected to clicked
+                card.classList.add('selected');
+
+                // Update button style
+                const mode = card.querySelector('input').value;
+                const btn = document.getElementById('start-btn');
+                const btnIcon = document.getElementById('start-icon');
+                const btnText = document.getElementById('start-text');
+                const btnHint = document.getElementById('start-hint');
+
+                if (mode === 'voice') {
+                    btn.className = 'start-btn voice';
+                    btnIcon.textContent = 'mic';
+                    btnText.textContent = '开始语音面试';
+                    btnHint.textContent = '约 5-10 分钟，包含 5 个问题';
+                } else {
+                    btn.className = 'start-btn';
+                    btnIcon.textContent = 'play_arrow';
+                    btnText.textContent = '开始文字面试';
+                    btnHint.textContent = '约 5-10 分钟，包含 5 个问题';
+                }
+            });
+        });
+
         // School type selection
         const schoolCards = document.querySelectorAll('.school-card');
         schoolCards.forEach(card => {
@@ -598,15 +767,24 @@
 
         // Start interview
         async function startInterview() {
+            // Get selected interview mode
+            const modeRadio = document.querySelector('input[name="interview_mode"]:checked');
+            const interviewMode = modeRadio ? modeRadio.value : 'voice';
+
             // Get selected school type
-            const selectedRadio = document.querySelector('input[name="school_type"]:checked');
-            const schoolType = selectedRadio ? selectedRadio.value : 'holistic';
+            const schoolRadio = document.querySelector('input[name="school_type"]:checked');
+            const schoolType = schoolRadio ? schoolRadio.value : 'holistic';
 
             // Save to session
             sessionStorage.setItem('interview_school_type', schoolType);
+            sessionStorage.setItem('interview_mode', interviewMode);
 
-            // Navigate to start page
-            window.location.href = `/mock-interview/start?school_type=${schoolType}`;
+            // Navigate to appropriate page based on mode
+            if (interviewMode === 'voice') {
+                window.location.href = `/mock-interview/voice?school_type=${schoolType}`;
+            } else {
+                window.location.href = `/mock-interview/start?school_type=${schoolType}`;
+            }
         }
 
         // View session detail

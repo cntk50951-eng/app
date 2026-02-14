@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports']
 
 
 def login_required(f):
@@ -1553,7 +1553,6 @@ def achievements_page():
 
 
 @app.route('/reports')
-@login_required
 def reports_page():
     """学习报告页面."""
     return render_template('reports.html')
@@ -2257,6 +2256,313 @@ def api_mock_interview_detail(session_id):
 
     except Exception as e:
         print(f"Error getting session: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/mock-interview/voice')
+@login_required
+def mock_interview_voice():
+    """AI 语音面试入口页面."""
+    school_type = request.args.get('school_type', 'holistic')
+    return render_template('mock-interview-voice.html', school_type=school_type)
+
+
+# ============ Voice Interview API ============
+
+@app.route('/api/mock-interview/voice/start', methods=['POST'])
+@login_required
+def api_voice_interview_start():
+    """开始语音面试，生成问题."""
+    data = request.json or {}
+    school_type = data.get('school_type', 'holistic')
+    num_questions = data.get('num_questions', 5)
+
+    user_id = session.get('user_id')
+
+    # Get profile from session
+    profile = {
+        'child_name': session.get('child_name', '小朋友'),
+        'child_age': session.get('child_age', '5岁'),
+        'child_gender': session.get('child_gender', '不透露'),
+        'interests': session.get('child_interests', []),
+        'target_schools': session.get('target_schools', [])
+    }
+
+    try:
+        from services.voice_interview_service import create_voice_session
+
+        session_data = create_voice_session(user_id, school_type, profile, num_questions)
+
+        return jsonify({
+            'success': True,
+            'session_id': session_data['session_id'],
+            'questions': session_data['questions']
+        })
+
+    except Exception as e:
+        print(f"Error starting voice interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/voice/recognize', methods=['POST'])
+@login_required
+def api_voice_recognize():
+    """语音识别 - 处理录音并识别文字."""
+    session_id = request.form.get('session_id')
+
+    if 'audio' not in request.files:
+        # 尝试从 JSON 获取 base64 音频
+        data = request.json or {}
+        if 'audio_data' in data:
+            import base64
+            audio_data = base64.b64decode(data['audio_data'])
+        else:
+            return jsonify({'error': 'No audio file', 'fallback': True}), 400
+    else:
+        audio_file = request.files['audio']
+        audio_data = audio_file.read()
+
+    if not audio_data:
+        return jsonify({'error': 'Empty audio data', 'fallback': True}), 400
+
+    try:
+        from services.voice_interview_service import recognize_speech
+
+        result = recognize_speech(audio_data)
+
+        return jsonify({
+            'success': result['success'],
+            'text': result.get('text', ''),
+            'fallback': result.get('fallback', False)
+        })
+
+    except Exception as e:
+        print(f"Error recognizing speech: {e}")
+        return jsonify({'error': str(e), 'fallback': True}), 500
+
+
+@app.route('/api/mock-interview/voice/followup', methods=['POST'])
+@login_required
+def api_voice_followup():
+    """生成语音面试的追问问题."""
+    data = request.json or {}
+    session_id = data.get('session_id')
+    question = data.get('question', '')
+    answer = data.get('answer', '')
+
+    user_id = session.get('user_id')
+
+    # Get profile
+    profile = {
+        'child_name': session.get('child_name', '小朋友'),
+        'child_age': session.get('child_age', '5岁')
+    }
+
+    try:
+        from services.voice_interview_service import generate_voice_follow_up
+
+        result = generate_voice_follow_up(question, answer, profile)
+
+        return jsonify({
+            'success': True,
+            'follow_up': result.get('follow_up', ''),
+            'needs_follow_up': result.get('needs_follow_up', False)
+        })
+
+    except Exception as e:
+        print(f"Error generating follow-up: {e}")
+        # Return default follow-up on error
+        return jsonify({
+            'success': True,
+            'follow_up': '可以话多啲俾老师知吗？',
+            'needs_follow_up': True
+        })
+
+
+@app.route('/api/mock-interview/voice/tts', methods=['POST'])
+@login_required
+def api_voice_tts():
+    """生成语音面试的 TTS 音频."""
+    data = request.json or {}
+    text = data.get('text', '')
+    session_id = data.get('session_id')
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    try:
+        from services.voice_interview_service import generate_voice_audio
+
+        result = generate_voice_audio(text)
+
+        return jsonify({
+            'success': True,
+            'audio_url': result.get('audio_url'),
+            'audio_data': result.get('audio_data')
+        })
+
+    except Exception as e:
+        print(f"Error generating TTS: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/voice/answer', methods=['POST'])
+@login_required
+def api_voice_answer():
+    """保存语音面试的回答."""
+    data = request.json or {}
+    session_id = data.get('session_id')
+    question = data.get('question', '')
+    answer = data.get('answer', '')
+    follow_up_question = data.get('follow_up_question')
+    follow_up_answer = data.get('follow_up_answer')
+
+    user_id = session.get('user_id')
+
+    try:
+        from services.voice_interview_service import save_voice_answer, get_voice_session
+
+        session = get_voice_session(user_id, session_id)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+
+        # Save answer
+        answer_data = {
+            'question': question,
+            'answer': answer,
+            'answer_time': time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        # Save follow-up if exists
+        if follow_up_question and follow_up_answer:
+            answer_data['follow_up'] = follow_up_question
+            answer_data['follow_up_answer'] = follow_up_answer
+
+        save_voice_answer(user_id, session_id, answer_data)
+
+        return jsonify({
+            'success': True
+        })
+
+    except Exception as e:
+        print(f"Error saving answer: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/voice/next', methods=['POST'])
+@login_required
+def api_voice_next():
+    """进入语音面试的下一题."""
+    data = request.json or {}
+    session_id = data.get('session_id')
+
+    user_id = session.get('user_id')
+
+    try:
+        from services.voice_interview_service import get_voice_session
+
+        session = get_voice_session(user_id, session_id)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+
+        # Get current question index
+        current_index = session.get('current_question_index', 0)
+        questions = session.get('questions', [])
+
+        # Check if there are more questions
+        if current_index >= len(questions) - 1:
+            return jsonify({
+                'success': True,
+                'has_next': False
+            })
+
+        # Move to next question
+        session['current_question_index'] = current_index + 1
+
+        return jsonify({
+            'success': True,
+            'has_next': True,
+            'next_question': questions[current_index + 1]
+        })
+
+    except Exception as e:
+        print(f"Error going to next question: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/voice/finish', methods=['POST'])
+@login_required
+def api_voice_finish():
+    """完成语音面试，生成评估报告."""
+    data = request.json or {}
+    session_id = data.get('session_id')
+
+    user_id = session.get('user_id')
+
+    try:
+        from services.voice_interview_service import (
+            complete_voice_session,
+            generate_voice_report
+        )
+
+        # Complete session
+        session = complete_voice_session(user_id, session_id)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+
+        # Generate report
+        report = generate_voice_report(user_id, session_id)
+        if not report:
+            return jsonify({'error': 'Failed to generate report'}), 500
+
+        # Get score message
+        score = report.get('score', 0)
+        if score >= 90:
+            message = '劲劲劲！你叻晒！'
+        elif score >= 80:
+            message = '表现好好！继续努力！'
+        elif score >= 70:
+            message = '几好呀，继续加油！'
+        elif score >= 60:
+            message = '既嘢讲得不错，继续练习！'
+        else:
+            message = '再接再厉！'
+
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'score': score,
+            'message': message,
+            'report': report
+        })
+
+    except Exception as e:
+        print(f"Error finishing voice interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mock-interview/voice/history', methods=['GET'])
+@login_required
+def api_voice_history():
+    """获取语音面试历史记录."""
+    user_id = session.get('user_id')
+
+    try:
+        from services.voice_interview_service import get_voice_interview_history
+
+        history = get_voice_interview_history(user_id, 10)
+
+        return jsonify({
+            'success': True,
+            'sessions': history
+        })
+
+    except Exception as e:
+        print(f"Error getting voice history: {e}")
         return jsonify({'error': str(e)}), 500
 
 
