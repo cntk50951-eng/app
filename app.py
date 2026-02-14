@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history', '/school-questions', '/school-questions/schools', '/school-questions/school', '/school-questions/ai-match', '/interview-experience', '/interview-timeline', '/api/schools', '/api/schools', '/api/ai-match/recommend', '/api/experience', '/api/timeline', '/api/questions/like', '/api/experience/like', '/micro-lessons', '/daily-tasks', '/practice/quick', '/practice/voice', '/api/micro-lessons', '/api/micro-lessons/generate', '/api/daily-tasks', '/api/daily-tasks/complete', '/api/practice/submit', '/api/practice/history']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history', '/school-questions', '/school-questions/schools', '/school-questions/school', '/school-questions/ai-match', '/interview-experience', '/interview-timeline', '/api/schools', '/api/schools', '/api/ai-match/recommend', '/api/experience', '/api/timeline', '/api/questions/like', '/api/experience/like', '/micro-lessons', '/daily-tasks', '/practice/quick', '/practice/voice', '/api/micro-lessons', '/api/micro-lessons/generate', '/api/daily-tasks', '/api/daily-tasks/complete', '/api/practice/submit', '/api/practice/history', '/showcase', '/showcase/generate', '/showcase/share/<share_type>', '/api/showcase/generate', '/api/showcase/templates', '/api/showcase/share']
 
 
 def login_required(f):
@@ -4326,6 +4326,126 @@ def api_practice_history():
         })
     except Exception as e:
         print(f"Error fetching practice history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Showcase Routes (学习成果社交秀) ============
+
+@app.route('/showcase')
+def showcase_page():
+    """学习成果社交秀首页"""
+    child_name = session.get('child_name', '同学')
+    return render_template('showcase.html', child_name=child_name)
+
+
+@app.route('/showcase/generate')
+def showcase_generate():
+    """生成成就海报页面"""
+    child_name = session.get('child_name', '同学')
+    share_type = request.args.get('type', 'achievement')
+    return render_template('showcase_generate.html', child_name=child_name, share_type=share_type)
+
+
+@app.route('/showcase/share/<share_type>')
+def showcase_share(share_type='wechat'):
+    """分享页面"""
+    child_name = session.get('child_name', '同学')
+    return render_template('showcase_share.html', child_name=child_name, share_type=share_type)
+
+
+@app.route('/api/showcase/templates', methods=['GET'])
+def api_showcase_templates():
+    """获取海报模板API"""
+    try:
+        from services.showcase_service import get_templates
+
+        category = request.args.get('category')
+        templates = get_templates(category)
+
+        return jsonify({
+            'success': True,
+            'templates': templates
+        })
+    except Exception as e:
+        print(f"Error fetching templates: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/showcase/generate', methods=['POST'])
+def api_showcase_generate():
+    """生成成就海报API"""
+    try:
+        from services.showcase_service import generate_poster_data, create_share_record, generate_share_image
+
+        data = request.get_json() or {}
+        poster_type = data.get('type', 'achievement')
+        template_id = data.get('template', 'achievement_basic')
+
+        # Get user data
+        user_id = session.get('user_id')
+        child_name = session.get('child_name', '同学')
+
+        # Build user data
+        user_data = {
+            'name': child_name,
+            'avatar': session.get('picture')
+        }
+
+        # Get achievement data (mock data for demo)
+        achievement_data = {
+            'title': '学习成就',
+            'description': '恭喜获得新成就！',
+            'icon': '🏆',
+            'streak_days': 7,
+            'badges_count': 5
+        }
+
+        # Generate poster data
+        poster_data = generate_poster_data(user_data, template_id, achievement_data)
+
+        # Generate share image
+        image_url = generate_share_image(poster_data)
+
+        # Create share record if user is logged in
+        if user_id:
+            create_share_record(user_id, poster_type, poster_data)
+
+        return jsonify({
+            'success': True,
+            'poster_data': poster_data,
+            'image_url': image_url
+        })
+    except Exception as e:
+        print(f"Error generating poster: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/showcase/share', methods=['POST'])
+def api_showcase_share():
+    """分享记录API"""
+    try:
+        from services.showcase_service import create_share_record
+
+        data = request.get_json() or {}
+        platform = data.get('platform', 'wechat')
+        poster_type = data.get('type', 'achievement')
+        poster_data = data.get('poster_data', {})
+
+        user_id = session.get('user_id')
+
+        if user_id:
+            share_id = create_share_record(user_id, poster_type, poster_data, platform)
+            return jsonify({
+                'success': True,
+                'share_id': share_id
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': 'Share recorded (guest mode)'
+            })
+    except Exception as e:
+        print(f"Error recording share: {e}")
         return jsonify({'error': str(e)}), 500
 
 

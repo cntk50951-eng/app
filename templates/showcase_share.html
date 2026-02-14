@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>分享成就 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #1e94e9;
+            --primary-dark: #1565c0;
+            --wechat: #07c160;
+            --xiaohongshu: #fe2c55;
+            --weibo: #e6162d;
+        }
+
+        body {
+            min-height: 100dvh;
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            padding-bottom: 0.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            padding-bottom: 6rem;
+        }
+
+        /* Poster Preview */
+        .poster-preview {
+            background: white;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        .poster-header {
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .poster-header.achievement {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .poster-header.report {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .poster-header.streak {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .poster-header.master {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .poster-icon {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .poster-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .poster-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .poster-body {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .poster-user {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .poster-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .poster-stat {
+            text-align: center;
+        }
+
+        .poster-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .poster-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .poster-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Share Options */
+        .share-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 0.5rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .share-option:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .share-option.wechat {
+            background: #e8f8f0;
+            border-color: var(--wechat);
+        }
+
+        .share-option.xiaohongshu {
+            background: #ffeef0;
+            border-color: var(--xiaohongshu);
+        }
+
+        .share-option.weibo {
+            background: #ffeaea;
+            border-color: var(--weibo);
+        }
+
+        .share-option.more {
+            background: var(--background-light);
+        }
+
+        .share-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .share-icon.wechat {
+            background: var(--wechat);
+        }
+
+        .share-icon.xiaohongshu {
+            background: var(--xiaohongshu);
+        }
+
+        .share-icon.weibo {
+            background: var(--weibo);
+        }
+
+        .share-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Share Success */
+        .share-success {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .share-success.active {
+            display: block;
+        }
+
+        .success-icon {
+            width: 4rem;
+            height: 4rem;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+        }
+
+        .success-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .success-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1rem;
+            background: var(--background-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+        }
+
+        .qr-placeholder {
+            font-size: 3rem;
+        }
+
+        .qr-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="{{ url_for('showcase_generate') }}" class="back-btn">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="page-title">分享成就</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content" id="share-content">
+            <!-- Poster Preview -->
+            <div class="poster-preview">
+                <div class="poster-header {{ share_type }}" id="poster-header">
+                    <div class="poster-icon" id="poster-icon">🏆</div>
+                    <div class="poster-title" id="poster-title">学习成就</div>
+                    <div class="poster-subtitle" id="poster-subtitle">恭喜获得新成就！</div>
+                </div>
+                <div class="poster-body">
+                    <div class="poster-user" id="poster-user">{{ child_name }}的成就</div>
+                    <div class="poster-stats">
+                        <div class="poster-stat">
+                            <div class="poster-stat-value" id="stat-value-1">7</div>
+                            <div class="poster-stat-label">连续天数</div>
+                        </div>
+                        <div class="poster-stat">
+                            <div class="poster-stat-value" id="stat-value-2">5</div>
+                            <div class="poster-stat-label">获得徽章</div>
+                        </div>
+                    </div>
+                    <div class="poster-date" id="poster-date"></div>
+                </div>
+            </div>
+
+            <!-- QR Code Section -->
+            <div class="qr-section">
+                <div class="qr-code">
+                    <span class="qr-placeholder">📱</span>
+                </div>
+                <div class="qr-desc">扫码打开分享链接</div>
+            </div>
+
+            <!-- Share Options -->
+            <div class="share-section">
+                <div class="section-title">分享到</div>
+                <div class="share-options">
+                    <div class="share-option wechat" onclick="shareTo('wechat')">
+                        <div class="share-icon wechat">💬</div>
+                        <div class="share-label">微信</div>
+                    </div>
+                    <div class="share-option xiaohongshu" onclick="shareTo('xiaohongshu')">
+                        <div class="share-icon xiaohongshu">📕</div>
+                        <div class="share-label">小红书</div>
+                    </div>
+                    <div class="share-option weibo" onclick="shareTo('weibo')">
+                        <div class="share-icon weibo">📱</div>
+                        <div class="share-label">微博</div>
+                    </div>
+                    <div class="share-option more" onclick="shareTo('more')">
+                        <div class="share-icon more">📤</div>
+                        <div class="share-label">更多</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="savePoster()">
+                    <span class="material-symbols-outlined">download</span>
+                    保存到相册
+                </button>
+                <button class="btn btn-secondary" onclick="copyLink()">
+                    <span class="material-symbols-outlined">link</span>
+                    复制链接
+                </button>
+            </div>
+        </main>
+
+        <!-- Share Success -->
+        <div class="share-success" id="share-success">
+            <div class="success-icon">✅</div>
+            <div class="success-title">分享成功！</div>
+            <div class="success-desc">您的成就已经分享给更多人了</div>
+            <button class="btn btn-primary" onclick="goToShowcase()">
+                返回成果秀
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Share type configuration
+        const shareConfig = {
+            wechat: {
+                icon: '🏆',
+                title: '学习成就',
+                subtitle: '快来看看我的学习成就！',
+                bg: 'achievement'
+            },
+            xiaohongshu: {
+                icon: '📕',
+                title: '学习打卡',
+                subtitle: '每天坚持学习，进步看得见！',
+                bg: 'streak'
+            },
+            weekly: {
+                icon: '📊',
+                title: '学习周报',
+                subtitle: '本周学习情况总结',
+                bg: 'report'
+            }
+        };
+
+        // Get share type from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareType = urlParams.get('type') || '{{ share_type }}';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initPoster(shareType);
+            updateDate();
+        });
+
+        function initPoster(type) {
+            const config = shareConfig[type] || shareConfig.wechat;
+
+            const header = document.getElementById('poster-header');
+            header.className = `poster-header ${config.bg}`;
+
+            document.getElementById('poster-icon').textContent = config.icon;
+            document.getElementById('poster-title').textContent = config.title;
+            document.getElementById('poster-subtitle').textContent = config.subtitle;
+
+            // Update stats based on type
+            const stats = {
+                wechat: [{ value: '7', label: '连续天数' }, { value: '5', label: '获得徽章' }],
+                xiaohongshu: [{ value: '30', label: '学习天数' }, { value: '50', label: '练习次数' }],
+                weekly: [{ value: '12', label: '完成课程' }, { value: '85%', label: '正确率' }]
+            };
+
+            const currentStats = stats[type] || stats.wechat;
+            document.getElementById('stat-value-1').textContent = currentStats[0].value;
+            document.querySelectorAll('.poster-stat-label')[0].textContent = currentStats[0].label;
+            document.getElementById('stat-value-2').textContent = currentStats[1].value;
+            document.querySelectorAll('.poster-stat-label')[1].textContent = currentStats[1].label;
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('poster-date').textContent = dateStr;
+        }
+
+        function shareTo(platform) {
+            const platforms = {
+                wechat: '微信',
+                xiaohongshu: '小红书',
+                weibo: '微博',
+                more: '更多'
+            };
+
+            // Show share success (in real app, use platform SDK)
+            document.getElementById('share-content').style.display = 'none';
+            document.getElementById('share-success').classList.add('active');
+
+            // Track share
+            trackShare(platform);
+        }
+
+        async function trackShare(platform) {
+            try {
+                await fetch('/api/showcase/share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        platform: platform,
+                        type: shareType
+                    })
+                });
+            } catch (error) {
+                console.error('Error tracking share:', error);
+            }
+        }
+
+        function savePoster() {
+            alert('海报已保存到相册！');
+        }
+
+        function copyLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('链接已复制到剪贴板！');
+            }).catch(() => {
+                alert('复制失败，请手动复制');
+            });
+        }
+
+        function goToShowcase() {
+            window.location.href = '/showcase';
+        }
+    </script>
+</body>
+</html>

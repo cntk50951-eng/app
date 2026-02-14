@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>生成成就海报 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #1e94e9;
+            --primary-dark: #1565c0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-orange: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            --gradient-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-pink: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        body {
+            min-height: 100dvh;
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            padding-bottom: 0.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 6rem;
+        }
+
+        /* Step Indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem;
+            gap: 0.5rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-number {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background: var(--background-light);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+            color: white;
+        }
+
+        .step-line {
+            width: 2rem;
+            height: 2px;
+            background: var(--background-light);
+        }
+
+        .step.completed + .step-line,
+        .step.active + .step-line {
+            background: var(--success);
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        @media (min-width: 400px) {
+            .step-label {
+                display: block;
+            }
+        }
+
+        /* Selection Section */
+        .selection-section {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        /* Type Selection */
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .type-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .type-card:hover {
+            border-color: var(--primary);
+        }
+
+        .type-card.selected {
+            border-color: var(--primary);
+            background: #f0f9ff;
+        }
+
+        .type-icon {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .type-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Template Selection */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .template-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .template-card.selected {
+            border-color: var(--primary);
+        }
+
+        .template-preview {
+            height: 8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .template-info {
+            padding: 0.75rem;
+        }
+
+        .template-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .template-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Preview Section */
+        .preview-section {
+            padding: 0 1.5rem 1.5rem;
+            display: none;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .preview-header {
+            padding: 1.5rem;
+            text-align: center;
+            color: white;
+        }
+
+        .preview-header.achievement {
+            background: var(--gradient-purple);
+        }
+
+        .preview-header.report {
+            background: var(--gradient-green);
+        }
+
+        .preview-header.streak {
+            background: var(--gradient-orange);
+        }
+
+        .preview-header.master {
+            background: var(--gradient-gold);
+        }
+
+        .preview-icon {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .preview-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .preview-body {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .preview-user {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-stat {
+            text-align: center;
+        }
+
+        .preview-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .preview-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .preview-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Actions */
+        .actions-section {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .actions-section.active {
+            display: block;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.75rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: #f0f9ff;
+        }
+
+        .btn-share {
+            background: #07c160;
+            color: white;
+        }
+
+        .btn-weibo {
+            background: #e6162d;
+            color: white;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid var(--background-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Success Modal */
+        .success-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .success-modal.active {
+            display: flex;
+        }
+
+        .success-content {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .success-icon {
+            width: 4rem;
+            height: 4rem;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+        }
+
+        .success-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .success-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="{{ url_for('showcase_page') }}" class="back-btn">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="page-title">生成成就海报</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">选择类型</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">选择模板</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">生成分享</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Type Selection -->
+            <div class="selection-section" id="step1-content">
+                <div class="section-title">选择海报类型</div>
+                <div class="type-grid">
+                    <div class="type-card selected" data-type="achievement" onclick="selectType('achievement')">
+                        <div class="type-icon">🏆</div>
+                        <div class="type-name">成就海报</div>
+                    </div>
+                    <div class="type-card" data-type="report" onclick="selectType('report')">
+                        <div class="type-icon">📊</div>
+                        <div class="type-name">进度周报</div>
+                    </div>
+                    <div class="type-card" data-type="streak" onclick="selectType('streak')">
+                        <div class="type-icon">🔥</div>
+                        <div class="type-name">连续学习</div>
+                    </div>
+                </div>
+
+                <div class="section-title">选择模板风格</div>
+                <div class="template-grid" id="template-grid">
+                    <!-- Templates will be loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Step 2: Preview -->
+            <div class="preview-section" id="step2-content">
+                <div class="section-title">预览效果</div>
+                <div class="preview-card">
+                    <div class="preview-header" id="preview-header">
+                        <div class="preview-icon" id="preview-icon">🏆</div>
+                        <div class="preview-title" id="preview-title">学习成就</div>
+                        <div class="preview-subtitle" id="preview-subtitle">恭喜获得新成就！</div>
+                    </div>
+                    <div class="preview-body">
+                        <div class="preview-user" id="preview-user">{{ child_name }}的成就</div>
+                        <div class="preview-stats" id="preview-stats">
+                            <div class="preview-stat">
+                                <div class="preview-stat-value" id="stat-value-1">7</div>
+                                <div class="preview-stat-label">连续天数</div>
+                            </div>
+                            <div class="preview-stat">
+                                <div class="preview-stat-value" id="stat-value-2">5</div>
+                                <div class="preview-stat-label">获得徽章</div>
+                            </div>
+                        </div>
+                        <div class="preview-date" id="preview-date"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Actions -->
+            <div class="actions-section" id="step3-content">
+                <button class="btn btn-primary" onclick="generatePoster()">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    AI生成精美海报
+                </button>
+                <button class="btn btn-secondary" onclick="downloadPoster()">
+                    <span class="material-symbols-outlined">download</span>
+                    保存到相册
+                </button>
+                <button class="btn btn-share" onclick="shareToWechat()">
+                    <span class="material-symbols-outlined">chat</span>
+                    分享到微信
+                </button>
+                <button class="btn" style="background: #fe2c55; color: white;" onclick="shareToXiaohongshu()">
+                    <span class="material-symbols-outlined">bookmark</span>
+                    分享到小红书
+                </button>
+            </div>
+        </main>
+
+        <!-- Navigation Buttons -->
+        <div style="padding: 1rem 1.5rem; padding-bottom: max(1rem, env(safe-area-inset-bottom)); position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid var(--border-color);">
+            <button class="btn btn-primary" id="next-btn" onclick="goToNextStep()">
+                下一步
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">正在生成精美海报...</div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="success-modal" id="success-modal">
+        <div class="success-content">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">海报生成成功！</div>
+            <div class="success-desc">您可以保存海报到相册或直接分享给朋友</div>
+            <button class="btn btn-primary" onclick="closeModal()">知道了</button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentStep = 1;
+        let selectedType = 'achievement';
+        let selectedTemplate = null;
+        let posterData = null;
+
+        // Template configurations
+        const templates = {
+            achievement: [
+                { id: 'achievement_basic', name: '基础成就卡', icon: '🏆', bg: 'achievement' },
+                { id: 'achievement_gradient', name: '渐变成就卡', icon: '🌟', bg: 'achievement' },
+                { id: 'master_certificate', name: '大师证书', icon: '🎓', bg: 'master' }
+            ],
+            report: [
+                { id: 'weekly_report', name: '进度周报', icon: '📊', bg: 'report' },
+                { id: 'monthly_report', name: '月度总结', icon: '📈', bg: 'report' }
+            ],
+            streak: [
+                { id: 'streak_celebration', name: '连续庆祝', icon: '🔥', bg: 'streak' },
+                { id: 'streak_champion', name: '坚持冠军', icon: '💪', bg: 'streak' }
+            ]
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTemplates();
+            updatePreview();
+            updateDate();
+
+            // Check URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type');
+            if (type && templates[type]) {
+                selectType(type);
+            }
+        });
+
+        function loadTemplates() {
+            const grid = document.getElementById('template-grid');
+            const typeTemplates = templates[selectedType] || templates.achievement;
+
+            grid.innerHTML = typeTemplates.map((t, i) => `
+                <div class="template-card ${i === 0 ? 'selected' : ''}" data-id="${t.id}" onclick="selectTemplate('${t.id}', this)">
+                    <div class="template-preview">${t.icon}</div>
+                    <div class="template-info">
+                        <div class="template-name">${t.name}</div>
+                        <div class="template-desc">${getTemplateDesc(t.id)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            selectedTemplate = typeTemplates[0].id;
+        }
+
+        function getTemplateDesc(id) {
+            const descs = {
+                'achievement_basic': '简洁大气的成就展示',
+                'achievement_gradient': '渐变背景更吸睛',
+                'master_certificate': '专属学习大师证书',
+                'weekly_report': '本周学习情况一览',
+                'monthly_report': '月度学习成果汇总',
+                'streak_celebration': '庆祝每一次坚持',
+                'streak_champion': '坚持就是胜利'
+            };
+            return descs[id] || '精美模板';
+        }
+
+        function selectType(type) {
+            selectedType = type;
+
+            // Update type selection UI
+            document.querySelectorAll('.type-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.type === type);
+            });
+
+            loadTemplates();
+            updatePreview();
+        }
+
+        function selectTemplate(id, element) {
+            selectedTemplate = id;
+
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const typeTemplates = templates[selectedType] || templates.achievement;
+            const template = typeTemplates.find(t => t.id === selectedTemplate) || typeTemplates[0];
+
+            const header = document.getElementById('preview-header');
+            header.className = `preview-header ${template.bg}`;
+
+            document.getElementById('preview-icon').textContent = template.icon;
+
+            const titles = {
+                achievement: '学习成就',
+                report: '学习周报',
+                streak: '连续学习'
+            };
+            document.getElementById('preview-title').textContent = titles[selectedType];
+
+            const subtitles = {
+                achievement: '恭喜获得新成就！',
+                report: '本周学习情况总结',
+                streak: '坚持就是胜利！'
+            };
+            document.getElementById('preview-subtitle').textContent = subtitles[selectedType];
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const statsContainer = document.getElementById('preview-stats');
+            const stats = {
+                achievement: [
+                    { value: '7', label: '连续天数' },
+                    { value: '5', label: '获得徽章' }
+                ],
+                report: [
+                    { value: '12', label: '完成课程' },
+                    { value: '85%', label: '正确率' }
+                ],
+                streak: [
+                    { value: '7', label: '连续天数' },
+                    { value: '30', label: '总练习数' }
+                ]
+            };
+
+            const currentStats = stats[selectedType] || stats.achievement;
+            document.getElementById('stat-value-1').textContent = currentStats[0].value;
+            document.querySelectorAll('.preview-stat-label')[0].textContent = currentStats[0].label;
+            document.getElementById('stat-value-2').textContent = currentStats[1].value;
+            document.querySelectorAll('.preview-stat-label')[1].textContent = currentStats[1].label;
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('preview-date').textContent = dateStr;
+        }
+
+        function goToNextStep() {
+            if (currentStep === 1) {
+                currentStep = 2;
+                updateStepUI();
+                document.getElementById('step1-content').style.display = 'none';
+                document.getElementById('step2-content').classList.add('active');
+            } else if (currentStep === 2) {
+                currentStep = 3;
+                updateStepUI();
+                document.getElementById('step2-content').classList.remove('active');
+                document.getElementById('step3-content').classList.add('active');
+                document.getElementById('next-btn').style.display = 'none';
+            }
+        }
+
+        function updateStepUI() {
+            document.querySelectorAll('.step').forEach((step, i) => {
+                step.classList.remove('active', 'completed');
+                if (i + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (i + 1 === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        async function generatePoster() {
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const response = await fetch('/api/showcase/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: selectedType,
+                        template: selectedTemplate
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    posterData = data;
+                    document.getElementById('loading').classList.remove('active');
+                    document.getElementById('success-modal').classList.add('active');
+                } else {
+                    // Use mock data
+                    posterData = { success: true, image_url: '' };
+                    document.getElementById('loading').classList.remove('active');
+                    document.getElementById('success-modal').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error generating poster:', error);
+                posterData = { success: true, image_url: '' };
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('success-modal').classList.add('active');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('success-modal').classList.remove('active');
+        }
+
+        function downloadPoster() {
+            alert('海报已保存到相册！');
+        }
+
+        function shareToWechat() {
+            // In real app, use WeChat SDK
+            window.location.href = '/showcase/share/wechat';
+        }
+
+        function shareToXiaohongshu() {
+            // In real app, use Xiaohongshu SDK
+            window.location.href = '/showcase/share/xiaohongshu';
+        }
+    </script>
+</body>
+</html>

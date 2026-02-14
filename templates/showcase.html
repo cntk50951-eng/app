@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>学习成果社交秀 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #1e94e9;
+            --primary-dark: #1565c0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-orange: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            --gradient-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        body {
+            min-height: 100dvh;
+            background: var(--background-light);
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            padding-bottom: 0.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            padding: 2rem 1.5rem;
+            background: var(--gradient-purple);
+            color: white;
+            text-align: center;
+        }
+
+        .hero-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 6rem;
+        }
+
+        /* Generate Button */
+        .generate-section {
+            padding: 1.5rem;
+        }
+
+        .generate-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            text-align: center;
+        }
+
+        .generate-icon {
+            width: 4rem;
+            height: 4rem;
+            background: var(--gradient-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+        }
+
+        .generate-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .generate-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-generate {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-generate:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Feature Grid */
+        .feature-section {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-card.achievement {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #fbbf24;
+        }
+
+        .feature-card.report {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+        }
+
+        .feature-card.share {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #3b82f6;
+        }
+
+        .feature-card.cases {
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            border-color: #ec4899;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-item:hover {
+            transform: translateX(4px);
+            border-color: var(--primary);
+        }
+
+        .action-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .action-icon.streak {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+
+        .action-icon.badge {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        }
+
+        .action-icon.share {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        }
+
+        .action-content {
+            flex: 1;
+        }
+
+        .action-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .action-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .action-arrow {
+            color: var(--text-muted);
+        }
+
+        /* Success Cases Preview */
+        .cases-preview {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .case-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .case-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .case-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: var(--background-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .case-info {
+            flex: 1;
+        }
+
+        .case-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .case-school {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .case-achievement {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: #dcfce7;
+            color: #16a34a;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .case-experience {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .case-tips {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--background-light);
+            border-radius: var(--radius-md);
+        }
+
+        .case-tips-icon {
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .case-tips-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Card */
+        .stats-section {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            color: white;
+        }
+
+        .stats-title {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stats-item {
+            text-align: center;
+        }
+
+        .stats-item-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .stats-item-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="{{ url_for('dashboard') }}" class="back-btn">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="page-title">学习成果社交秀</h1>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-icon">🎉</div>
+            <div class="hero-title">炫耀学习成果</div>
+            <div class="hero-subtitle">一键生成精美海报，分享给朋友家人</div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Generate Section -->
+            <div class="generate-section">
+                <div class="generate-card">
+                    <div class="generate-icon">✨</div>
+                    <div class="generate-title">生成专属成就海报</div>
+                    <div class="generate-desc">根据您的学习数据，AI智能生成精美海报</div>
+                    <a href="{{ url_for('showcase_generate') }}" class="btn-generate">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        立即生成
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="stats-section">
+                <div class="stats-card">
+                    <div class="stats-title">本周成就</div>
+                    <div class="stats-value" id="total-achievements">0</div>
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="streak-days">0</div>
+                            <div class="stats-item-label">连续天数</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="badges-count">0</div>
+                            <div class="stats-item-label">获得徽章</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="shares-count">0</div>
+                            <div class="stats-item-label">分享次数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature Grid -->
+            <div class="feature-section">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    功能中心
+                </div>
+                <div class="feature-grid">
+                    <div class="feature-card achievement" onclick="window.location.href='{{ url_for('showcase_generate') }}?type=achievement'">
+                        <div class="feature-icon">🏆</div>
+                        <div class="feature-name">成就海报</div>
+                        <div class="feature-desc">生成学习成就卡片</div>
+                    </div>
+                    <div class="feature-card report" onclick="window.location.href='{{ url_for('showcase_generate') }}?type=report'">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-name">进度周报</div>
+                        <div class="feature-desc">查看每周学习进度</div>
+                    </div>
+                    <div class="feature-card share" onclick="window.location.href='{{ url_for('showcase_share', share_type='wechat') }}'">
+                        <div class="feature-icon">📱</div>
+                        <div class="feature-name">分享到微信</div>
+                        <div class="feature-desc">一键分享给好友</div>
+                    </div>
+                    <div class="feature-card cases" onclick="scrollToCases()">
+                        <div class="feature-icon">🌟</div>
+                        <div class="feature-name">成功案例</div>
+                        <div class="feature-desc">看看大家怎么做</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">bolt</span>
+                    快速操作
+                </div>
+                <div class="action-list">
+                    <a href="{{ url_for('showcase_generate') }}?type=streak" class="action-item">
+                        <div class="action-icon streak">🔥</div>
+                        <div class="action-content">
+                            <div class="action-title">炫耀连续学习</div>
+                            <div class="action-desc">分享您的学习坚持</div>
+                        </div>
+                        <span class="material-symbols-outlined action-arrow">chevron_right</span>
+                    </a>
+                    <a href="{{ url_for('showcase_generate') }}?type=master" class="action-item">
+                        <div class="action-icon badge">🎓</div>
+                        <div class="action-content">
+                            <div class="action-title">生成大师证书</div>
+                            <div class="action-desc">展示您的学习成就</div>
+                        </div>
+                        <span class="material-symbols-outlined action-arrow">chevron_right</span>
+                    </a>
+                    <a href="{{ url_for('showcase_share', share_type='xiaohongshu') }}" class="action-item">
+                        <div class="action-icon share">📕</div>
+                        <div class="action-content">
+                            <div class="action-title">分享到小红书</div>
+                            <div class="action-desc">让更多人看到您的努力</div>
+                        </div>
+                        <span class="material-symbols-outlined action-arrow">chevron_right</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Success Cases -->
+            <div class="cases-preview" id="cases-section">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">star</span>
+                    成功案例
+                </div>
+                <div id="cases-list">
+                    <!-- Cases will be loaded dynamically -->
+                </div>
+                <button class="btn-generate" style="margin-top: 1rem; background: var(--text-secondary);" onclick="loadMoreCases()">
+                    查看更多案例
+                </button>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <span class="material-symbols-outlined filled">dashboard</span>
+                <span>首頁</span>
+            </a>
+            <a href="{{ url_for('lesson', topic_id='self-introduction') }}" class="nav-item">
+                <span class="material-symbols-outlined">school</span>
+                <span>練習</span>
+            </a>
+            <a href="{{ url_for('showcase_page') }}" class="nav-item active">
+                <span class="material-symbols-outlined">celebration</span>
+                <span>成果秀</span>
+            </a>
+            <a href="{{ url_for('achievements_page') }}" class="nav-item">
+                <span class="material-symbols-outlined">emoji_events</span>
+                <span>成就</span>
+            </a>
+            <a href="{{ url_for('settings_page') }}" class="nav-item">
+                <span class="material-symbols-outlined">settings</span>
+                <span>設定</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // Load showcase data
+        async function loadShowcaseData() {
+            try {
+                // Load user stats
+                const statsRes = await fetch('/api/user/stats');
+                if (statsRes.ok) {
+                    const stats = await statsRes.json();
+                    document.getElementById('total-achievements').textContent = stats.total_achievements || 0;
+                    document.getElementById('streak-days').textContent = stats.streak_days || 0;
+                }
+
+                // Load achievements
+                const achRes = await fetch('/api/achievements');
+                if (achRes.ok) {
+                    const ach = await achRes.json();
+                    document.getElementById('badges-count').textContent = ach.earned_badges || 0;
+                }
+
+                // Load success cases
+                loadSuccessCases();
+            } catch (error) {
+                console.error('Error loading showcase data:', error);
+                loadMockData();
+            }
+        }
+
+        function loadMockData() {
+            document.getElementById('total-achievements').textContent = '5';
+            document.getElementById('streak-days').textContent = '7';
+            document.getElementById('badges-count').textContent = '3';
+            document.getElementById('shares-count').textContent = '12';
+            loadSuccessCases();
+        }
+
+        async function loadSuccessCases() {
+            const cases = [
+                {
+                    id: 1,
+                    child_name: '小明',
+                    school: 'XX小学',
+                    achievement: '面试成功',
+                    experience: '通过每天练习模拟面试，我变得更有自信了！',
+                    tips: '坚持每天练习，多听多说很重要',
+                    avatar: '👦'
+                },
+                {
+                    id: 2,
+                    child_name: '小红',
+                    school: 'YY国际学校',
+                    achievement: '表达能力提升',
+                    experience: '以前不敢说话，现在能流畅表达了',
+                    tips: '不要害怕犯错，勇于尝试',
+                    avatar: '👧'
+                },
+                {
+                    id: 3,
+                    child_name: '小华',
+                    school: 'ZZ实验小学',
+                    achievement: '连续学习30天',
+                    experience: '每天坚持学习，形成了很好的习惯',
+                    tips: '让学习成为日常的一部分',
+                    avatar: '👦'
+                }
+            ];
+
+            renderCases(cases);
+        }
+
+        function renderCases(cases) {
+            const container = document.getElementById('cases-list');
+            container.innerHTML = cases.map(c => `
+                <div class="case-card">
+                    <div class="case-header">
+                        <div class="case-avatar">${c.avatar}</div>
+                        <div class="case-info">
+                            <div class="case-name">${c.child_name}</div>
+                            <div class="case-school">${c.school}</div>
+                        </div>
+                        <div class="case-achievement">
+                            <span>✓</span> ${c.achievement}
+                        </div>
+                    </div>
+                    <div class="case-experience">"${c.experience}"</div>
+                    <div class="case-tips">
+                        <span class="material-symbols-outlined case-tips-icon">lightbulb</span>
+                        <span class="case-tips-text">${c.tips}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function scrollToCases() {
+            document.getElementById('cases-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function loadMoreCases() {
+            alert('更多成功案例加载中...');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadShowcaseData);
+    </script>
+</body>
+</html>

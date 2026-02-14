@@ -319,3 +319,16 @@ CREATE INDEX idx_wrong_user ON user_wrong_answers(user_id);
 CREATE INDEX idx_category_progress_user ON category_progress(user_id);
 CREATE INDEX idx_daily_challenge_user ON daily_challenges(user_id, challenge_date);
 CREATE INDEX idx_user_stats_user ON user_stats(user_id);
+
+-- 学习成果社交秀分享记录表
+CREATE TABLE IF NOT EXISTS showcase_shares (
+    id UUID PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    poster_type VARCHAR(50) NOT NULL,
+    poster_data JSONB,
+    platform VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_showcase_shares_user ON showcase_shares(user_id);
+CREATE INDEX idx_showcase_shares_created ON showcase_shares(created_at);
