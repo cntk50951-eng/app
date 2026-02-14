@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能匹配 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .hero-section h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .hero-section p {
+            opacity: 0.9;
+        }
+        .selection-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .selection-card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        .school-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            margin-bottom: 16px;
+        }
+        .match-result {
+            display: none;
+        }
+        .match-result.show {
+            display: block;
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+        }
+        .analysis-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .analysis-section h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .analysis-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .analysis-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .analysis-list li:last-child {
+            border-bottom: none;
+        }
+        .strengths-list li { color: #4caf50; }
+        .weaknesses-list li { color: #ff9800; }
+        .suggestions-list li { color: #2196f3; }
+        .questions-grid {
+            display: grid;
+            gap: 16px;
+        }
+        .question-card {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .question-card .type {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        .question-card p {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .question-card .tips {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+        }
+        .history-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-item .school {
+            font-weight: 500;
+            color: #333;
+        }
+        .history-item .date {
+            font-size: 12px;
+            color: #888;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('school_questions') }}" class="btn-back" data-href="{{ url_for('school_questions') }}">
+            <span class="material-symbols-outlined">arrow_back</span>
+            返回
+        </a>
+
+        <div class="hero-section">
+            <h1>AI智能匹配</h1>
+            <p>根據孩子的特點和目標學校，智能推薦最適合的練習題目</p>
+        </div>
+
+        <div class="selection-card">
+            <h2>選擇目標學校</h2>
+            <select id="schoolSelect" class="school-select" onchange="startMatching()">
+                <option value="">請選擇學校...</option>
+                {% for school in schools %}
+                <option value="{{ school.id }}">{{ school.name_zh }} {% if school.district %}({{ school.district }}){% endif %}</option>
+                {% endfor %}
+            </select>
+
+            <button id="matchBtn" class="btn btn-primary" style="width: 100%; display: none;" onclick="startMatching()">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                開始智能匹配
+            </button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>AI正在分析中，請稍候...</p>
+        </div>
+
+        <div id="matchResult" class="match-result">
+            <div class="score-circle" id="scoreCircle">
+                <span id="scoreValue">0</span>%
+            </div>
+
+            <div class="analysis-section">
+                <h3><span class="material-symbols-outlined" style="color: #4caf50;">check_circle</span> 孩子的優勢</h3>
+                <ul class="analysis-list strengths-list" id="strengthsList"></ul>
+            </div>
+
+            <div class="analysis-section">
+                <h3><span class="material-symbols-outlined" style="color: #ff9800;">warning</span> 需要加強</h3>
+                <ul class="analysis-list weaknesses-list" id="weaknessesList"></ul>
+            </div>
+
+            <div class="analysis-section">
+                <h3><span class="material-symbols-outlined" style="color: #2196f3;">lightbulb</span> 準備建議</h3>
+                <ul class="analysis-list suggestions-list" id="suggestionsList"></ul>
+            </div>
+
+            <div class="analysis-section">
+                <h3><span class="material-symbols-outlined">quiz</span> 推薦真題</h3>
+                <div class="questions-grid" id="questionsGrid"></div>
+            </div>
+        </div>
+
+        {% if history %}
+        <div class="history-section">
+            <h3>匹配歷史</h3>
+            {% for record in history %}
+            <div class="history-item">
+                <div class="school">{{ record.school_name or '綜合匹配' }}</div>
+                <div class="date">{{ record.created_at }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // 監聽學校選擇
+        document.getElementById('schoolSelect').addEventListener('change', function() {
+            const btn = document.getElementById('matchBtn');
+            if (this.value) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'none';
+            }
+        });
+
+        function startMatching() {
+            const schoolId = document.getElementById('schoolSelect').value;
+            if (!schoolId) return;
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('matchResult').classList.remove('show');
+
+            fetch('/api/ai-match/recommend', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({school_id: parseInt(schoolId)})
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading').classList.remove('show');
+
+                if (data.success && data.result) {
+                    displayResult(data.result);
+                } else {
+                    alert('匹配失敗，請稍後重試');
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').classList.remove('show');
+                alert('發生錯誤，請重試');
+            });
+        }
+
+        function displayResult(result) {
+            // 顯示匹配度
+            const score = result.match_score || 0;
+            document.getElementById('scoreValue').textContent = score;
+
+            // 顯示分析
+            const analysis = result.analysis || {};
+
+            const strengthsList = document.getElementById('strengthsList');
+            strengthsList.innerHTML = '';
+            (analysis.strengths || []).forEach(item => {
+                strengthsList.innerHTML += `<li><span class="material-symbols-outlined">trending_up</span> ${item}</li>`;
+            });
+
+            const weaknessesList = document.getElementById('weaknessesList');
+            weaknessesList.innerHTML = '';
+            (analysis.weaknesses || []).forEach(item => {
+                weaknessesList.innerHTML += `<li><span class="material-symbols-outlined">priority_high</span> ${item}</li>`;
+            });
+
+            const suggestionsList = document.getElementById('suggestionsList');
+            suggestionsList.innerHTML = '';
+            (analysis.suggestions || []).forEach(item => {
+                suggestionsList.innerHTML += `<li><span class="material-symbols-outlined">arrow_right</span> ${item}</li>`;
+            });
+
+            // 顯示推薦題目
+            const questionsGrid = document.getElementById('questionsGrid');
+            questionsGrid.innerHTML = '';
+            (result.questions || []).forEach(q => {
+                questionsGrid.innerHTML += `
+                    <div class="question-card">
+                        <span class="type">${q.question_type}</span>
+                        <p>${q.question_text}</p>
+                        ${q.tips ? `<div class="tips">提示: ${q.tips}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('matchResult').classList.add('show');
+        }
+    </script>
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('school_questions') }}" class="nav-item {% if active_page == 'school-questions' %}active{% endif %}">
+            <span class="material-symbols-outlined">school</span>
+            <span>題庫</span>
+        </a>
+        <a href="{{ url_for('ai_match') }}" class="nav-item {% if active_page == 'ai-match' %}active{% endif %}">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span>AI</span>
+        </a>
+    </nav>
+    {% endblock %}
+</body>
+</html>

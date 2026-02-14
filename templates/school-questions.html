@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>目標學校題庫 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+        .hero-section h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .hero-section p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+        }
+        .feature-card .icon {
+            width: 48px;
+            height: 48px;
+            background: #f0f4ff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .feature-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .feature-card a {
+            display: inline-block;
+            margin-top: 12px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .school-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .school-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .school-card:hover {
+            transform: translateY(-4px);
+        }
+        .school-card .image {
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+        .school-card .info {
+            padding: 16px;
+        }
+        .school-card h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .school-card .meta {
+            font-size: 13px;
+            color: #888;
+        }
+        .school-card .ranking {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .filter-bar select {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .quick-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .quick-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .quick-link:hover {
+            transform: translateY(-2px);
+        }
+        .quick-link .material-symbols-outlined {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="btn-back" data-href="{{ url_for('dashboard') }}">
+            <span class="material-symbols-outlined">arrow_back</span>
+            返回
+        </a>
+
+        <div class="hero-section">
+            <h1>目標學校智能題庫</h1>
+            <p>根據孩子的特點，智能推薦最適合的學校真題</p>
+        </div>
+
+        <div class="quick-links">
+            <a href="{{ url_for('school_list') }}" class="quick-link">
+                <span class="material-symbols-outlined">school</span>
+                學校列表
+            </a>
+            <a href="{{ url_for('ai_match') }}" class="quick-link">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                AI智能匹配
+            </a>
+            <a href="{{ url_for('interview_experience') }}" class="quick-link">
+                <span class="material-symbols-outlined">article</span>
+                面試經驗
+            </a>
+            <a href="{{ url_for('interview_timeline') }}" class="quick-link">
+                <span class="material-symbols-outlined">timeline</span>
+                面試時間線
+            </a>
+        </div>
+
+        {% if featured_schools %}
+        <section style="margin-top: 40px;">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">推薦學校</h2>
+            <div class="school-grid">
+                {% for school in featured_schools %}
+                <a href="{{ url_for('school_detail', school_id=school.id) }}" class="school-card">
+                    <div class="image">
+                        <span class="material-symbols-outlined" style="font-size: 48px;">school</span>
+                    </div>
+                    <div class="info">
+                        {% if school.ranking %}
+                        <span class="ranking">排名 #{{ school.ranking }}</span>
+                        {% endif %}
+                        <h4>{{ school.name_zh }}</h4>
+                        <div class="meta">
+                            {% if school.district %}{{ school.district }} {% endif %}
+                            {% if school.category %}| {{ school.category }}{% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="icon">
+                    <span class="material-symbols-outlined" style="font-size: 24px; color: #667eea;">school</span>
+                </div>
+                <h3>學校真題庫</h3>
+                <p>收錄各名校真實面試題目，按學校、題型分類，方便針對性練習</p>
+                <a href="{{ url_for('school_list') }}">查看全部學校</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">
+                    <span class="material-symbols-outlined" style="font-size: 24px; color: #667eea;">auto_awesome</span>
+                </div>
+                <h3>AI智能匹配</h3>
+                <p>根據孩子的興趣、特長和目標學校，智能推薦最適合的練習題目</p>
+                <a href="{{ url_for('ai_match') }}">開始AI匹配</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">
+                    <span class="material-symbols-outlined" style="font-size: 24px; color: #667eea;">article</span>
+                </div>
+                <h3>面試經驗分享</h3>
+                <p>家長分享真實面試經驗，了解學校面試流程和注意事項</p>
+                <a href="{{ url_for('interview_experience') }}">閱讀經驗</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">
+                    <span class="material-symbols-outlined" style="font-size: 24px; color: #667eea;">timeline</span>
+                </div>
+                <h3>面試時間線</h3>
+                <p>了解目標學校的面試流程各階段時間，合理規劃準備安排</p>
+                <a href="{{ url_for('interview_timeline') }}">查看時間線</a>
+            </div>
+        </div>
+
+        {% if districts %}
+        <div class="filter-bar">
+            <h3 style="font-size: 16px; margin-bottom: 12px;">按區域篩選</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                {% for district in districts %}
+                <a href="{{ url_for('school_list', district=district) }}" class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;">
+                    {{ district }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('school_questions') }}" class="nav-item {% if active_page == 'school-questions' %}active{% endif %}">
+            <span class="material-symbols-outlined">school</span>
+            <span>題庫</span>
+        </a>
+        <a href="{{ url_for('child_profile_step1') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+            <span class="material-symbols-outlined">person</span>
+            <span>畫像</span>
+        </a>
+    </nav>
+    {% endblock %}
+</body>
+</html>

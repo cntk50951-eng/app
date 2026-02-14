@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面試經驗分享 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        .hero-section h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .hero-section p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .filter-bar {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-row select {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            min-width: 140px;
+        }
+        .experience-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .experience-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .experience-card:hover {
+            transform: translateY(-2px);
+        }
+        .experience-card.featured {
+            border-left: 4px solid #667eea;
+        }
+        .experience-card .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .experience-card h3 {
+            font-size: 16px;
+            color: #333;
+            flex: 1;
+        }
+        .experience-card .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        .experience-card .meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .experience-card .meta .author-type {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .experience-card .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .experience-card .tag {
+            padding: 4px 10px;
+            background: #f0f4ff;
+            color: #667eea;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .experience-card .result {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        .experience-card .result.admitted { background: #e8f5e9; color: #4caf50; }
+        .experience-card .result.waitlisted { background: #fff3e0; color: #ff9800; }
+        .experience-card .result.rejected { background: #ffebee; color: #f44336; }
+        .experience-card .preview {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .experience-card .actions {
+            display: flex;
+            gap: 12px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background: #e0e0e0;
+        }
+        .action-btn.liked {
+            color: #f44336;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('school_questions') }}" class="btn-back" data-href="{{ url_for('school_questions') }}">
+            <span class="material-symbols-outlined">arrow_back</span>
+            返回
+        </a>
+
+        <div class="hero-section">
+            <h1>面試經驗分享</h1>
+            <p>家長真實面試經驗，幫助您更好地準備</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-row">
+                <select id="schoolFilter" onchange="applyFilters()">
+                    <option value="">全部學校</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if selected_school == school.id|string %}selected{% endif %}>{{ school.name_zh }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="authorFilter" onchange="applyFilters()">
+                    <option value="">全部身份</option>
+                    <option value="parent" {% if selected_author == 'parent' %}selected{% endif %}>家長</option>
+                    <option value="student" {% if selected_author == 'student' %}selected{% endif %}>學生</option>
+                    <option value="alumni" {% if selected_author == 'alumni' %}selected{% endif %}>校友</option>
+                </select>
+            </div>
+        </div>
+
+        {% if experiences %}
+        <div class="experience-list">
+            {% for exp in experiences %}
+            <div class="experience-card {% if exp.is_featured %}featured{% endif %}">
+                <div class="header">
+                    <h3>
+                        {{ exp.title }}
+                        {% if exp.is_featured %}
+                        <span class="badge">精選</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="meta">
+                    {% if exp.school_name %}
+                    <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span> {{ exp.school_name }}</span>
+                    {% endif %}
+                    {% if exp.author_name %}
+                    <span class="author-type"><span class="material-symbols-outlined" style="font-size: 16px;">person</span> {{ exp.author_name }}</span>
+                    {% endif %}
+                    {% if exp.child_grade %}
+                    <span>{{ exp.child_grade }}</span>
+                    {% endif %}
+                </div>
+                {% if exp.interview_result %}
+                <span class="result {{ exp.interview_result }}">
+                    {% if exp.interview_result == 'admitted' %}錄取
+                    {% elif exp.interview_result == 'waitlisted' %}候補
+                    {% elif exp.interview_result == 'rejected' %}未錄取
+                    {% endif %}
+                </span>
+                {% endif %}
+                {% if exp.tags %}
+                <div class="tags">
+                    {% for tag in exp.tags.split(',') %}
+                    <span class="tag">{{ tag.strip() }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="preview">{{ exp.content[:200] }}{% if exp.content|length > 200 %}...{% endif %}</div>
+                <div class="actions">
+                    <button class="action-btn" onclick="likeExperience({{ exp.id }})">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
+                        <span>{{ exp.like_count }}</span>
+                    </button>
+                    <button class="action-btn">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                        <span>{{ exp.view_count }}</span>
+                    </button>
+                    <a href="#" class="action-btn" style="text-decoration: none; color: #333;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">read_more</span>
+                        <span>閱讀全文</span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-symbols-outlined" style="font-size: 64px;">article</span>
+            <p>暫無面試經驗分享</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function applyFilters() {
+            const schoolId = document.getElementById('schoolFilter').value;
+            const authorType = document.getElementById('authorFilter').value;
+
+            let url = '{{ url_for("interview_experience") }}?';
+            const params = [];
+
+            if (schoolId) params.push('school_id=' + schoolId);
+            if (authorType) params.push('author_type=' + authorType);
+
+            if (params.length > 0) {
+                url += params.join('&');
+            } else {
+                url = '{{ url_for("interview_experience") }}';
+            }
+
+            window.location.href = url;
+        }
+
+        function likeExperience(experienceId) {
+            fetch('/api/experience/like', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({experience_id: experienceId})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('school_questions') }}" class="nav-item {% if active_page == 'school-questions' %}active{% endif %}">
+            <span class="material-symbols-outlined">school</span>
+            <span>題庫</span>
+        </a>
+        <a href="{{ url_for('child_profile_step1') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+            <span class="material-symbols-outlined">person</span>
+            <span>畫像</span>
+        </a>
+    </nav>
+    {% endblock %}
+</body>
+</html>

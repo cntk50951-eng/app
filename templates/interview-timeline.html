@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面試時間線 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        .hero-section h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .hero-section p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .school-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .school-selector h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .school-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+        .timeline-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .timeline-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+        .timeline-header .year {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 28px;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -26px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+        .timeline-item:first-child .timeline-dot {
+            width: 20px;
+            height: 20px;
+            left: -28px;
+            top: -2px;
+        }
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 10px;
+        }
+        .timeline-content .stage {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .timeline-content h4 {
+            font-size: 16px;
+            color: #333;
+        }
+        .timeline-content .date {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .timeline-content .description {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        .timeline-content .tips {
+            font-size: 13px;
+            color: #667eea;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .quick-timelines {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .quick-school {
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .quick-school:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .quick-school h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .quick-school p {
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('school_questions') }}" class="btn-back" data-href="{{ url_for('school_questions') }}">
+            <span class="material-symbols-outlined">arrow_back</span>
+            返回
+        </a>
+
+        <div class="hero-section">
+            <h1>面試時間線</h1>
+            <p>了解目標學校的面試流程，合理規劃準備時間</p>
+        </div>
+
+        <div class="school-selector">
+            <h3>選擇學校</h3>
+            <select id="schoolSelect" class="school-select" onchange="selectSchool()">
+                <option value="">請選擇學校...</option>
+                {% for school in schools %}
+                <option value="{{ school.id }}" {% if selected_school == school.id|string %}selected{% endif %}>{{ school.name_zh }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if school and timeline %}
+        <div class="timeline-card">
+            <div class="timeline-header">
+                <h2>{{ school.name_zh }}</h2>
+                <span class="year">{{ timeline[0].year }}年</span>
+            </div>
+
+            <div class="timeline">
+                {% for item in timeline %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="stage">
+                            <h4>{{ item.stage }}</h4>
+                            <span style="color: #888; font-size: 14px;">第{{ item.stage_order }}階段</span>
+                        </div>
+                        {% if item.start_date or item.end_date %}
+                        <div class="date">
+                            {% if item.start_date %}{{ item.start_date }}{% endif %}
+                            {% if item.start_date and item.end_date %} - {% endif %}
+                            {% if item.end_date %}{{ item.end_date }}{% endif %}
+                        </div>
+                        {% endif %}
+                        {% if item.description %}
+                        <div class="description">{{ item.description }}</div>
+                        {% endif %}
+                        {% if item.tips %}
+                        <div class="tips">
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: #667eea;">lightbulb</span>
+                            {{ item.tips }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-symbols-outlined" style="font-size: 64px;">timeline</span>
+            <p>請選擇一所學校查看面試時間線</p>
+        </div>
+        {% endif %}
+
+        {% if schools %}
+        <h3 style="margin-top: 32px; margin-bottom: 16px; font-size: 16px;">快速查看</h3>
+        <div class="quick-timelines">
+            {% for school in schools[:6] %}
+            <a href="{{ url_for('interview_timeline') }}?school_id={{ school.id }}" class="quick-school">
+                <h4>{{ school.name_zh }}</h4>
+                <p>{% if school.district %}{{ school.district }}{% endif %}</p>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function selectSchool() {
+            const schoolId = document.getElementById('schoolSelect').value;
+            if (schoolId) {
+                window.location.href = '{{ url_for("interview_timeline") }}?school_id=' + schoolId;
+            }
+        }
+    </script>
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('school_questions') }}" class="nav-item {% if active_page == 'school-questions' %}active{% endif %}">
+            <span class="material-symbols-outlined">school</span>
+            <span>題庫</span>
+        </a>
+        <a href="{{ url_for('child_profile_step1') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+            <span class="material-symbols-outlined">person</span>
+            <span>畫像</span>
+        </a>
+    </nav>
+    {% endblock %}
+</body>
+</html>

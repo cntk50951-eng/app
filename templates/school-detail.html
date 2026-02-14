@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ school.name_zh }} - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .school-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        .school-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .school-header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .school-header .ranking {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .info-card .label {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .info-card .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section h2 .material-symbols-outlined {
+            color: #667eea;
+        }
+        .description {
+            line-height: 1.8;
+            color: #555;
+        }
+        .timeline {
+            position: relative;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            padding-bottom: 24px;
+            position: relative;
+        }
+        .timeline-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+        .timeline-dot {
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .timeline-content {
+            flex: 1;
+        }
+        .timeline-content h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .timeline-content .date {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .timeline-content p {
+            font-size: 14px;
+            color: #555;
+        }
+        .questions-grid {
+            display: grid;
+            gap: 16px;
+        }
+        .question-card {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .question-card .type {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .question-card .difficulty {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .question-card .difficulty.easy { background: #e8f5e9; color: #4caf50; }
+        .question-card .difficulty.medium { background: #fff3e0; color: #ff9800; }
+        .question-card .difficulty.hard { background: #ffebee; color: #f44336; }
+        .question-card p {
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .question-card .sample-answer {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+        }
+        .question-card .tips {
+            font-size: 13px;
+            color: #888;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background: #f5f5f5;
+        }
+        .action-btn.liked {
+            color: #f44336;
+            border-color: #f44336;
+        }
+        .empty-questions {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('school_list') }}" class="btn-back" data-href="{{ url_for('school_list') }}">
+            <span class="material-symbols-outlined">arrow_back</span>
+            返回列表
+        </a>
+
+        <div class="school-header">
+            <h1>{{ school.name_zh }}</h1>
+            {% if school.name_en %}
+            <div class="subtitle">{{ school.name_en }}</div>
+            {% endif %}
+            {% if school.ranking %}
+            <div class="ranking">排名 #{{ school.ranking }}</div>
+            {% endif %}
+        </div>
+
+        <div class="info-cards">
+            {% if school.district %}
+            <div class="info-card">
+                <div class="label">區域</div>
+                <div class="value">{{ school.district }}</div>
+            </div>
+            {% endif %}
+            <div class="info-card">
+                <div class="label">類型</div>
+                <div class="value">{% if school.school_type == 'primary' %}小學{% elif school.school_type == 'secondary' %}中學{% else %}{{ school.school_type }}{% endif %}</div>
+            </div>
+            {% if school.category %}
+            <div class="info-card">
+                <div class="label">類別</div>
+                <div class="value">{{ school.category }}</div>
+            </div>
+            {% endif %}
+            {% if school.interview_format %}
+            <div class="info-card">
+                <div class="label">面試形式</div>
+                <div class="value">{{ school.interview_format }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if school.description %}
+        <div class="section">
+            <h2><span class="material-symbols-outlined">info</span> 學校簡介</h2>
+            <p class="description">{{ school.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if school.admission_requirements %}
+        <div class="section">
+            <h2><span class="material-symbols-outlined">assignment</span> 入学要求</h2>
+            <p class="description">{{ school.admission_requirements }}</p>
+        </div>
+        {% endif %}
+
+        {% if timeline %}
+        <div class="section">
+            <h2><span class="material-symbols-outlined">timeline</span> 面試時間線</h2>
+            <div class="timeline">
+                {% for item in timeline %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h4>{{ item.stage }}</h4>
+                        {% if item.start_date and item.end_date %}
+                        <div class="date">{{ item.start_date }} - {{ item.end_date }}</div>
+                        {% endif %}
+                        {% if item.description %}
+                        <p>{{ item.description }}</p>
+                        {% endif %}
+                        {% if item.tips %}
+                        <p style="color: #667eea; font-size: 13px; margin-top: 4px;">提示: {{ item.tips }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h2><span class="material-symbols-outlined">quiz</span> 真題練習</h2>
+            {% if questions %}
+            <div class="questions-grid">
+                {% for q in questions %}
+                <div class="question-card">
+                    <span class="type">{{ q.question_type }}</span>
+                    <span class="difficulty {{ q.difficulty }}">{{ q.difficulty }}</span>
+                    <p>{{ q.question_text }}</p>
+                    {% if q.sample_answer %}
+                    <div class="sample-answer">
+                        <strong>參考答案：</strong>{{ q.sample_answer }}
+                    </div>
+                    {% endif %}
+                    {% if q.tips %}
+                    <div class="tips">{{ q.tips }}</div>
+                    {% endif %}
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="likeQuestion({{ q.id }})">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
+                            <span>{{ q.like_count }}</span>
+                        </button>
+                        <button class="action-btn">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                            <span>{{ q.view_count }}</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-questions">
+                <p>暫無真題資料</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 24px; display: flex; gap: 12px;">
+            <a href="{{ url_for('ai_match') }}?school_id={{ school.id }}" class="btn btn-primary">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                AI智能匹配
+            </a>
+            <a href="{{ url_for('interview_experience') }}?school_id={{ school.id }}" class="btn btn-outline">
+                <span class="material-symbols-outlined">article</span>
+                查看經驗
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function likeQuestion(questionId) {
+            fetch('/api/questions/like', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({question_id: questionId})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('school_questions') }}" class="nav-item {% if active_page == 'school-questions' %}active{% endif %}">
+            <span class="material-symbols-outlined">school</span>
+            <span>題庫</span>
+        </a>
+        <a href="{{ url_for('child_profile_step1') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+            <span class="material-symbols-outlined">person</span>
+            <span>畫像</span>
+        </a>
+    </nav>
+    {% endblock %}
+</body>
+</html>

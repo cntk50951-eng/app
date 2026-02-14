@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history', '/school-questions', '/school-questions/schools', '/school-questions/school', '/school-questions/ai-match', '/interview-experience', '/interview-timeline', '/api/schools', '/api/schools', '/api/ai-match/recommend', '/api/experience', '/api/timeline', '/api/questions/like', '/api/experience/like']
 
 
 def login_required(f):
@@ -3674,6 +3674,344 @@ def api_parent_interview_school_types():
 
     except Exception as e:
         print(f"Error getting school types: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ 学校真题库 Routes ============
+
+@app.route('/school-questions')
+def school_questions():
+    """学校真题库首页"""
+    from services.school_service import get_featured_schools, get_districts, get_categories
+
+    featured_schools = get_featured_schools()
+    districts = get_districts()
+    categories = get_categories()
+
+    return render_template(
+        'school-questions.html',
+        featured_schools=featured_schools,
+        districts=districts,
+        categories=categories,
+        active_page='school-questions'
+    )
+
+
+@app.route('/school-questions/schools')
+def school_list():
+    """学校列表页"""
+    from services.school_service import get_all_schools, get_districts, get_categories
+
+    district = request.args.get('district', '')
+    category = request.args.get('category', '')
+    school_type = request.args.get('type', '')
+
+    filters = {}
+    if district:
+        filters['district'] = district
+    if category:
+        filters['category'] = category
+    if school_type:
+        filters['school_type'] = school_type
+
+    schools = get_all_schools(filters if filters else None)
+    districts = get_districts()
+    categories = get_categories()
+
+    return render_template(
+        'school-list.html',
+        schools=schools,
+        districts=districts,
+        categories=categories,
+        selected_district=district,
+        selected_category=category,
+        selected_type=school_type,
+        active_page='school-questions'
+    )
+
+
+@app.route('/school-questions/school/<int:school_id>')
+def school_detail(school_id):
+    """学校详情页"""
+    from services.school_service import get_school_by_id, get_school_questions, get_interview_timeline
+
+    school = get_school_by_id(school_id)
+    if not school:
+        flash('学校不存在', 'error')
+        return redirect(url_for('school_questions'))
+
+    questions = get_school_questions(school_id)
+    timeline = get_interview_timeline(school_id)
+
+    return render_template(
+        'school-detail.html',
+        school=school,
+        questions=questions,
+        timeline=timeline,
+        active_page='school-questions'
+    )
+
+
+@app.route('/school-questions/ai-match')
+def ai_match():
+    """AI智能匹配页"""
+    from services.school_service import get_all_schools
+    from services.ai_matching_service import get_question_types, get_match_history
+
+    schools = get_all_schools()
+    question_types = get_question_types()
+
+    # 如果已登录，获取历史记录
+    history = []
+    if session.get('logged_in'):
+        history = get_match_history(session.get('user_id'), limit=5)
+
+    return render_template(
+        'ai-match.html',
+        schools=schools,
+        question_types=question_types,
+        history=history,
+        active_page='ai-match'
+    )
+
+
+@app.route('/interview-experience')
+def interview_experience():
+    """面试经验分享页"""
+    from services.school_service import get_experience_list, get_all_schools
+
+    school_id = request.args.get('school_id', '')
+    author_type = request.args.get('author_type', '')
+
+    filters = {}
+    if school_id:
+        filters['school_id'] = school_id
+    if author_type:
+        filters['author_type'] = author_type
+
+    experiences = get_experience_list(filters if filters else None)
+    schools = get_all_schools()
+
+    return render_template(
+        'interview-experience.html',
+        experiences=experiences,
+        schools=schools,
+        selected_school=school_id,
+        selected_author=author_type,
+        active_page='experience'
+    )
+
+
+@app.route('/interview-timeline')
+def interview_timeline():
+    """面试时间线页"""
+    from services.school_service import get_all_schools
+
+    schools = get_all_schools()
+    school_id = request.args.get('school_id', '')
+
+    timeline = []
+    school = None
+    if school_id:
+        from services.school_service import get_school_by_id, get_interview_timeline
+        school = get_school_by_id(school_id)
+        timeline = get_interview_timeline(school_id)
+
+    return render_template(
+        'interview-timeline.html',
+        schools=schools,
+        timeline=timeline,
+        selected_school=school_id,
+        school=school,
+        active_page='timeline'
+    )
+
+
+# ============ 学校真题库 API Routes ============
+
+@app.route('/api/schools', methods=['GET'])
+def api_schools():
+    """获取学校列表API"""
+    try:
+        from services.school_service import get_all_schools
+
+        district = request.args.get('district', '')
+        category = request.args.get('category', '')
+        school_type = request.args.get('type', '')
+
+        filters = {}
+        if district:
+            filters['district'] = district
+        if category:
+            filters['category'] = category
+        if school_type:
+            filters['school_type'] = school_type
+
+        schools = get_all_schools(filters if filters else None)
+
+        return jsonify({
+            'success': True,
+            'schools': schools
+        })
+    except Exception as e:
+        print(f"Error fetching schools: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/schools/<int:school_id>', methods=['GET'])
+def api_school_detail(school_id):
+    """获取学校详情API"""
+    try:
+        from services.school_service import get_school_by_id
+
+        school = get_school_by_id(school_id)
+        if not school:
+            return jsonify({'error': 'School not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'school': school
+        })
+    except Exception as e:
+        print(f"Error fetching school: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/schools/<int:school_id>/questions', methods=['GET'])
+def api_school_questions(school_id):
+    """获取学校真题API"""
+    try:
+        from services.school_service import get_school_questions
+
+        question_type = request.args.get('type', '')
+        difficulty = request.args.get('difficulty', '')
+        year = request.args.get('year', '')
+
+        filters = {}
+        if question_type:
+            filters['question_type'] = question_type
+        if difficulty:
+            filters['difficulty'] = difficulty
+        if year:
+            filters['year'] = int(year)
+
+        questions = get_school_questions(school_id, filters if filters else None)
+
+        return jsonify({
+            'success': True,
+            'questions': questions
+        })
+    except Exception as e:
+        print(f"Error fetching questions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/ai-match/recommend', methods=['POST'])
+def api_ai_match_recommend():
+    """AI推荐API"""
+    try:
+        from services.ai_matching_service import recommend_questions
+
+        data = request.get_json() or {}
+        user_id = session.get('user_id') or 1  # 默认用户
+        school_id = data.get('school_id')
+        profile_id = data.get('profile_id')
+
+        result = recommend_questions(user_id, school_id, profile_id)
+
+        return jsonify({
+            'success': True,
+            'result': result
+        })
+    except Exception as e:
+        print(f"Error in AI match: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/experience', methods=['GET'])
+def api_experience():
+    """获取经验列表API"""
+    try:
+        from services.school_service import get_experience_list
+
+        school_id = request.args.get('school_id', '')
+        author_type = request.args.get('author_type', '')
+
+        filters = {}
+        if school_id:
+            filters['school_id'] = int(school_id)
+        if author_type:
+            filters['author_type'] = author_type
+
+        experiences = get_experience_list(filters if filters else None)
+
+        return jsonify({
+            'success': True,
+            'experiences': experiences
+        })
+    except Exception as e:
+        print(f"Error fetching experiences: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/<int:school_id>', methods=['GET'])
+def api_timeline(school_id):
+    """获取面试时间线API"""
+    try:
+        from services.school_service import get_interview_timeline
+
+        timeline = get_interview_timeline(school_id)
+
+        return jsonify({
+            'success': True,
+            'timeline': timeline
+        })
+    except Exception as e:
+        print(f"Error fetching timeline: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/questions/like', methods=['POST'])
+def api_like_question():
+    """点赞题目API"""
+    try:
+        from services.school_service import like_question
+
+        data = request.get_json() or {}
+        question_id = data.get('question_id')
+
+        if not question_id:
+            return jsonify({'error': 'Question ID required'}), 400
+
+        success = like_question(question_id)
+
+        return jsonify({
+            'success': success
+        })
+    except Exception as e:
+        print(f"Error liking question: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/experience/like', methods=['POST'])
+def api_like_experience():
+    """点赞经验API"""
+    try:
+        from services.school_service import like_experience
+
+        data = request.get_json() or {}
+        experience_id = data.get('experience_id')
+
+        if not experience_id:
+            return jsonify({'error': 'Experience ID required'}), 400
+
+        success = like_experience(experience_id)
+
+        return jsonify({
+            'success': success
+        })
+    except Exception as e:
+        print(f"Error liking experience: {e}")
         return jsonify({'error': str(e)}), 500
 
 

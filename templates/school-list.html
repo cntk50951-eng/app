@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校列表 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-row select {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 150px;
+            background: white;
+        }
+        .school-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .school-item {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .school-item:hover {
+            transform: translateX(4px);
+        }
+        .school-item .rank-badge {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .school-item .content {
+            flex: 1;
+            padding: 16px 20px;
+        }
+        .school-item h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .school-item .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .school-item .tag {
+            padding: 4px 10px;
+            background: #f0f4ff;
+            color: #667eea;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .school-item .meta {
+            font-size: 14px;
+            color: #888;
+        }
+        .school-item .arrow {
+            display: flex;
+            align-items: center;
+            padding-right: 20px;
+            color: #ccc;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .empty-state .material-symbols-outlined {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('school_questions') }}" class="btn-back" data-href="{{ url_for('school_questions') }}">
+            <span class="material-symbols-outlined">arrow_back</span>
+            返回
+        </a>
+
+        <div class="page-header">
+            <h1>學校列表</h1>
+            <a href="{{ url_for('ai_match') }}" class="btn btn-primary">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                AI智能匹配
+            </a>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-row">
+                <select id="districtFilter" onchange="applyFilters()">
+                    <option value="">全部區域</option>
+                    {% for district in districts %}
+                    <option value="{{ district }}" {% if selected_district == district %}selected{% endif %}>{{ district }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="categoryFilter" onchange="applyFilters()">
+                    <option value="">全部類別</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="typeFilter" onchange="applyFilters()">
+                    <option value="">全部類型</option>
+                    <option value="primary" {% if selected_type == 'primary' %}selected{% endif %}>小學</option>
+                    <option value="secondary" {% if selected_type == 'secondary' %}selected{% endif %}>中學</option>
+                </select>
+            </div>
+        </div>
+
+        {% if schools %}
+        <div class="school-list">
+            {% for school in schools %}
+            <a href="{{ url_for('school_detail', school_id=school.id) }}" class="school-item">
+                <div class="rank-badge">
+                    {% if school.ranking %}{{ school.ranking }}{% else %}#{% endif %}
+                </div>
+                <div class="content">
+                    <h3>{{ school.name_zh }}</h3>
+                    <div class="tags">
+                        {% if school.district %}<span class="tag">{{ school.district }}</span>{% endif %}
+                        <span class="tag">{{ school.school_type }}</span>
+                        {% if school.category %}<span class="tag">{{ school.category }}</span>{% endif %}
+                    </div>
+                    <div class="meta">
+                        {% if school.description %}{{ school.description[:80] }}...{% endif %}
+                    </div>
+                </div>
+                <div class="arrow">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-symbols-outlined">search_off</span>
+            <p>沒有找到符合條件的學校</p>
+            <a href="{{ url_for('school_list') }}" class="btn btn-outline" style="margin-top: 16px;">清除篩選</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function applyFilters() {
+            const district = document.getElementById('districtFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+            const type = document.getElementById('typeFilter').value;
+
+            let url = '{{ url_for("school_list") }}?';
+            const params = [];
+
+            if (district) params.push('district=' + encodeURIComponent(district));
+            if (category) params.push('category=' + encodeURIComponent(category));
+            if (type) params.push('type=' + encodeURIComponent(type));
+
+            if (params.length > 0) {
+                url += params.join('&');
+                window.location.href = url;
+            } else {
+                window.location.href = '{{ url_for("school_list") }}';
+            }
+        }
+    </script>
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>主頁</span>
+        </a>
+        <a href="{{ url_for('school_questions') }}" class="nav-item {% if active_page == 'school-questions' %}active{% endif %}">
+            <span class="material-symbols-outlined">school</span>
+            <span>題庫</span>
+        </a>
+        <a href="{{ url_for('child_profile_step1') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+            <span class="material-symbols-outlined">person</span>
+            <span>畫像</span>
+        </a>
+    </nav>
+    {% endblock %}
+</body>
+</html>
