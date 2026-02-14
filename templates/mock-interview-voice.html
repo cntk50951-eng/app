@@ -1099,7 +1099,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         text: question.question,
-                        session_id: sessionId
+                        session_id: sessionId,
+                        language: 'cantonese'
                     })
                 });
 
@@ -1227,7 +1228,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         text: text,
-                        session_id: sessionId
+                        session_id: sessionId,
+                        language: 'cantonese'
                     })
                 });
 
