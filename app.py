@@ -2843,6 +2843,482 @@ def api_reset_path():
         return jsonify({'error': str(e)}), 500
 
 
+# ============ 家长协作空间与社群路由 ============
+
+@app.route('/parent-community')
+@login_required
+def parent_community():
+    """家长协作空间主页"""
+    return render_template('parent-community.html', active_page='community')
+
+
+# 问答社区 API
+@app.route('/api/community/questions')
+@login_required
+def api_questions():
+    """获取问题列表"""
+    from services.parent_community_service import get_questions
+
+    category = request.args.get('category')
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+    keyword = request.args.get('keyword')
+
+    try:
+        result = get_questions(category=category, page=page, limit=limit, keyword=keyword)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error getting questions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/questions', methods=['POST'])
+@login_required
+def api_create_question():
+    """创建问题"""
+    from services.parent_community_service import create_question
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+
+    category = data.get('category')
+    title = data.get('title')
+    content = data.get('content')
+    is_anonymous = data.get('is_anonymous', False)
+
+    if not category or not title or not content:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        question_id = create_question(user_id, category, title, content, is_anonymous)
+        return jsonify({'id': question_id, 'message': '问题发布成功'})
+    except Exception as e:
+        print(f"Error creating question: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/questions/<int:question_id>')
+@login_required
+def api_question_detail(question_id):
+    """获取问题详情"""
+    from services.parent_community_service import get_question_by_id
+
+    try:
+        question = get_question_by_id(question_id)
+        if not question:
+            return jsonify({'error': '问题不存在'}), 404
+        return jsonify(question)
+    except Exception as e:
+        print(f"Error getting question: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/questions/<int:question_id>/answers', methods=['POST'])
+@login_required
+def api_create_answer(question_id):
+    """回答问题"""
+    from services.parent_community_service import create_answer
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+
+    content = data.get('content')
+    is_anonymous = data.get('is_anonymous', False)
+
+    if not content:
+        return jsonify({'error': '回答内容不能为空'}), 400
+
+    try:
+        answer_id = create_answer(question_id, user_id, content, is_anonymous)
+        return jsonify({'id': answer_id, 'message': '回答发布成功'})
+    except Exception as e:
+        print(f"Error creating answer: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/answers/<int:answer_id>/like', methods=['POST'])
+@login_required
+def api_like_answer(answer_id):
+    """点赞回答"""
+    from services.parent_community_service import like_answer
+
+    user_id = session.get('user_id')
+
+    try:
+        result = like_answer(answer_id, user_id)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error liking answer: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/questions/<int:question_id>/best-answer', methods=['POST'])
+@login_required
+def api_set_best_answer(question_id):
+    """设为最佳回答"""
+    from services.parent_community_service import set_best_answer
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+    answer_id = data.get('answer_id')
+
+    if not answer_id:
+        return jsonify({'error': '缺少回答ID'}), 400
+
+    try:
+        result = set_best_answer(question_id, user_id, answer_id)
+        if not result:
+            return jsonify({'error': '无权操作'}), 403
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error setting best answer: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# 经验分享 API
+@app.route('/api/community/experiences')
+@login_required
+def api_experiences():
+    """获取经验文章列表"""
+    from services.parent_community_service import get_posts
+
+    tag = request.args.get('tag')
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+    keyword = request.args.get('keyword')
+
+    try:
+        result = get_posts(tag=tag, page=page, limit=limit, keyword=keyword)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error getting posts: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/experiences', methods=['POST'])
+@login_required
+def api_create_experience():
+    """发布经验文章"""
+    from services.parent_community_service import create_post
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+
+    title = data.get('title')
+    content = data.get('content')
+    cover_image = data.get('cover_image')
+    tags = data.get('tags', [])
+
+    if not title or not content:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        post_id = create_post(user_id, title, content, cover_image, tags)
+        return jsonify({'id': post_id, 'message': '文章发布成功'})
+    except Exception as e:
+        print(f"Error creating post: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/experiences/<int:post_id>')
+@login_required
+def api_experience_detail(post_id):
+    """获取经验文章详情"""
+    from services.parent_community_service import get_post_by_id
+
+    user_id = session.get('user_id')
+
+    try:
+        post = get_post_by_id(post_id, user_id)
+        if not post:
+            return jsonify({'error': '文章不存在'}), 404
+        return jsonify(post)
+    except Exception as e:
+        print(f"Error getting post: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/experiences/<int:post_id>/like', methods=['POST'])
+@login_required
+def api_like_experience(post_id):
+    """点赞经验文章"""
+    from services.parent_community_service import like_post
+
+    user_id = session.get('user_id')
+
+    try:
+        result = like_post(post_id, user_id)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error liking post: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/experiences/<int:post_id>/favorite', methods=['POST'])
+@login_required
+def api_favorite_experience(post_id):
+    """收藏经验文章"""
+    from services.parent_community_service import favorite_post
+
+    user_id = session.get('user_id')
+
+    try:
+        result = favorite_post(post_id, user_id)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error favoriting post: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/experiences/<int:post_id>/comments', methods=['POST'])
+@login_required
+def api_create_comment(post_id):
+    """评论经验文章"""
+    from services.parent_community_service import create_post_comment
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        return jsonify({'error': '评论内容不能为空'}), 400
+
+    try:
+        comment_id = create_post_comment(post_id, user_id, content)
+        return jsonify({'id': comment_id, 'message': '评论发布成功'})
+    except Exception as e:
+        print(f"Error creating comment: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# 面试案例 API
+@app.route('/api/community/cases')
+@login_required
+def api_cases():
+    """获取面试案例列表"""
+    from services.parent_community_service import get_cases
+
+    school_type = request.args.get('school_type')
+    school_name = request.args.get('school_name')
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+
+    try:
+        result = get_cases(school_type=school_type, school_name=school_name, page=page, limit=limit)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error getting cases: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/cases', methods=['POST'])
+@login_required
+def api_create_case():
+    """提交面试案例"""
+    from services.parent_community_service import create_case
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+
+    school_name = data.get('school_name')
+    school_type = data.get('school_type')
+    interview_date = data.get('interview_date')
+    questions = data.get('questions')
+    key_points = data.get('key_points')
+    overall_rating = data.get('overall_rating')
+    review_content = data.get('review_content')
+    is_anonymous = data.get('is_anonymous', True)
+
+    if not school_name or not school_type or not interview_date or not questions or not review_content:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        case_id = create_case(user_id, school_name, school_type, interview_date, questions,
+                            key_points, overall_rating, review_content, is_anonymous)
+        return jsonify({'id': case_id, 'message': '案例提交成功，待审核后发布'})
+    except Exception as e:
+        print(f"Error creating case: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/cases/<int:case_id>')
+@login_required
+def api_case_detail(case_id):
+    """获取案例详情"""
+    from services.parent_community_service import get_case_by_id
+
+    user_id = session.get('user_id')
+
+    try:
+        case = get_case_by_id(case_id, user_id)
+        if not case:
+            return jsonify({'error': '案例不存在'}), 404
+        return jsonify(case)
+    except Exception as e:
+        print(f"Error getting case: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/cases/<int:case_id>/helpful', methods=['POST'])
+@login_required
+def api_case_helpful(case_id):
+    """标记案例有帮助"""
+    from services.parent_community_service import mark_case_helpful
+
+    user_id = session.get('user_id')
+
+    try:
+        result = mark_case_helpful(case_id, user_id)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error marking case helpful: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/cases/<int:case_id>/favorite', methods=['POST'])
+@login_required
+def api_favorite_case(case_id):
+    """收藏案例"""
+    from services.parent_community_service import favorite_case
+
+    user_id = session.get('user_id')
+
+    try:
+        result = favorite_case(case_id, user_id)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error favoriting case: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# 学习目标 API
+@app.route('/api/community/goals')
+@login_required
+def api_goals():
+    """获取学习目标列表"""
+    from services.parent_community_service import get_goals
+
+    user_id = session.get('user_id')
+    child_profile_id = request.args.get('child_id')
+    status = request.args.get('status')
+
+    try:
+        result = get_goals(user_id, child_profile_id, status)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error getting goals: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/goals', methods=['POST'])
+@login_required
+def api_create_goal():
+    """创建学习目标"""
+    from services.parent_community_service import create_goal
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+
+    child_profile_id = data.get('child_id')
+    title = data.get('title')
+    goal_type = data.get('goal_type')
+    target_value = data.get('target_value')
+    period = data.get('period')
+    deadline = data.get('deadline')
+
+    if not child_profile_id or not title or not goal_type or not target_value or not period:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        goal_id = create_goal(user_id, child_profile_id, title, goal_type, target_value, period, deadline)
+        return jsonify({'id': goal_id, 'message': '目标创建成功'})
+    except Exception as e:
+        print(f"Error creating goal: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/goals/<int:goal_id>/progress', methods=['POST'])
+@login_required
+def api_update_goal_progress(goal_id):
+    """更新目标进度"""
+    from services.parent_community_service import update_goal_progress
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+    value = data.get('value', 1)
+
+    try:
+        result = update_goal_progress(goal_id, user_id, value)
+        if not result:
+            return jsonify({'error': '目标不存在'}), 404
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error updating goal progress: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/goals/<int:goal_id>', methods=['DELETE'])
+@login_required
+def api_delete_goal(goal_id):
+    """删除学习目标"""
+    from services.parent_community_service import delete_goal
+
+    user_id = session.get('user_id')
+
+    try:
+        result = delete_goal(goal_id, user_id)
+        if not result:
+            return jsonify({'error': '目标不存在'}), 404
+        return jsonify({'message': '目标删除成功'})
+    except Exception as e:
+        print(f"Error deleting goal: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# 鼓励留言 API
+@app.route('/api/community/encouragement-messages')
+@login_required
+def api_encouragement_messages():
+    """获取鼓励留言"""
+    from services.parent_community_service import get_encouragement_messages
+
+    user_id = session.get('user_id')
+    child_profile_id = request.args.get('child_id')
+
+    if not child_profile_id:
+        return jsonify({'error': '缺少孩子ID'}), 400
+
+    try:
+        messages = get_encouragement_messages(user_id, int(child_profile_id))
+        return jsonify({'messages': messages})
+    except Exception as e:
+        print(f"Error getting messages: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/community/encouragement-messages', methods=['POST'])
+@login_required
+def api_create_encouragement_message():
+    """发送鼓励留言"""
+    from services.parent_community_service import create_encouragement_message
+
+    user_id = session.get('user_id')
+    data = request.get_json()
+
+    child_profile_id = data.get('child_id')
+    message = data.get('message')
+
+    if not child_profile_id or not message:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        message_id = create_encouragement_message(user_id, child_profile_id, message)
+        return jsonify({'id': message_id, 'message': '留言发送成功'})
+    except Exception as e:
+        print(f"Error creating message: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     print("Starting AI Tutor application...")
     print(f"Database configured: {bool(DATABASE_URL)}")
