@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI微课工坊 - AI Tutor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90d9;
+            --secondary-color: #6c5ce7;
+            --accent-color: #00cec9;
+            --success-color: #00b894;
+            --warning-color: #fdcb6e;
+            --danger-color: #e17055;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .hero-section {
+            background: var(--bg-gradient);
+            padding: 60px 0;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .lesson-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+
+        .lesson-thumbnail {
+            height: 140px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+
+        .lesson-duration {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .difficulty-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .difficulty-easy { background: #d4edda; color: #155724; }
+        .difficulty-medium { background: #fff3cd; color: #856404; }
+        .difficulty-hard { background: #f8d7da; color: #721c24; }
+
+        .practice-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .practice-card:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        .practice-card .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .practice-card.quick { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .practice-card.voice { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+        .practice-card.scenario { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stats-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 32px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(74, 144, 217, 0.4);
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <i class="bi bi-robot me-2"></i>AI Tutor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/micro-lessons">Micro Lessons</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/daily-tasks">Daily Tasks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/practice">Practice</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">AI微课工坊</h1>
+                    <p class="lead mb-4">利用人工智能技术，为您的孩子创建个性化的1-3分钟微课，让学习变得更有趣、更高效！</p>
+                    <button class="btn btn-light btn-lg generate-btn" onclick="showGenerateModal()">
+                        <i class="bi bi-magic me-2"></i>生成新微课
+                    </button>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <div style="font-size: 120px;">
+                        <i class="bi bi-play-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">学习模式</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="practice-card quick" onclick="startQuickPractice()">
+                        <div class="icon">⚡</div>
+                        <h4>快速问答</h4>
+                        <p class="mb-0">60秒快速问答练习</p>
+                        <small class="text-muted">提升反应能力和知识巩固</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="practice-card voice" onclick="startVoicePractice()">
+                        <div class="icon">🎤</div>
+                        <h4>语音跟读</h4>
+                        <p class="mb-0">90秒跟读练习</p>
+                        <small class="text-muted">提高口语表达能力和发音</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="practice-card scenario" onclick="startScenarioPractice()">
+                        <div class="icon">🎭</div>
+                        <h4>情景模拟</h4>
+                        <p class="mb-0">120秒情景对话练习</p>
+                        <small class="text-muted">培养实际应用能力</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-4 bg-white">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalLessons">0</div>
+                        <div class="text-muted">已完成微课</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalPractice">0</div>
+                        <div class="text-muted">练习次数</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalTime">0</div>
+                        <div class="text-muted">学习时长(分钟)</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number" id="streakDays">0</div>
+                        <div class="text-muted">连续学习天数</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- My Lessons Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>我的微课</h2>
+                <button class="btn btn-outline-primary" onclick="loadLessons()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                </button>
+            </div>
+            <div id="lessonsContainer" class="row g-4">
+                <div class="col-12 text-center py-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Generate Modal -->
+    <div class="modal fade" id="generateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">生成新微课</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择主题</label>
+                        <select class="form-select" id="topicSelect">
+                            <option value="science">科学知识</option>
+                            <option value="math">数学思维</option>
+                            <option value="language">语言表达</option>
+                            <option value="arts">艺术创作</option>
+                            <option value="nature">自然科学</option>
+                            <option value="history">历史故事</option>
+                            <option value="custom">自定义主题</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="customTopicDiv" style="display: none;">
+                        <label class="form-label">自定义主题</label>
+                        <input type="text" class="form-control" id="customTopic" placeholder="输入您想学习的主题">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">难度级别</label>
+                        <select class="form-select" id="difficultySelect">
+                            <option value="easy">简单 - 适合初学者</option>
+                            <option value="medium" selected>中等 - 需要思考</option>
+                            <option value="hard">较难 - 深入学习</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">课程时长</label>
+                        <select class="form-select" id="durationSelect">
+                            <option value="60">1分钟</option>
+                            <option value="90">1分半钟</option>
+                            <option value="120" selected>2分钟</option>
+                            <option value="180">3分钟</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="generateLesson()">
+                        <span id="generateBtnText">开始生成</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practice Modal -->
+    <div class="modal fade" id="practiceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="practiceModalTitle">快速问答</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="practiceModalBody">
+                    <!-- Practice content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load lessons on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLessons();
+            loadStats();
+
+            // Topic select change event
+            document.getElementById('topicSelect').addEventListener('change', function() {
+                const customDiv = document.getElementById('customTopicDiv');
+                customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+            });
+        });
+
+        function loadLessons() {
+            const container = document.getElementById('lessonsContainer');
+            container.innerHTML = '<div class="col-12 text-center py-5"><div class="loading-spinner"></div><p class="mt-3">加载中...</p></div>';
+
+            fetch('/api/micro-lessons')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.lessons.length > 0) {
+                        renderLessons(data.lessons);
+                    } else {
+                        showEmptyState();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading lessons:', error);
+                    showEmptyState();
+                });
+        }
+
+        function renderLessons(lessons) {
+            const container = document.getElementById('lessonsContainer');
+            container.innerHTML = '';
+
+            lessons.forEach(lesson => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4 col-lg-3';
+                col.innerHTML = `
+                    <div class="lesson-card" onclick="viewLesson(${lesson.id})">
+                        <div class="lesson-thumbnail position-relative">
+                            <i class="bi bi-book"></i>
+                            <span class="difficulty-badge difficulty-${lesson.difficulty}">${getDifficultyText(lesson.difficulty)}</span>
+                            <span class="lesson-duration"><i class="bi bi-clock me-1"></i>${lesson.duration_seconds}秒</span>
+                        </div>
+                        <div class="p-3">
+                            <h6 class="mb-2">${lesson.title}</h6>
+                            <p class="text-muted small mb-2">${lesson.description || ''}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary">${lesson.topic || '通用'}</span>
+                                <small class="text-muted">${formatDate(lesson.created_at)}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function showEmptyState() {
+            const container = document.getElementById('lessonsContainer');
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-collection-play"></i>
+                        <h4>暂无微课</h4>
+                        <p>点击上方"生成新微课"开始创建您的第一个微课吧！</p>
+                        <button class="btn btn-primary" onclick="showGenerateModal()">
+                            <i class="bi bi-plus-circle me-2"></i>创建微课
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadStats() {
+            // Load practice history for stats
+            fetch('/api/practice/history?limit=100')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalPractice').textContent = data.count || 0;
+
+                        // Calculate total time
+                        let totalTime = 0;
+                        data.history.forEach(h => {
+                            totalTime += h.duration_seconds || 0;
+                        });
+                        document.getElementById('totalTime').textContent = Math.round(totalTime / 60);
+                    }
+                })
+                .catch(console.error);
+
+            // Load lessons count
+            fetch('/api/micro-lessons?limit=100')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalLessons').textContent = data.count || 0;
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function showGenerateModal() {
+            const modal = new bootstrap.Modal(document.getElementById('generateModal'));
+            modal.show();
+        }
+
+        function generateLesson() {
+            const btn = document.getElementById('generateBtnText');
+            btn.innerHTML = '<span class="loading-spinner me-2"></span>生成中...';
+            btn.disabled = true;
+
+            const topicSelect = document.getElementById('topicSelect');
+            const topic = topicSelect.value === 'custom'
+                ? document.getElementById('customTopic').value
+                : topicSelect.value;
+            const difficulty = document.getElementById('difficultySelect').value;
+            const duration = parseInt(document.getElementById('durationSelect').value);
+
+            if (!topic) {
+                alert('请输入主题');
+                btn.innerHTML = '开始生成';
+                btn.disabled = false;
+                return;
+            }
+
+            fetch('/api/micro-lessons/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic, difficulty, duration})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('generateModal')).hide();
+                    loadLessons();
+                    alert('微课生成成功！');
+                } else {
+                    alert('生成失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error generating lesson:', error);
+                alert('生成失败，请重试');
+            })
+            .finally(() => {
+                btn.innerHTML = '开始生成';
+                btn.disabled = false;
+            });
+        }
+
+        function viewLesson(lessonId) {
+            window.location.href = `/micro-lesson/${lessonId}`;
+        }
+
+        // Practice functions
+        function startQuickPractice() {
+            const modal = new bootstrap.Modal(document.getElementById('practiceModal'));
+            document.getElementById('practiceModalTitle').textContent = '快速问答 - 60秒';
+            document.getElementById('practiceModalBody').innerHTML = '<div class="text-center py-5"><div class="loading-spinner"></div></div>';
+            modal.show();
+
+            fetch('/api/practice/quick?topic=general')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderQuickPractice(data.practice);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function renderQuickPractice(practice) {
+            const body = document.getElementById('practiceModalBody');
+            let timeLeft = 60;
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerDisplay').textContent = timeLeft;
+                if (timeLeft <= 0) clearInterval(timer);
+            }, 1000);
+
+            let html = `
+                <div class="text-center mb-4">
+                    <div class="display-4" id="timerDisplay">60</div>
+                    <div class="text-muted">秒</div>
+                </div>
+                <div id="questionsContainer">
+            `;
+
+            if (practice.questions && practice.questions.length > 0) {
+                practice.questions.forEach((q, i) => {
+                    html += `
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">${i + 1}. ${q.question}</label>
+                            <input type="text" class="form-control" id="answer_${i}" placeholder="请输入答案">
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="submitQuickPractice()">提交答案</button>
+                </div>
+            `;
+
+            body.innerHTML = html;
+        }
+
+        function submitQuickPractice() {
+            const answers = [];
+            document.querySelectorAll('[id^="answer_"]').forEach((input, i) => {
+                answers.push({
+                    question_index: i,
+                    answer: input.value
+                });
+            });
+
+            fetch('/api/practice/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    session_type: 'quick_qa',
+                    topic_id: 'general',
+                    duration_seconds: 60,
+                    time_limit_seconds: 60,
+                    answers: answers
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('练习完成！');
+                    bootstrap.Modal.getInstance(document.getElementById('practiceModal')).hide();
+                    loadStats();
+                }
+            })
+            .catch(console.error);
+        }
+
+        function startVoicePractice() {
+            const modal = new bootstrap.Modal(document.getElementById('practiceModal'));
+            document.getElementById('practiceModalTitle').textContent = '语音跟读 - 90秒';
+            modal.show();
+
+            fetch('/api/practice/voice?topic=general')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderVoicePractice(data.practice);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function renderVoicePractice(practice) {
+            const body = document.getElementById('practiceModalBody');
+            let timeLeft = 90;
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerDisplay').textContent = timeLeft;
+                if (timeLeft <= 0) clearInterval(timer);
+            }, 1000);
+
+            let sentences = practice.sentences || ['你好！今天我们学习新知识。'];
+            let html = `
+                <div class="text-center mb-4">
+                    <div class="display-4" id="timerDisplay">90</div>
+                    <div class="text-muted">秒</div>
+                </div>
+                <div class="alert alert-info">
+                    <h5><i class="bi bi-mic me-2"></i>跟读练习</h5>
+                    <p class="mb-0">听录音，然后跟读。点击麦克风开始录音。</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">跟读内容：</label>
+                    <div class="p-3 bg-light rounded">
+                        ${sentences.map(s => `<p class="mb-1">${s}</p>`).join('')}
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="alert('语音功能开发中')">
+                        <i class="bi bi-mic me-2"></i>开始录音
+                    </button>
+                </div>
+            `;
+
+            body.innerHTML = html;
+        }
+
+        function startScenarioPractice() {
+            const modal = new bootstrap.Modal(document.getElementById('practiceModal'));
+            document.getElementById('practiceModalTitle').textContent = '情景模拟 - 120秒';
+            modal.show();
+
+            fetch('/api/practice/scenario?topic=general')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderScenarioPractice(data.practice);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function renderScenarioPractice(practice) {
+            const body = document.getElementById('practiceModalBody');
+            let timeLeft = 120;
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerDisplay').textContent = timeLeft;
+                if (timeLeft <= 0) clearInterval(timer);
+            }, 1000);
+
+            const scenario = practice.scenario || {};
+            let html = `
+                <div class="text-center mb-4">
+                    <div class="display-4" id="timerDisplay">120</div>
+                    <div class="text-muted">秒</div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>情景背景</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>场景：</strong>${scenario.scenario || '模拟场景'}</p>
+                        <p><strong>角色：</strong>${scenario.role || '学生'}</p>
+                        <p><strong>背景：</strong>${scenario.context || '学习场景'}</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">请给出你的回答：</label>
+                    <textarea class="form-control" id="scenarioAnswer" rows="4" placeholder="在这里输入你的回答..."></textarea>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="submitScenarioPractice()">提交回答</button>
+                </div>
+            `;
+
+            body.innerHTML = html;
+        }
+
+        function submitScenarioPractice() {
+            const answer = document.getElementById('scenarioAnswer').value;
+
+            fetch('/api/practice/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    session_type: 'scenario_simulation',
+                    topic_id: 'general',
+                    duration_seconds: 120,
+                    time_limit_seconds: 120,
+                    transcript: answer
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('练习完成！');
+                    bootstrap.Modal.getInstance(document.getElementById('practiceModal')).hide();
+                    loadStats();
+                }
+            })
+            .catch(console.error);
+        }
+
+        // Utility functions
+        function getDifficultyText(difficulty) {
+            const map = {'easy': '简单', 'medium': '中等', 'hard': '困难'};
+            return map[difficulty] || difficulty;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN');
+        }
+    </script>
+</body>
+</html>

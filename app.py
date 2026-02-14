@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history', '/school-questions', '/school-questions/schools', '/school-questions/school', '/school-questions/ai-match', '/interview-experience', '/interview-timeline', '/api/schools', '/api/schools', '/api/ai-match/recommend', '/api/experience', '/api/timeline', '/api/questions/like', '/api/experience/like']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history', '/school-questions', '/school-questions/schools', '/school-questions/school', '/school-questions/ai-match', '/interview-experience', '/interview-timeline', '/api/schools', '/api/schools', '/api/ai-match/recommend', '/api/experience', '/api/timeline', '/api/questions/like', '/api/experience/like', '/micro-lessons', '/daily-tasks', '/practice/quick', '/practice/voice', '/api/micro-lessons', '/api/micro-lessons/generate', '/api/daily-tasks', '/api/daily-tasks/complete', '/api/practice/submit', '/api/practice/history']
 
 
 def login_required(f):
@@ -3990,6 +3990,342 @@ def api_like_question():
         })
     except Exception as e:
         print(f"Error liking question: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Micro Lesson Workshop Routes ============
+
+@app.route('/micro-lessons')
+def micro_lessons_page():
+    """微课工坊首页"""
+    return render_template('micro-lessons.html')
+
+
+@app.route('/micro-lesson/<int:lesson_id>')
+def micro_lesson_detail(lesson_id):
+    """微课详情页"""
+    return render_template('micro-lesson-detail.html', lesson_id=lesson_id)
+
+
+@app.route('/daily-tasks')
+def daily_tasks_page():
+    """每日任务页面"""
+    return render_template('daily-tasks.html')
+
+
+@app.route('/practice/quick/<topic>')
+def quick_practice_page(topic):
+    """快速问答练习页面"""
+    return render_template('practice-quick.html', topic=topic)
+
+
+@app.route('/practice/voice/<int:lesson_id>')
+def voice_practice_page(lesson_id):
+    """语音跟读练习页面"""
+    return render_template('practice-voice.html', lesson_id=lesson_id)
+
+
+# ============ Micro Lesson API Endpoints ============
+
+@app.route('/api/micro-lessons', methods=['GET'])
+def api_micro_lessons_list():
+    """获取微课列表API"""
+    try:
+        from services.micro_lesson_service import get_user_lessons
+
+        user_id = session.get('user_id')
+        limit = request.args.get('limit', 20, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        lessons = get_user_lessons(user_id, limit, offset)
+
+        return jsonify({
+            'success': True,
+            'lessons': lessons,
+            'count': len(lessons)
+        })
+    except Exception as e:
+        print(f"Error fetching micro lessons: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/micro-lessons/generate', methods=['POST'])
+def api_generate_micro_lesson():
+    """生成微课API"""
+    try:
+        from services.micro_lesson_service import generate_micro_lesson, save_micro_lesson
+
+        data = request.get_json() or {}
+        topic = data.get('topic', 'general knowledge')
+        difficulty = data.get('difficulty', 'easy')
+        duration = data.get('duration', 60)
+
+        # Get user profile
+        user_profile = {
+            'child_name': session.get('child_name', '小朋友'),
+            'child_age': session.get('child_age', 6),
+            'preferred_language': session.get('preferred_language', 'zh')
+        }
+
+        # Generate lesson
+        lesson_data = generate_micro_lesson(user_profile, topic, difficulty, duration)
+
+        # Save to database
+        user_id = session.get('user_id')
+        saved_lesson = save_micro_lesson(user_id, lesson_data)
+
+        return jsonify({
+            'success': True,
+            'lesson': saved_lesson or lesson_data
+        })
+    except Exception as e:
+        print(f"Error generating micro lesson: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/micro-lessons/<int:lesson_id>', methods=['GET'])
+def api_micro_lesson_detail(lesson_id):
+    """获取微课详情API"""
+    try:
+        from db.database import execute_query
+
+        query = "SELECT * FROM micro_lessons WHERE id = %s"
+        lessons = execute_query(query, (lesson_id,), fetch=True)
+
+        if not lessons:
+            return jsonify({'error': 'Lesson not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'lesson': lessons[0]
+        })
+    except Exception as e:
+        print(f"Error fetching lesson detail: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/micro-lessons/<int:lesson_id>/progress', methods=['POST'])
+def api_update_lesson_progress(lesson_id):
+    """更新微课学习进度API"""
+    try:
+        from services.micro_lesson_service import update_lesson_progress
+
+        data = request.get_json() or {}
+        progress_percent = data.get('progress_percent', 0)
+        time_spent = data.get('time_spent', 0)
+
+        user_id = session.get('user_id')
+        result = update_lesson_progress(user_id, lesson_id, progress_percent, time_spent)
+
+        return jsonify({
+            'success': True,
+            'progress': result
+        })
+    except Exception as e:
+        print(f"Error updating progress: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Daily Tasks API Endpoints ============
+
+@app.route('/api/daily-tasks', methods=['GET'])
+def api_daily_tasks():
+    """获取每日任务API"""
+    try:
+        from services.micro_lesson_service import get_daily_tasks
+        from datetime import datetime
+
+        user_id = session.get('user_id')
+        task_date = request.args.get('date')
+
+        # Get user profile for task generation
+        user_profile = {
+            'child_name': session.get('child_name', '小朋友'),
+            'child_age': session.get('child_age', 6),
+            'topics': session.get('child_interests', ['science', 'math', 'language']),
+            'child_interests': session.get('child_interests', [])
+        }
+
+        if task_date:
+            task_date = datetime.strptime(task_date, '%Y-%m-%d').date()
+        else:
+            task_date = None
+
+        tasks = get_daily_tasks(user_id, user_profile, task_date)
+
+        return jsonify({
+            'success': True,
+            'tasks': tasks,
+            'count': len(tasks)
+        })
+    except Exception as e:
+        print(f"Error fetching daily tasks: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/daily-tasks/complete', methods=['POST'])
+def api_complete_task():
+    """完成任务API"""
+    try:
+        from services.micro_lesson_service import complete_task
+
+        data = request.get_json() or {}
+        task_id = data.get('task_id')
+        score = data.get('score')
+
+        if not task_id:
+            return jsonify({'error': 'Task ID required'}), 400
+
+        user_id = session.get('user_id')
+        result = complete_task(user_id, task_id, score)
+
+        if not result:
+            return jsonify({'error': 'Task not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'task': result
+        })
+    except Exception as e:
+        print(f"Error completing task: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Practice API Endpoints ============
+
+@app.route('/api/practice/quick', methods=['GET'])
+def api_quick_practice():
+    """获取快速问答练习API"""
+    try:
+        from services.micro_lesson_service import generate_quick_practice
+
+        topic = request.args.get('topic', 'general')
+        difficulty = request.args.get('difficulty', 'easy')
+
+        user_profile = {
+            'child_name': session.get('child_name', '小朋友'),
+            'child_age': session.get('child_age', 6),
+            'preferred_language': session.get('preferred_language', 'zh')
+        }
+
+        practice = generate_quick_practice(user_profile, topic, difficulty)
+
+        return jsonify({
+            'success': True,
+            'practice': practice
+        })
+    except Exception as e:
+        print(f"Error generating quick practice: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/practice/voice', methods=['GET'])
+def api_voice_practice():
+    """获取语音跟读练习API"""
+    try:
+        from services.micro_lesson_service import generate_voice_repeat_practice
+
+        lesson_id = request.args.get('lesson_id', type=int)
+        topic = request.args.get('topic', 'general')
+
+        user_profile = {
+            'child_name': session.get('child_name', '小朋友'),
+            'child_age': session.get('child_age', 6),
+            'preferred_language': session.get('preferred_language', 'zh')
+        }
+
+        practice = generate_voice_repeat_practice(user_profile, lesson_id, topic)
+
+        return jsonify({
+            'success': True,
+            'practice': practice
+        })
+    except Exception as e:
+        print(f"Error generating voice practice: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/practice/scenario', methods=['GET'])
+def api_scenario_practice():
+    """获取情景模拟练习API"""
+    try:
+        from services.micro_lesson_service import generate_scenario_simulation
+
+        topic = request.args.get('topic', 'general')
+        difficulty = request.args.get('difficulty', 'easy')
+
+        user_profile = {
+            'child_name': session.get('child_name', '小朋友'),
+            'child_age': session.get('child_age', 6),
+            'preferred_language': session.get('preferred_language', 'zh')
+        }
+
+        practice = generate_scenario_simulation(user_profile, topic, difficulty)
+
+        return jsonify({
+            'success': True,
+            'practice': practice
+        })
+    except Exception as e:
+        print(f"Error generating scenario practice: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/practice/submit', methods=['POST'])
+def api_submit_practice():
+    """提交练习结果API"""
+    try:
+        from services.micro_lesson_service import record_practice_session
+
+        data = request.get_json() or {}
+
+        session_data = {
+            'session_type': data.get('session_type'),
+            'topic_id': data.get('topic_id'),
+            'lesson_id': data.get('lesson_id'),
+            'duration_seconds': data.get('duration_seconds'),
+            'time_limit_seconds': data.get('time_limit_seconds'),
+            'score': data.get('score'),
+            'max_score': data.get('max_score'),
+            'correct_count': data.get('correct_count', 0),
+            'total_count': data.get('total_count', 0),
+            'answers': data.get('answers', []),
+            'audio_url': data.get('audio_url'),
+            'transcript': data.get('transcript'),
+            'feedback': data.get('feedback')
+        }
+
+        user_id = session.get('user_id')
+        result = record_practice_session(user_id, session_data)
+
+        return jsonify({
+            'success': True,
+            'session': result
+        })
+    except Exception as e:
+        print(f"Error submitting practice: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/practice/history', methods=['GET'])
+def api_practice_history():
+    """获取练习历史API"""
+    try:
+        from services.micro_lesson_service import get_practice_history
+
+        user_id = session.get('user_id')
+        session_type = request.args.get('type')
+        limit = request.args.get('limit', 10, type=int)
+
+        history = get_practice_history(user_id, session_type, limit)
+
+        return jsonify({
+            'success': True,
+            'history': history,
+            'count': len(history)
+        })
+    except Exception as e:
+        print(f"Error fetching practice history: {e}")
         return jsonify({'error': str(e)}), 500
 
 

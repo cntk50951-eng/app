@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速问答 - AI Tutor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90d9;
+            --warning-color: #fdcb6e;
+            --danger-color: #e17055;
+            --success-color: #00b894;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            min-height: 100vh;
+        }
+        .practice-container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .timer-display {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+        .timer-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary-color) 0%, #e9ecef 0%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .timer-inner {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .timer-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        .timer-label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .question-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        .question-number {
+            background: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+        .answer-input {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .answer-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+        }
+        .start-screen, .result-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        .result-score {
+            font-size: 80px;
+            font-weight: 700;
+            color: var(--success-color);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="practice-container">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <div class="mb-4">
+                <i class="bi bi-lightning display-1 text-warning"></i>
+            </div>
+            <h2 class="mb-3">快速问答挑战</h2>
+            <p class="text-muted mb-4">在60秒内回答尽可能多的问题</p>
+
+            <div class="row text-start mb-4">
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded">
+                        <i class="bi bi-clock me-2 text-primary"></i>时间限制
+                        <strong>60秒</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded">
+                        <i class="bi bi-question-circle me-2 text-primary"></i>题目数量
+                        <strong>3-5题</strong>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-warning btn-lg text-white px-5" onclick="startPractice()">
+                <i class="bi bi-play-fill me-2"></i>开始挑战
+            </button>
+            <div class="mt-3">
+                <a href="/micro-lessons" class="text-muted">返回微课工坊</a>
+            </div>
+        </div>
+
+        <!-- Practice Screen -->
+        <div class="practice-screen" id="practiceScreen" style="display: none;">
+            <div class="timer-display">
+                <div class="timer-circle" id="timerCircle">
+                    <div class="timer-inner">
+                        <span class="timer-number" id="timerNumber">60</span>
+                        <span class="timer-label">秒</span>
+                    </div>
+                </div>
+                <div class="text-muted">剩余时间</div>
+            </div>
+
+            <div class="question-card">
+                <h5 class="mb-4">
+                    <span class="question-number" id="currentQNum">1</span>
+                    <span id="questionText">加载中...</span>
+                </h5>
+
+                <div class="mb-4">
+                    <input type="text" class="form-control answer-input" id="answerInput"
+                           placeholder="请输入答案..." autocomplete="off">
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" onclick="skipQuestion()">
+                        跳过 <i class="bi bi-arrow-right"></i>
+                    </button>
+                    <button class="btn btn-primary btn-lg" onclick="submitAnswer()">
+                        提交答案
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="result-screen" id="resultScreen" style="display: none;">
+            <div class="mb-4">
+                <i class="bi bi-trophy display-1 text-warning"></i>
+            </div>
+            <h2 class="mb-3">练习完成!</h2>
+
+            <div class="result-score" id="resultScore">0</div>
+            <p class="text-muted mb-4">回答正确数</p>
+
+            <div class="row text-start mb-4">
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded text-center">
+                        <div class="h4 mb-0" id="totalQuestions">0</div>
+                        <small class="text-muted">总题数</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded text-center">
+                        <div class="h4 mb-0" id="accuracy">0%</div>
+                        <small class="text-muted">正确率</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-warning btn-lg text-white" onclick="restartPractice()">
+                    <i class="bi bi-arrow-repeat me-2"></i>再来一次
+                </button>
+                <a href="/micro-lessons" class="btn btn-outline-secondary">返回微课工坊</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 60;
+        let timerInterval = null;
+        let currentQuestion = 0;
+        let questions = [];
+        let answers = [];
+        let topic = '{{ topic }}' || 'general';
+
+        function startPractice() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('practiceScreen').style.display = 'block';
+
+            // Load practice data
+            fetch(`/api/practice/quick?topic=${topic}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.practice.questions) {
+                        questions = data.practice.questions;
+                    } else {
+                        // Fallback questions
+                        questions = [
+                            {question: '1 + 1 = ?', answer: '2'},
+                            {question: '太阳是什么颜色？', answer: '黄色'},
+                            {question: '一年有几个季节？', answer: '4'}
+                        ];
+                    }
+                    showQuestion();
+                    startTimer();
+                })
+                .catch(error => {
+                    console.error('Error loading practice:', error);
+                    questions = [
+                        {question: '1 + 1 = ?', answer: '2'},
+                        {question: '太阳是什么颜色？', answer: '黄色'},
+                        {question: '一年有几个季节？', answer: '4'}
+                    ];
+                    showQuestion();
+                    startTimer();
+                });
+        }
+
+        function startTimer() {
+            timeLeft = 60;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    endPractice();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timerNumber').textContent = timeLeft;
+
+            const percent = (timeLeft / 60) * 100;
+            let color = '#4a90d9';
+            if (timeLeft <= 10) color = '#e17055';
+            else if (timeLeft <= 20) color = '#fdcb6e';
+
+            document.getElementById('timerCircle').style.background =
+                `conic-gradient(${color} ${percent}%, #e9ecef ${percent}%)`;
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) {
+                endPractice();
+                return;
+            }
+
+            document.getElementById('currentQNum').textContent = currentQuestion + 1;
+            document.getElementById('questionText').textContent = questions[currentQuestion].question;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+        }
+
+        function submitAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            const question = questions[currentQuestion];
+
+            answers.push({
+                question_index: currentQuestion,
+                question: question.question,
+                user_answer: answer,
+                correct_answer: question.answer,
+                is_correct: checkAnswer(answer, question.answer)
+            });
+
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function skipQuestion() {
+            const question = questions[currentQuestion];
+            answers.push({
+                question_index: currentQuestion,
+                question: question.question,
+                user_answer: '',
+                correct_answer: question.answer,
+                is_correct: false
+            });
+
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function checkAnswer(userAnswer, correctAnswer) {
+            if (!userAnswer) return false;
+            return userAnswer.toLowerCase().includes(correctAnswer.toLowerCase()) ||
+                   correctAnswer.toLowerCase().includes(userAnswer.toLowerCase());
+        }
+
+        function endPractice() {
+            clearInterval(timerInterval);
+
+            document.getElementById('practiceScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+
+            const correctCount = answers.filter(a => a.is_correct).length;
+            const totalCount = answers.length;
+            const accuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+
+            document.getElementById('resultScore').textContent = correctCount;
+            document.getElementById('totalQuestions').textContent = totalCount;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+
+            // Save to backend
+            fetch('/api/practice/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    session_type: 'quick_qa',
+                    topic_id: topic,
+                    duration_seconds: 60 - timeLeft,
+                    time_limit_seconds: 60,
+                    score: correctCount,
+                    max_score: totalCount,
+                    correct_count: correctCount,
+                    total_count: totalCount,
+                    answers: answers
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Practice saved:', data);
+            })
+            .catch(console.error);
+        }
+
+        function restartPractice() {
+            timeLeft = 60;
+            currentQuestion = 0;
+            answers = [];
+
+            document.getElementById('resultScreen').style.display = 'none';
+            startPractice();
+        }
+
+        // Handle Enter key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('practiceScreen').style.display !== 'none') {
+                submitAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
