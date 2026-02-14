@@ -4999,6 +4999,724 @@ def api_companion_mood():
     except Exception as e:
         print(f"Error updating mood: {e}")
         return jsonify({'error': str(e)}), 500
-    print("Starting AI Tutor application...")
-    print(f"Database configured: {bool(DATABASE_URL)}")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+# ==================== Arena Routes ====================
+
+@app.route('/arena')
+@login_required
+def arena():
+    """Arena homepage."""
+    return render_template('arena.html')
+
+
+@app.route('/api/arena/rank', methods=['GET'])
+@login_required
+def api_arena_rank():
+    """Get user's arena rank information."""
+    try:
+        from services.arena_service import get_or_create_user_rank, get_rank_config
+
+        user_id = session.get('user_id')
+        rank_data = get_or_create_user_rank(user_id)
+        rank_config = get_rank_config(rank_data['current_rank'])
+
+        # Calculate win rate
+        win_rate = 0
+        if rank_data['total_matches'] > 0:
+            win_rate = int(rank_data['wins'] / rank_data['total_matches'] * 100)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'rank_id': rank_data['current_rank'],
+                'rank_name': rank_config['rank_name_zh'] if rank_config else '青銅',
+                'rank_icon': rank_config['rank_icon'] if rank_config else '🥉',
+                'rank_points': rank_data['rank_points'],
+                'total_matches': rank_data['total_matches'],
+                'wins': rank_data['wins'],
+                'losses': rank_data['losses'],
+                'win_rate': f'{win_rate}%',
+                'current_streak': rank_data['current_streak'],
+                'best_streak': rank_data['best_streak']
+            }
+        })
+    except Exception as e:
+        print(f"Error getting arena rank: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/arena/start', methods=['POST'])
+@login_required
+def api_arena_start():
+    """Start a new arena match."""
+    try:
+        from services.arena_service import create_match, get_or_create_user_rank
+        from services.question_bank_service import get_random_questions
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        match_type = data.get('match_type', 'challenge')  # challenge, timed, practice
+        category = data.get('category', 'self_intro')
+        difficulty = data.get('difficulty', 'medium')
+        time_limit = data.get('time_limit', 300)  # seconds
+
+        # Check if user has an active match
+        from services.arena_service import get_user_active_match
+        active_match = get_user_active_match(user_id)
+        if active_match:
+            return jsonify({
+                'success': False,
+                'error': '你還有一場對戰正在进行中'
+            }), 400
+
+        # Get opponent info
+        opponent_names = {
+            'ai': ['AI面試官', 'AI小博士', 'AI老師', 'AI教練'],
+            'self_intro': '自我介紹大師',
+            'logic': '邏輯高手',
+            'expression': '表達達人',
+            'social': '社交高手'
+        }
+
+        if data.get('opponent_type') == 'user':
+            opponent_name = '對手玩家'
+            opponent_avatar = '👤'
+            opponent_type = 'user'
+        else:
+            opponent_name = opponent_names.get(category, opponent_names['ai'][0])
+            opponent_avatar = '🤖'
+            opponent_type = 'ai'
+
+        # Create match
+        match = create_match(
+            user_id=user_id,
+            opponent_type=opponent_type,
+            opponent_name=opponent_name,
+            opponent_avatar=opponent_avatar,
+            difficulty=difficulty,
+            category=category,
+            match_type=match_type,
+            time_limit=time_limit if match_type == 'timed' else None
+        )
+
+        # Get questions for the match
+        question_count = 10 if match_type != 'timed' else 50
+        questions = get_random_questions(categories=[category], limit=question_count)
+
+        # If no questions from database, generate sample questions
+        if not questions:
+            questions = generate_sample_questions(category, question_count)
+
+        # Store match in session for tracking
+        session['arena_match_id'] = match['match_id']
+        session['arena_questions'] = questions
+        session['arena_current_q'] = 0
+        session['arena_score'] = 0
+        session['arena_correct'] = 0
+        session['arena_start_time'] = datetime.now().isoformat()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'match_id': match['match_id'],
+                'opponent': {
+                    'type': opponent_type,
+                    'name': opponent_name,
+                    'avatar': opponent_avatar,
+                    'difficulty': difficulty
+                },
+                'category': category,
+                'match_type': match_type,
+                'time_limit': time_limit if match_type == 'timed' else None,
+                'question_count': len(questions),
+                'questions': questions[:5],  # Send first 5 questions
+                'start_time': match['started_at'].isoformat() if match.get('started_at') else datetime.now().isoformat()
+            }
+        })
+    except Exception as e:
+        print(f"Error starting arena match: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/arena/answer', methods=['POST'])
+@login_required
+def api_arena_answer():
+    """Submit answer for a question."""
+    try:
+        from services.arena_service import get_match
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        match_id = data.get('match_id')
+        question_id = data.get('question_id')
+        answer = data.get('answer')
+        time_spent = data.get('time_spent', 0)
+
+        if not match_id or not answer:
+            return jsonify({
+                'success': False,
+                'error': '缺少必要參數'
+            }), 400
+
+        # Get questions from session
+        questions = session.get('arena_questions', [])
+        current_q = session.get('arena_current_q', 0)
+
+        # Find the question
+        question = None
+        for q in questions:
+            if str(q.get('id')) == str(question_id):
+                question = q
+                break
+
+        if not question:
+            return jsonify({
+                'success': False,
+                'error': '題目不存在'
+            }), 400
+
+        # Check answer
+        correct_answer = question.get('correct_answer', '').upper()
+        is_correct = answer.upper() == correct_answer
+
+        # Update score
+        score = session.get('arena_score', 0)
+        correct = session.get('arena_correct', 0)
+
+        if is_correct:
+            score += 10
+            correct += 1
+
+        session['arena_score'] = score
+        session['arena_correct'] = correct
+        session['arena_current_q'] = current_q + 1
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'correct': is_correct,
+                'correct_answer': correct_answer,
+                'explanation': question.get('explanation', ''),
+                'score': score,
+                'running_score': score,
+                'correct_count': correct,
+                'remaining_questions': len(questions) - current_q - 1
+            }
+        })
+    except Exception as e:
+        print(f"Error submitting answer: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/arena/finish', methods=['POST'])
+@login_required
+def api_arena_finish():
+    """Finish arena match and calculate results."""
+    try:
+        from services.arena_service import (
+            get_match, update_match_result, update_user_rank,
+            add_coins, calculate_rewards, generate_ai_score
+        )
+
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+
+        match_id = data.get('match_id')
+
+        if not match_id:
+            return jsonify({
+                'success': False,
+                'error': '缺少對戰ID'
+            }), 400
+
+        # Get match details
+        match = get_match(match_id)
+        if not match:
+            return jsonify({
+                'success': False,
+                'error': '對戰不存在'
+            }), 400
+
+        # Get user's answers/results
+        user_score = session.get('arena_score', 0)
+        user_correct = session.get('arena_correct', 0)
+        questions = session.get('arena_questions', [])
+        user_total = len(questions)
+
+        # Calculate duration
+        start_time = session.get('arena_start_time')
+        if start_time:
+            start_dt = datetime.fromisoformat(start_time)
+            duration = int((datetime.now() - start_dt).total_seconds())
+        else:
+            duration = 0
+
+        # Generate AI score
+        opponent_score, opponent_correct, opponent_total = generate_ai_score(
+            match['difficulty'], user_correct, user_total
+        )
+
+        # Determine result
+        if user_score > opponent_score:
+            result = 'win'
+        elif user_score < opponent_score:
+            result = 'lose'
+        else:
+            result = 'draw'
+
+        # Get current streak before update
+        from services.arena_service import get_or_create_user_rank
+        rank_data = get_or_create_user_rank(user_id)
+        current_streak = rank_data['current_streak']
+
+        # Calculate rewards
+        rewards = calculate_rewards(
+            user_id=user_id,
+            match_type=match['match_type'],
+            result=result,
+            difficulty=match['difficulty'],
+            user_correct=user_correct,
+            user_total=user_total,
+            current_streak=current_streak + (1 if result == 'win' else 0)
+        )
+
+        # Update match result
+        updated_match = update_match_result(
+            match_id=match_id,
+            user_score=user_score,
+            user_correct=user_correct,
+            user_total=user_total,
+            opponent_score=opponent_score,
+            opponent_correct=opponent_correct,
+            opponent_total=opponent_total,
+            result=result,
+            points_earned=rewards['points'],
+            coins_earned=rewards['coins'],
+            duration=duration,
+            badges_earned=rewards['badges']
+        )
+
+        # Update user rank
+        updated_rank = update_user_rank(
+            user_id=user_id,
+            points_change=rewards['points'],
+            win=(result == 'win') if result != 'draw' else None
+        )
+
+        # Add coins
+        coin_result = add_coins(
+            user_id=user_id,
+            amount=rewards['coins'],
+            transaction_type=f'match_{result}',
+            reference_id=match_id
+        )
+
+        # Get updated user rank info
+        from services.arena_service import get_rank_config
+        rank_config = get_rank_config(updated_rank['current_rank'])
+
+        # Get user coins
+        from services.arena_service import get_or_create_user_coins
+        coins_data = get_or_create_user_coins(user_id)
+
+        # Clear session
+        session.pop('arena_match_id', None)
+        session.pop('arena_questions', None)
+        session.pop('arena_current_q', None)
+        session.pop('arena_score', None)
+        session.pop('arena_correct', None)
+        session.pop('arena_start_time', None)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'result': result,
+                'user_score': user_score,
+                'opponent_score': opponent_score,
+                'user_correct': user_correct,
+                'user_total': user_total,
+                'accuracy': f'{int(user_correct/user_total*100) if user_total > 0 else 0}%',
+                'duration': duration,
+                'rewards': {
+                    'points_earned': rewards['points'],
+                    'points_total': updated_rank['rank_points'],
+                    'coins_earned': rewards['coins'],
+                    'coins_balance': coin_result['balance'],
+                    'badges': rewards['badges']
+                },
+                'rank_info': {
+                    'current_rank': updated_rank['current_rank'],
+                    'rank_name': rank_config['rank_name_zh'] if rank_config else '青銅',
+                    'rank_icon': rank_config['rank_icon'] if rank_config else '🥉'
+                }
+            }
+        })
+    except Exception as e:
+        print(f"Error finishing arena match: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/arena/leaderboard', methods=['GET'])
+@login_required
+def api_arena_leaderboard():
+    """Get arena leaderboard."""
+    try:
+        from services.arena_service import get_leaderboard
+
+        period = request.args.get('period', 'weekly')
+        limit = int(request.args.get('limit', 50))
+
+        user_id = session.get('user_id')
+        leaderboard_data = get_leaderboard(period, limit)
+
+        # Find user's rank
+        user_rank = None
+        for entry in leaderboard_data['data']:
+            if entry['user_id'] == user_id:
+                user_rank = entry
+                break
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'period': leaderboard_data['period'],
+                'period_label': f"{leaderboard_data['period_start']} - {leaderboard_data['period_end']}",
+                'user_rank': user_rank,
+                'top_players': leaderboard_data['data'][:10],
+                'updated_at': leaderboard_data['updated_at']
+            }
+        })
+    except Exception as e:
+        print(f"Error getting leaderboard: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/arena/history', methods=['GET'])
+@login_required
+def api_arena_history():
+    """Get user's arena match history."""
+    try:
+        from services.arena_service import get_match_history, get_or_create_user_rank
+
+        user_id = session.get('user_id')
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+        filter_type = request.args.get('filter', 'all')
+
+        history = get_match_history(user_id, page, limit, filter_type)
+
+        # Get overall stats
+        rank_data = get_or_create_user_rank(user_id)
+
+        # Calculate avg score
+        avg_score = 0
+        if history['matches']:
+            total_score = sum(m['user_score'] or 0 for m in history['matches'])
+            avg_score = int(total_score / len(history['matches']))
+
+        best_score = 0
+        if history['matches']:
+            best_score = max(m['user_score'] or 0 for m in history['matches'])
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'matches': history['matches'],
+                'pagination': history['pagination'],
+                'statistics': {
+                    'total_matches': rank_data['total_matches'],
+                    'wins': rank_data['wins'],
+                    'losses': rank_data['losses'],
+                    'avg_score': avg_score,
+                    'best_score': best_score
+                }
+            }
+        })
+    except Exception as e:
+        print(f"Error getting arena history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/arena/home', methods=['GET'])
+@login_required
+def api_arena_home():
+    """Get arena home data."""
+    try:
+        from services.arena_service import get_arena_home_data
+
+        user_id = session.get('user_id')
+        data = get_arena_home_data(user_id)
+
+        return jsonify({
+            'success': True,
+            'data': data
+        })
+    except Exception as e:
+        print(f"Error getting arena home: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+def generate_sample_questions(category, count):
+    """Generate sample questions for arena."""
+    questions_db = {
+        'self_intro': [
+            {'id': 1, 'question': '請介紹你自己？', 'question_en': 'Please introduce yourself', 'options': [
+                {'id': 'A', 'text': '我叫小明，今年6歲...'},
+                {'id': 'B', 'text': '我喜歡玩玩具車...'},
+                {'id': 'C', 'text': '我最喜歡上學的日子...'},
+                {'id': 'D', 'text': '我的好朋友是小華...'}
+            ], 'correct_answer': 'A', 'explanation': '自我介紹應該先說明自己的姓名和年齡。'},
+            {'id': 2, 'question': '你最喜歡什麼？', 'question_en': 'What do you like most?', 'options': [
+                {'id': 'A', 'text': '我喜歡畫畫...'},
+                {'id': 'B', 'text': '我不喜歡上學...'},
+                {'id': 'C', 'text': '我最討厭吃飯...'},
+                {'id': 'D', 'text': '我不喜歡和朋友玩...'}
+            ], 'correct_answer': 'A', 'explanation': '回答應該積極正面。'},
+            {'id': 3, 'question': '你長大後想做什麼？', 'question_en': 'What do you want to be when you grow up?', 'options': [
+                {'id': 'A', 'text': '我想做醫生...'},
+                {'id': 'B', 'text': '我不想長大...'},
+                {'id': 'C', 'text': '我不知道...'},
+                {'id': 'D', 'text': '隨便啦...'}
+            ], 'correct_answer': 'A', 'explanation': '回答應該展現夢想和目標。'},
+            {'id': 4, 'question': '你最擅長什麼？', 'question_en': 'What are you best at?', 'options': [
+                {'id': 'A', 'text': '我最擅長畫畫...'},
+                {'id': 'B', 'text': '我甚麼都不擅長...'},
+                {'id': 'C', 'text': '我不懂...'},
+                {'id': 'D', 'text': '我沒有擅長的...'}
+            ], 'correct_answer': 'A', 'explanation': '應該自信地展示自己的優點。'},
+            {'id': 5, 'question': '你喜歡上學嗎？', 'question_en': 'Do you like going to school?', 'options': [
+                {'id': 'A', 'text': '喜歡！因為可以學新知識...'},
+                {'id': 'B', 'text': '不喜歡，因為要早起...'},
+                {'id': 'C', 'text': '一般般...'},
+                {'id': 'D', 'text': '討厭上學...'}
+            ], 'correct_answer': 'A', 'explanation': '積極正面的回答會給面試官好印象。'},
+            {'id': 6, 'question': '你的好朋友是誰？', 'question_en': 'Who is your best friend?', 'options': [
+                {'id': 'A', 'text': '我的好朋友是小華，我們一起玩...'},
+                {'id': 'B', 'text': '我沒有好朋友...'},
+                {'id': 'C', 'text': '很多人都是我的朋友...'},
+                {'id': 'D', 'text': '我不喜歡交朋友...'}
+            ], 'correct_answer': 'A', 'explanation': '具體說明朋友是誰，做什麼活動。'},
+            {'id': 7, 'question': '你喜歡什麼顏色？', 'question_en': 'What color do you like?', 'options': [
+                {'id': 'A', 'text': '我喜歡藍色，因為像天空...'},
+                {'id': 'B', 'text': '我沒有特別喜歡...'},
+                {'id': 'C', 'text': '顏色不重要...'},
+                {'id': 'D', 'text': '我討厭所有顏色...'}
+            ], 'correct_answer': 'A', 'explanation': '可以加上一點理由讓回答更完整。'},
+            {'id': 8, 'question': '你最喜歡什麼動物？', 'question_en': 'What animal do you like best?', 'options': [
+                {'id': 'A', 'text': '我最喜歡小狗，因為牠很可愛...'},
+                {'id': 'B', 'text': '我沒有喜歡的動物...'},
+                {'id': 'C', 'text': '動物都一樣...'},
+                {'id': 'D', 'text': '我害怕動物...'}
+            ], 'correct_answer': 'A', 'explanation': '說明理由讓回答更有說服力。'},
+            {'id': 9, 'question': '假日你會做什麼？', 'question_en': 'What do you do on holidays?', 'options': [
+                {'id': 'A', 'text': '假日我會和家人去公園玩...'},
+                {'id': 'B', 'text': '假日我都在睡覺...'},
+                {'id': 'C', 'text': '假日很無聊...'},
+                {'id': 'D', 'text': '我討厭假日...'}
+            ], 'correct_answer': 'A', 'explanation': '展示你的興趣和愛好。'},
+            {'id': 10, 'question': '你在家都做什麼？', 'question_en': 'What do you do at home?', 'options': [
+                {'id': 'A', 'text': '我會看書、畫畫、玩玩具...'},
+                {'id': 'B', 'text': '我都在看電視...'},
+                {'id': 'C', 'text': '我甚麼都不做...'},
+                {'id': 'D', 'text': '我不喜歡待在家...'}
+            ], 'correct_answer': 'A', 'explanation': '展示多元化的興趣愛好。'}
+        ],
+        'logic': [
+            {'id': 101, 'question': '1 + 1 = ?', 'options': [
+                {'id': 'A', 'text': '2'},
+                {'id': 'B', 'text': '3'},
+                {'id': 'C', 'text': '1'},
+                {'id': 'D', 'text': '0'}
+            ], 'correct_answer': 'A', 'explanation': '1加1等於2。'},
+            {'id': 102, 'question': '5 + 3 = ?', 'options': [
+                {'id': 'A', 'text': '8'},
+                {'id': 'B', 'text': '7'},
+                {'id': 'C', 'text': '9'},
+                {'id': 'D', 'text': '6'}
+            ], 'correct_answer': 'A', 'explanation': '5加3等於8。'},
+            {'id': 103, 'question': '10 - 4 = ?', 'options': [
+                {'id': 'A', 'text': '6'},
+                {'id': 'B', 'text': '5'},
+                {'id': 'C', 'text': '7'},
+                {'id': 'D', 'text': '4'}
+            ], 'correct_answer': 'A', 'explanation': '10減4等於6。'},
+            {'id': 104, 'question': '2 x 3 = ?', 'options': [
+                {'id': 'A', 'text': '6'},
+                {'id': 'B', 'text': '5'},
+                {'id': 'C', 'text': '8'},
+                {'id': 'D', 'text': '4'}
+            ], 'correct_answer': 'A', 'explanation': '2乘3等於6。'},
+            {'id': 105, 'question': '哪個是紅色的？', 'options': [
+                {'id': 'A', 'text': '蘋果'},
+                {'id': 'B', 'text': '香蕉'},
+                {'id': 'C', 'text': '青瓜'},
+                {'id': 'D', 'text': '茄子'}
+            ], 'correct_answer': 'A', 'explanation': '蘋果是紅色的。'},
+            {'id': 106, 'question': '找出不同的那個：', 'options': [
+                {'id': 'A', 'text': '狗狗'},
+                {'id': 'B', 'text': '貓咪'},
+                {'id': 'C', 'text': '小鳥'},
+                {'id': 'D', 'text': '魚'}
+            ], 'correct_answer': 'C', 'explanation': '鳥是天上跑的，其他是寵物。'},
+            {'id': 107, 'question': '7 + 8 = ?', 'options': [
+                {'id': 'A', 'text': '15'},
+                {'id': 'B', 'text': '14'},
+                {'id': 'C', 'text': '16'},
+                {'id': 'D', 'text': '13'}
+            ], 'correct_answer': 'A', 'explanation': '7加8等於15。'},
+            {'id': 108, 'question': '哪個圖形是圓的？', 'options': [
+                {'id': 'A', 'text': '氣球'},
+                {'id': 'B', 'text': '書'},
+                {'id': 'C', 'text': '門'},
+                {'id': 'D', 'text': '枱'}
+            ], 'correct_answer': 'A', 'explanation': '氣球是圓形的。'},
+            {'id': 109, 'question': '12 - 5 = ?', 'options': [
+                {'id': 'A', 'text': '7'},
+                {'id': 'B', 'text': '6'},
+                {'id': 'C', 'text': '8'},
+                {'id': 'D', 'text': '5'}
+            ], 'correct_answer': 'A', 'explanation': '12減5等於7。'},
+            {'id': 110, 'question': '哪個是水果？', 'options': [
+                {'id': 'A', 'text': '橙'},
+                {'id': 'B', 'text': '紅蘿蔔'},
+                {'id': 'C', 'text': '西蘭花'},
+                {'id': 'D', 'text': '薯仔'}
+            ], 'correct_answer': 'A', 'explanation': '橙是水果，其他是蔬菜。'}
+        ],
+        'expression': [
+            {'id': 201, 'question': '如果有人摔倒，你會怎樣？', 'options': [
+                {'id': 'A', 'text': '上前扶起他...'},
+                {'id': 'B', 'text': '笑他...'},
+                {'id': 'C', 'text': '走開...'},
+                {'id': 'D', 'text': '不知道...'}
+            ], 'correct_answer': 'A', 'explanation': '應該表現出關心和幫助。'},
+            {'id': 202, 'question': '你會怎樣介紹自己？', 'options': [
+                {'id': 'A', 'text': '大家好，我叫...'},
+                {'id': 'B', 'text': '我不想說...'},
+                {'id': 'C', 'text': '隨便啦...'},
+                {'id': 'D', 'text': '你好...'}
+            ], 'correct_answer': 'A', 'explanation': '自我介紹要有禮貌。'},
+            {'id': 203, 'question': '遇到陌生人怎麼辦？', 'options': [
+                {'id': 'A', 'text': '有禮貌地打招呼...'},
+                {'id': 'B', 'text': '馬上跑開...'},
+                {'id': 'C', 'text': '大聲喊叫...'},
+                {'id': 'D', 'text': '不理會...'}
+            ], 'correct_answer': 'A', 'explanation': '表現禮貌和自信。'},
+            {'id': 204, 'question': '怎樣說謝謝？', 'options': [
+                {'id': 'A', 'text': '多謝你！'},
+                {'id': 'B', 'text': '嗯...'},
+                {'id': 'C', 'text': '不用謝...'},
+                {'id': 'D', 'text': '好了...'}
+            ], 'correct_answer': 'A', 'explanation': '表達感謝要真誠。'},
+            {'id': 205, 'question': '別人說你好時，你會？', 'options': [
+                {'id': 'A', 'text': '說多謝，也讚回對方...'},
+                {'id': 'B', 'text': '不接受...'},
+                {'id': 'C', 'text': '不說話...'},
+                {'id': 'D', 'text': '說我不好...'}
+            ], 'correct_answer': 'A', 'explanation': '謙虛地接受讚美。'},
+            {'id': 206, 'question': '你想借玩具，怎樣說？', 'options': [
+                {'id': 'A', 'text': '請問可以借我嗎？'},
+                {'id': 'B', 'text': '給我！'},
+                {'id': 'C', 'text': '我要！'},
+                {'id': 'D', 'text': '不理會...'}
+            ], 'correct_answer': 'A', 'explanation': '請求時要有禮貌。'},
+            {'id': 207, 'question': '排隊時應該？', 'options': [
+                {'id': 'A', 'text': '排好隊，等候輪流...'},
+                {'id': 'B', 'text': '插隊...'},
+                {'id': 'C', 'text': '推開別人...'},
+                {'id': 'D', 'text': '走來走去...'}
+            ], 'correct_answer': 'A', 'explanation': '排隊是基本的社會規則。'},
+            {'id': 208, 'question': '做錯事了應該？', 'options': [
+                {'id': 'A', 'text': '承認錯誤並道歉...'},
+                {'id': 'B', 'text': '逃避...'},
+                {'id': 'C', 'text': '怪別人...'},
+                {'id': 'D', 'text': '不承認...'}
+            ], 'correct_answer': 'A', 'explanation': '勇於承擔責任是正確的。'},
+            {'id': 209, 'question': '收到禮物時應該？', 'options': [
+                {'id': 'A', 'text': '多謝並表現開心...'},
+                {'id': 'B', 'text': '不喜歡就黑面...'},
+                {'id': 'C', 'text': '不收...'},
+                {'id': 'D', 'text': '隨便放一邊...'}
+            ], 'correct_answer': 'A', 'explanation': '要表現出感謝和珍惜。'},
+            {'id': 210, 'question': '和老師說話時要？', 'options': [
+                {'id': 'A', 'text': '有禮貌，認真聽...'},
+                {'id': 'B', 'text': '東張西望...'},
+                {'id': 'C', 'text': '大聲喊...'},
+                {'id': 'D', 'text': '不說話...'}
+            ], 'correct_answer': 'A', 'explanation': '尊重師長是基本的禮貌。'}
+        ],
+        'social': [
+            {'id': 301, 'question': '新同學來了，你會？', 'options': [
+                {'id': 'A', 'text': '主動打招呼並一起玩...'},
+                {'id': 'B', 'text': '欺負他...'},
+                {'id': 'C', 'text': '不理的...'},
+                {'id': 'D', 'text': '笑他...'}
+            ], 'correct_answer': 'A', 'explanation': '應該友善地接納新朋友。'},
+            {'id': 302, 'question': '和朋友吵架了怎麼辦？', 'options': [
+                {'id': 'A', 'text': '冷靜後和好...'},
+                {'id': 'B', 'text': '永遠不理他...'},
+                {'id': 'C', 'text': '打他...'},
+                {'id': 'D', 'text': '告訴家長讓他處罰...'}
+            ], 'correct_answer': 'A', 'explanation': '冷靜處理衝突是正確的。'},
+            {'id': 303, 'question': '看到同學不開心，你會？', 'options': [
+                {'id': 'A', 'text': '關心並安慰他...'},
+                {'id': 'B', 'text': '笑他...'},
+                {'id': 'C', 'text': '走開...'},
+                {'id': 'D', 'text': '跟着他不開心...'}
+            ], 'correct_answer': 'A', 'explanation': '關心朋友是正確的。'},
+            {'id': 304, 'question': '玩的時候應該？', 'options': [
+                {'id': 'A', 'text': '輪流玩，分享玩具...'},
+                {'id': 'B', 'text': '自己玩，不理別人...'},
+                {'id': 'C', 'text': '搶別人的玩具...'},
+                {'id': 'D', 'text': '自己玩到夠...'}
+            ], 'correct_answer': 'A', 'explanation': '分享和輪流是良好的社交行為。'},
+            {'id': 305, 'question': '別人有困難時？', 'options': [
+                {'id': 'A', 'text': '盡力幫助他...'},
+                {'id': 'B', 'text': '取笑他...'},
+                {'id': 'C', 'text': '不理的...'},
+                {'id': 'D', 'text': '走開...'}
+            ], 'correct_answer': 'A', 'explanation': '幫助他人是正確的。'},
+            {'id': 306, 'question': '在公共場所要？', 'options': [
+                {'id': 'A', 'text': '保持安靜，守規則...'},
+                {'id': 'B', 'text': '大聲喧嘩...'},
+                {'id': 'C', 'text': '隨便跑...'},
+                {'id': 'D', 'text': '不理會別人...'}
+            ], 'correct_answer': 'A', 'explanation': '公共場所要守規矩。'},
+            {'id': 307, 'question': '想和朋友一起玩？', 'options': [
+                {'id': 'A', 'text': '禮貌地問可以一起嗎...'},
+                {'id': 'B', 'text': '直接加入不打招乎...'},
+                {'id': 'C', 'text': '趕走他們...'},
+                {'id': 'D', 'text': '自己一個玩...'}
+            ], 'correct_answer': 'A', 'explanation': '邀請時要有禮貌。'},
+            {'id': 308, 'question': '吃東西時應該？', 'options': [
+                {'id': 'A', 'text': '細嚼慢嚥，不放聲...'},
+                {'id': 'B', 'text': '大聲咀嚼...'},
+                {'id': 'C', 'text': '邊吃邊說...'},
+                {'id': 'D', 'text': '狼吞虎嚥...'}
+            ], 'correct_answer': 'A', 'explanation': '用餐禮儀是重要的社交技能。'},
+            {'id': 309, 'question': '別人生氣時你會？', 'options': [
+                {'id': 'A', 'text': '等他冷靜再說...'},
+                {'id': 'B', 'text': '跟着生氣...'},
+                {'id': 'C', 'text': '刺激他...'},
+                {'id': 'D', 'text': '走開不管...'}
+            ], 'correct_answer': 'A', 'explanation': '要理解和體諒他人的情緒。'},
+            {'id': 310, 'question': '老師讚賞你時？', 'options': [
+                {'id': 'A', 'text': '謙虛地說多謝...'},
+                {'id': 'B', 'text': '自大...'},
+                {'id': 'C', 'text': '不接受...'},
+                {'id': 'D', 'text': '說是應該的...'}
+            ], 'correct_answer': 'A', 'explanation': '謙虛接受讚美是正確的。'}
+        ]
+    }
+
+    import random
+    questions = questions_db.get(category, questions_db['self_intro'])
+    return random.sample(questions, min(count, len(questions)))
+
+
+print("Starting AI Tutor application...")
+print(f"Database configured: {bool(DATABASE_URL)}")
+app.run(host='0.0.0.0', port=5000, debug=True)

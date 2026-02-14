@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>競技場 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1E94F6;
+            --primary-dark: #1565C0;
+            --secondary: #8B5CF6;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --background-light: #F8FAFC;
+            --card-white: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --bronze: #CD7F32;
+            --silver: #C0C0C0;
+            --gold: #FFD700;
+            --platinum: #E5E4E2;
+            --diamond: #B9F2FF;
+            --master: #FF6B6B;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 5rem;
+        }
+
+        /* Rank Card */
+        .rank-card {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFA500 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .rank-card.bronze {
+            background: linear-gradient(135deg, var(--bronze) 0%, #8B4513 100%);
+            box-shadow: 0 4px 12px rgba(205, 127, 50, 0.3);
+        }
+
+        .rank-card.silver {
+            background: linear-gradient(135deg, var(--silver) 0%, #A0A0A0 100%);
+            box-shadow: 0 4px 12px rgba(192, 192, 192, 0.3);
+        }
+
+        .rank-card.gold {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFA500 100%);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .rank-card.platinum {
+            background: linear-gradient(135deg, var(--platinum) 0%, #B0B0B0 100%);
+            box-shadow: 0 4px 12px rgba(229, 228, 226, 0.3);
+        }
+
+        .rank-card.diamond {
+            background: linear-gradient(135deg, var(--diamond) 0%, #89CFF0 100%);
+            box-shadow: 0 4px 12px rgba(185, 242, 255, 0.3);
+        }
+
+        .rank-card.master {
+            background: linear-gradient(135deg, var(--master) 0%, #EE5A5A 100%);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .rank-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .rank-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .rank-points {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .rank-progress {
+            margin-top: 1rem;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .rank-progress-bar {
+            background: white;
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+
+        .next-rank {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Mode Cards */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .mode-card {
+            background: var(--card-white);
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 148, 246, 0.15);
+        }
+
+        .mode-card.selected {
+            border-color: var(--primary);
+            background: #EBF5FF;
+        }
+
+        .mode-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .mode-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .mode-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 1rem;
+            background: var(--background-light);
+            margin: 1rem;
+            border-radius: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Recent Matches */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 1rem 1rem 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .match-list {
+            padding: 0 1rem;
+        }
+
+        .match-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--card-white);
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .match-result {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+        }
+
+        .match-result.win {
+            background: #DCFCE7;
+        }
+
+        .match-result.lose {
+            background: #FEE2E2;
+        }
+
+        .match-result.draw {
+            background: #FEF3C7;
+        }
+
+        .match-info {
+            flex: 1;
+        }
+
+        .match-opponent {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .match-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .match-score {
+            text-align: right;
+        }
+
+        .match-points {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .match-points.win {
+            color: var(--success);
+        }
+
+        .match-points.lose {
+            color: var(--error);
+        }
+
+        /* Leaderboard */
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--card-white);
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .leaderboard-rank {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border-radius: 8px;
+            margin-right: 0.75rem;
+        }
+
+        .leaderboard-rank.gold {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFA500 100%);
+            color: white;
+        }
+
+        .leaderboard-rank.silver {
+            background: linear-gradient(135deg, var(--silver) 0%, #A0A0A0 100%);
+            color: white;
+        }
+
+        .leaderboard-rank.bronze {
+            background: linear-gradient(135deg, var(--bronze) 0%, #8B4513 100%);
+            color: white;
+        }
+
+        .leaderboard-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--background-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .leaderboard-points {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Category Cards */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        .category-card {
+            background: var(--card-white);
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-card:hover {
+            border-color: var(--primary);
+        }
+
+        .category-card.selected {
+            border-color: var(--primary);
+            background: #EBF5FF;
+        }
+
+        .category-icon {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .category-count {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Difficulty Buttons */
+        .difficulty-options {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            background: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .difficulty-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .difficulty-btn.selected {
+            border-color: var(--primary);
+            background: #EBF5FF;
+        }
+
+        .difficulty-btn.easy.selected {
+            border-color: var(--success);
+            background: #DCFCE7;
+        }
+
+        .difficulty-btn.medium.selected {
+            border-color: var(--warning);
+            background: #FEF3C7;
+        }
+
+        .difficulty-btn.hard.selected {
+            border-color: var(--error);
+            background: #FEE2E2;
+        }
+
+        .difficulty-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 0 auto 0.5rem;
+        }
+
+        .easy .difficulty-dot { background: var(--success); }
+        .medium .difficulty-dot { background: var(--warning); }
+        .hard .difficulty-dot { background: var(--error); }
+
+        .difficulty-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .difficulty-points {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Battle Screen */
+        .battle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+        }
+
+        .battle-timer {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .battle-players {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+            gap: 2rem;
+        }
+
+        .battle-player {
+            text-align: center;
+        }
+
+        .battle-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 0.5rem;
+        }
+
+        .battle-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .battle-vs {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .battle-score {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .battle-progress {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .battle-progress-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .battle-progress-bar {
+            height: 8px;
+            background: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .battle-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--card-white);
+            margin: 1rem;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: #F8FAFC;
+        }
+
+        .option-btn.selected {
+            border-color: var(--primary);
+            background: #EBF5FF;
+        }
+
+        .option-btn.correct {
+            border-color: var(--success);
+            background: #DCFCE7;
+        }
+
+        .option-btn.incorrect {
+            border-color: var(--error);
+            background: #FEE2E2;
+        }
+
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--background-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 0.75rem;
+        }
+
+        .option-btn.correct .option-letter {
+            background: var(--success);
+            color: white;
+        }
+
+        .option-btn.incorrect .option-letter {
+            background: var(--error);
+            color: white;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        /* Result Screen */
+        .result-screen {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .result-title.win { color: var(--success); }
+        .result-title.lose { color: var(--error); }
+        .result-title.draw { color: var(--warning); }
+
+        .result-scores {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .result-score-item {
+            text-align: center;
+        }
+
+        .result-score-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .result-score-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .result-vs {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .rewards-box {
+            background: var(--background-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .reward-label {
+            color: var(--text-secondary);
+        }
+
+        .reward-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .badge-item {
+            background: white;
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid #E5E7EB;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #E5E7EB;
+            margin: 0 1rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: none;
+            border: none;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #E5E7EB;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        @keyframes scorePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .score-pop {
+            animation: scorePop 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container" id="app">
+        <!-- Header -->
+        <div class="header" id="header">
+            <div class="back-btn" onclick="goHome()">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </div>
+            <div class="header-title">競技場</div>
+            <div style="width: 36px;"></div>
+        </div>
+
+        <!-- Home Screen -->
+        <div class="main-content" id="homeScreen">
+            <!-- Rank Card -->
+            <div class="rank-card" id="rankCard" onclick="showRankInfo()">
+                <div class="rank-icon" id="rankIcon">🥇</div>
+                <div class="rank-name" id="rankName">黃金</div>
+                <div class="rank-points" id="rankPoints">2500 積分</div>
+                <div class="rank-progress">
+                    <div class="rank-progress-bar" id="rankProgress" style="width: 50%;"></div>
+                </div>
+                <div class="next-rank" id="nextRank">距離下一級: 500分</div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value" id="statWins">0</div>
+                    <div class="stat-label">勝利</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statLosses">0</div>
+                    <div class="stat-label">失敗</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statWinRate">0%</div>
+                    <div class="stat-label">勝率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statStreak">0</div>
+                    <div class="stat-label">連勝</div>
+                </div>
+            </div>
+
+            <!-- Mode Selection -->
+            <div class="section-title">選擇模式</div>
+            <div class="mode-grid">
+                <div class="mode-card" onclick="selectMode('challenge')" id="modeChallenge">
+                    <div class="mode-icon">🎯</div>
+                    <div class="mode-name">挑戰模式</div>
+                    <div class="mode-desc">挑戰題目庫</div>
+                </div>
+                <div class="mode-card" onclick="selectMode('match')" id="modeMatch">
+                    <div class="mode-icon">⚔️</div>
+                    <div class="mode-name">對戰系統</div>
+                    <div class="mode-desc">與AI對戰</div>
+                </div>
+                <div class="mode-card" onclick="selectMode('timed')" id="modeTimed">
+                    <div class="mode-icon">⏱️</div>
+                    <div class="mode-name">計時賽</div>
+                    <div class="mode-desc">限時答題</div>
+                </div>
+                <div class="mode-card" onclick="selectMode('practice')" id="modePractice">
+                    <div class="mode-icon">📝</div>
+                    <div class="mode-name">練習場</div>
+                    <div class="mode-desc">不使用排名</div>
+                </div>
+            </div>
+
+            <!-- Recent Matches -->
+            <div class="section-title">最近對戰</div>
+            <div class="match-list" id="matchList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+
+            <!-- Leaderboard Preview -->
+            <div class="section-title">排行榜 Top 3</div>
+            <div id="leaderboardPreview">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+
+            <div style="padding: 1rem;">
+                <button class="btn-primary" onclick="showSetup()">開始挑戰</button>
+            </div>
+        </div>
+
+        <!-- Setup Screen -->
+        <div class="main-content hidden" id="setupScreen">
+            <div class="section-title" id="setupTitle">選擇題庫</div>
+            <div class="category-grid" id="categoryGrid">
+                <div class="category-card selected" onclick="selectCategory('self_intro')" data-category="self_intro">
+                    <div class="category-icon">👤</div>
+                    <div class="category-name">自我介紹</div>
+                    <div class="category-count">50題</div>
+                </div>
+                <div class="category-card" onclick="selectCategory('logic')" data-category="logic">
+                    <div class="category-icon">🧠</div>
+                    <div class="category-name">邏輯思維</div>
+                    <div class="category-count">40題</div>
+                </div>
+                <div class="category-card" onclick="selectCategory('expression')" data-category="expression">
+                    <div class="category-icon">🎤</div>
+                    <div class="category-name">表達技巧</div>
+                    <div class="category-count">35題</div>
+                </div>
+                <div class="category-card" onclick="selectCategory('social')" data-category="social">
+                    <div class="category-icon">👥</div>
+                    <div class="category-name">社交互動</div>
+                    <div class="category-count">30題</div>
+                </div>
+            </div>
+
+            <div class="section-title">選擇難度</div>
+            <div class="difficulty-options">
+                <div class="difficulty-btn easy" onclick="selectDifficulty('easy')" id="diffEasy">
+                    <div class="difficulty-dot"></div>
+                    <div class="difficulty-name">簡單</div>
+                    <div class="difficulty-points">+10分</div>
+                </div>
+                <div class="difficulty-btn medium selected" onclick="selectDifficulty('medium')" id="diffMedium">
+                    <div class="difficulty-dot"></div>
+                    <div class="difficulty-name">中等</div>
+                    <div class="difficulty-points">+25分</div>
+                </div>
+                <div class="difficulty-btn hard" onclick="selectDifficulty('hard')" id="diffHard">
+                    <div class="difficulty-dot"></div>
+                    <div class="difficulty-name">困難</div>
+                    <div class="difficulty-points">+50分</div>
+                </div>
+            </div>
+
+            <div style="padding: 1rem;">
+                <button class="btn-primary" onclick="startMatch()">開始對戰</button>
+                <button class="btn-secondary" onclick="goHome()">返回</button>
+            </div>
+        </div>
+
+        <!-- Battle Screen -->
+        <div class="main-content hidden" id="battleScreen">
+            <div class="battle-header">
+                <div>對戰中...</div>
+                <div class="battle-timer" id="battleTimer">05:00</div>
+            </div>
+
+            <div class="battle-players">
+                <div class="battle-player">
+                    <div class="battle-avatar" id="userAvatar">👤</div>
+                    <div class="battle-name" id="userName">你</div>
+                    <div class="battle-score" id="userScore">0</div>
+                </div>
+                <div class="battle-vs">VS</div>
+                <div class="battle-player">
+                    <div class="battle-avatar" id="opponentAvatar">🤖</div>
+                    <div class="battle-name" id="opponentName">AI面試官</div>
+                    <div class="battle-score" id="opponentScore">0</div>
+                </div>
+            </div>
+
+            <div class="battle-progress">
+                <div class="battle-progress-text">題目 <span id="currentQ">1</span> / <span id="totalQ">10</span></div>
+                <div class="battle-progress-bar">
+                    <div class="battle-progress-fill" id="progressFill" style="width: 10%;"></div>
+                </div>
+            </div>
+
+            <div class="question-card" id="questionCard">
+                <div class="question-text" id="questionText">
+                    請選擇答案...
+                </div>
+                <div id="optionsContainer">
+                    <!-- Options will be inserted here -->
+                </div>
+            </div>
+
+            <div class="question-card" id="resultCard" style="display: none;">
+                <div class="result-screen">
+                    <div class="result-icon" id="resultIcon">✓</div>
+                    <div class="result-title" id="resultTitle">正確！</div>
+                    <p id="resultExplanation"></p>
+                    <button class="btn-primary" onclick="nextQuestion()" id="nextBtn">下一題</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="main-content hidden" id="resultScreen">
+            <div class="result-screen">
+                <div class="result-icon" id="finalResultIcon">🏆</div>
+                <div class="result-title" id="finalResultTitle">你贏了！</div>
+
+                <div class="result-scores">
+                    <div class="result-score-item">
+                        <div class="result-score-value" id="finalUserScore">85</div>
+                        <div class="result-score-label">你的分數</div>
+                    </div>
+                    <div class="result-vs">VS</div>
+                    <div class="result-score-item">
+                        <div class="result-score-value" id="finalOpponentScore">70</div>
+                        <div class="result-score-label">對手分數</div>
+                    </div>
+                </div>
+
+                <div class="rewards-box">
+                    <div class="reward-item">
+                        <span class="reward-label">獲得積分</span>
+                        <span class="reward-value" id="rewardPoints">+25</span>
+                    </div>
+                    <div class="reward-item">
+                        <span class="reward-label">獲得金幣</span>
+                        <span class="reward-value" id="rewardCoins">+50</span>
+                    </div>
+                    <div class="reward-item">
+                        <span class="reward-label">當前段位</span>
+                        <span class="reward-value" id="currentRankResult">黃金 🥇</span>
+                    </div>
+                    <div class="badge-list" id="badgesList">
+                        <!-- Badges will be inserted here -->
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="showSetup()">再来一局</button>
+                <button class="btn-secondary" onclick="goHome()">返回首頁</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div class="main-content hidden" id="leaderboardScreen">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchLeaderboard('weekly')" id="tabWeekly">本週</button>
+                <button class="tab-btn" onclick="switchLeaderboard('monthly')" id="tabMonthly">本月</button>
+            </div>
+
+            <div class="match-list" id="leaderboardList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+
+            <div style="padding: 1rem;">
+                <button class="btn-secondary" onclick="goHome()">返回</button>
+            </div>
+        </div>
+
+        <!-- History Screen -->
+        <div class="main-content hidden" id="historyScreen">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchHistoryFilter('all')" id="filterAll">全部</button>
+                <button class="tab-btn" onclick="switchHistoryFilter('win')" id="filterWin">勝利</button>
+                <button class="tab-btn" onclick="switchHistoryFilter('lose')" id="filterLose">失敗</button>
+            </div>
+
+            <div class="match-list" id="historyList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+
+            <div style="padding: 1rem;">
+                <button class="btn-secondary" onclick="goHome()">返回</button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item" onclick="goHome()">
+                <span class="material-symbols-outlined nav-icon">home</span>
+                <span>首頁</span>
+            </div>
+            <div class="nav-item" onclick="showLeaderboard()">
+                <span class="material-symbols-outlined nav-icon">leaderboard</span>
+                <span>排行</span>
+            </div>
+            <div class="nav-item" onclick="showHistory()">
+                <span class="material-symbols-outlined nav-icon">history</span>
+                <span>歷史</span>
+            </div>
+            <div class="nav-item" onclick="window.location.href='/dashboard'">
+                <span class="material-symbols-outlined nav-icon">dashboard</span>
+                <span>主頁</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentMode = 'challenge';
+        let selectedCategory = 'self_intro';
+        let selectedDifficulty = 'medium';
+        let currentQuestionIndex = 0;
+        let questions = [];
+        let matchId = null;
+        let userScore = 0;
+        let opponentScore = 0;
+        let correctCount = 0;
+        let timerInterval = null;
+        let timeLeft = 300;
+
+        // Rank icons mapping
+        const rankIcons = {
+            'bronze': '🥉',
+            'silver': '🥈',
+            'gold': '🥇',
+            'platinum': '💎',
+            'diamond': '💎',
+            'master': '👑'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadArenaData();
+        });
+
+        async function loadArenaData() {
+            try {
+                const response = await fetch('/api/arena/home');
+                const data = await response.json();
+
+                if (data.success) {
+                    updateRankCard(data.data.user_rank);
+                    updateStats(data.data.user_rank.stats);
+                    updateRecentMatches(data.data.recent_matches);
+                    updateLeaderboardPreview(data.data.quick_stats.weekly_rank);
+                }
+            } catch (error) {
+                console.error('Error loading arena data:', error);
+            }
+        }
+
+        function updateRankCard(rank) {
+            const rankCard = document.getElementById('rankCard');
+            rankCard.className = 'rank-card ' + rank.rank_id;
+
+            document.getElementById('rankIcon').textContent = rank.rank_icon;
+            document.getElementById('rankName').textContent = rank.rank_name;
+            document.getElementById('rankPoints').textContent = rank.rank_points + ' 積分';
+
+            if (rank.next_rank) {
+                const progress = 100 - (rank.next_rank.points_needed / 2500 * 100);
+                document.getElementById('rankProgress').style.width = Math.min(100, progress) + '%';
+                document.getElementById('nextRank').textContent = '距離下一級: ' + rank.next_rank.points_needed + '分';
+            } else {
+                document.getElementById('rankProgress').style.width = '100%';
+                document.getElementById('nextRank').textContent = '最高段位！';
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('statWins').textContent = stats.wins;
+            document.getElementById('statLosses').textContent = stats.losses;
+            document.getElementById('statWinRate').textContent = stats.win_rate;
+            document.getElementById('statStreak').textContent = stats.current_streak;
+        }
+
+        function updateRecentMatches(matches) {
+            const container = document.getElementById('matchList');
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">暫無對戰記錄</div>';
+                return;
+            }
+
+            container.innerHTML = matches.map(match => `
+                <div class="match-item">
+                    <div class="match-result ${match.result}">
+                        ${match.result === 'win' ? '✓' : (match.result === 'lose' ? '✗' : '＝')}
+                    </div>
+                    <div class="match-info">
+                        <div class="match-opponent">${match.opponent_name}</div>
+                        <div class="match-details">${match.user_score}分 vs ${match.opponent_score}分</div>
+                    </div>
+                    <div class="match-score">
+                        <div class="match-points ${match.result}">${match.points_earned > 0 ? '+' : ''}${match.points_earned}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateLeaderboardPreview(userRank) {
+            const container = document.getElementById('leaderboardPreview');
+
+            fetch('/api/arena/leaderboard?limit=3')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data.top_players) {
+                        container.innerHTML = data.data.top_players.map((player, index) => `
+                            <div class="leaderboard-item">
+                                <div class="leaderboard-rank ${index === 0 ? 'gold' : (index === 1 ? 'silver' : 'bronze')}">${index + 1}</div>
+                                <div class="leaderboard-avatar">${player.user_avatar || '👤'}</div>
+                                <div class="leaderboard-name">${player.user_name}</div>
+                                <div class="leaderboard-points">${player.points}分</div>
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(err => {
+                    container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">載入失敗</div>';
+                });
+        }
+
+        // Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.main-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function goHome() {
+            showScreen('homeScreen');
+            loadArenaData();
+        }
+
+        function showSetup() {
+            showScreen('setupScreen');
+        }
+
+        function showLeaderboard() {
+            showScreen('leaderboardScreen');
+            loadLeaderboard('weekly');
+        }
+
+        function showHistory() {
+            showScreen('historyScreen');
+            loadHistory('all');
+        }
+
+        function showRankInfo() {
+            // Could show a modal with detailed rank info
+        }
+
+        // Mode Selection
+        function selectMode(mode) {
+            currentMode = mode;
+
+            document.querySelectorAll('.mode-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
+
+            // Update setup screen title based on mode
+            const titleMap = {
+                'challenge': '選擇題庫',
+                'match': '選擇題庫',
+                'timed': '選擇題庫',
+                'practice': '選擇題庫'
+            };
+            document.getElementById('setupTitle').textContent = titleMap[mode] || '選擇題庫';
+        }
+
+        // Category Selection
+        function selectCategory(category) {
+            selectedCategory = category;
+
+            document.querySelectorAll('.category-card').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`[data-category="${category}"]`).classList.add('selected');
+        }
+
+        // Difficulty Selection
+        function selectDifficulty(difficulty) {
+            selectedDifficulty = difficulty;
+
+            document.querySelectorAll('.difficulty-btn').forEach(el => el.classList.remove('selected'));
+            document.getElementById('diff' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1)).classList.add('selected');
+        }
+
+        // Start Match
+        async function startMatch() {
+            try {
+                const response = await fetch('/api/arena/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        match_type: currentMode === 'match' ? 'challenge' : currentMode,
+                        category: selectedCategory,
+                        difficulty: selectedDifficulty,
+                        opponent_type: currentMode === 'match' ? 'ai' : null,
+                        time_limit: currentMode === 'timed' ? 120 : 300
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    matchId = data.data.match_id;
+                    questions = data.data.questions;
+                    currentQuestionIndex = 0;
+                    userScore = 0;
+                    opponentScore = 0;
+                    correctCount = 0;
+
+                    document.getElementById('opponentName').textContent = data.data.opponent.name;
+                    document.getElementById('opponentAvatar').textContent = data.data.opponent.avatar;
+                    document.getElementById('totalQ').textContent = questions.length;
+
+                    showScreen('battleScreen');
+                    showQuestion();
+                    startTimer();
+                } else {
+                    alert(data.error || '開始失敗');
+                }
+            } catch (error) {
+                console.error('Error starting match:', error);
+                alert('網絡錯誤，請重試');
+            }
+        }
+
+        function startTimer() {
+            timeLeft = currentMode === 'timed' ? 120 : 300;
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('battleTimer').textContent =
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishMatch();
+                }
+            }, 1000);
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                finishMatch();
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+            document.getElementById('currentQ').textContent = currentQuestionIndex + 1;
+            document.getElementById('progressFill').style.width =
+                ((currentQuestionIndex + 1) / questions.length * 100) + '%';
+
+            document.getElementById('questionText').textContent = q.question;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = q.options.map(opt => `
+                <button class="option-btn" onclick="submitAnswer('${opt.id}', '${q.id}')">
+                    <span class="option-letter">${opt.id}</span>
+                    <span class="option-text">${opt.text}</span>
+                </button>
+            `).join('');
+
+            document.getElementById('questionCard').style.display = 'block';
+            document.getElementById('resultCard').style.display = 'none';
+        }
+
+        async function submitAnswer(answer, questionId) {
+            try {
+                const response = await fetch('/api/arena/answer', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        match_id: matchId,
+                        question_id: questionId,
+                        answer: answer
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update score
+                    userScore = data.data.running_score;
+                    correctCount = data.data.correct_count;
+                    document.getElementById('userScore').textContent = userScore;
+
+                    // Show result
+                    showAnswerResult(answer, data.data);
+                }
+            } catch (error) {
+                console.error('Error submitting answer:', error);
+            }
+        }
+
+        function showAnswerResult(answer, data) {
+            const q = questions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.option-btn');
+
+            buttons.forEach(btn => {
+                const letter = btn.querySelector('.option-letter').textContent;
+                if (letter === data.correct_answer) {
+                    btn.classList.add('correct');
+                } else if (letter === answer && !data.correct) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            document.getElementById('questionCard').style.display = 'none';
+            document.getElementById('resultCard').style.display = 'block';
+
+            document.getElementById('resultIcon').textContent = data.correct ? '✓' : '✗';
+            document.getElementById('resultTitle').textContent = data.correct ? '正確！' : '錯誤！';
+            document.getElementById('resultTitle').className = 'result-title ' + (data.correct ? 'win' : 'lose');
+            document.getElementById('resultExplanation').textContent = data.explanation || '';
+
+            // Animate score
+            document.getElementById('userScore').classList.add('score-pop');
+            setTimeout(() => {
+                document.getElementById('userScore').classList.remove('score-pop');
+            }, 300);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            showQuestion();
+        }
+
+        async function finishMatch() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            try {
+                const response = await fetch('/api/arena/finish', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({match_id: matchId})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResultScreen(data.data);
+                }
+            } catch (error) {
+                console.error('Error finishing match:', error);
+            }
+        }
+
+        function showResultScreen(data) {
+            showScreen('resultScreen');
+
+            document.getElementById('finalResultIcon').textContent =
+                data.result === 'win' ? '🏆' : (data.result === 'lose' ? '😢' : '🤝');
+            document.getElementById('finalResultTitle').textContent =
+                data.result === 'win' ? '你贏了！' : (data.result === 'lose' ? '再接再厲！' : '平手！');
+            document.getElementById('finalResultTitle').className = 'result-title ' + data.result;
+
+            document.getElementById('finalUserScore').textContent = data.user_score;
+            document.getElementById('finalOpponentScore').textContent = data.opponent_score;
+
+            document.getElementById('rewardPoints').textContent =
+                (data.rewards.points_earned >= 0 ? '+' : '') + data.rewards.points_earned;
+            document.getElementById('rewardCoins').textContent = '+' + data.rewards.coins_earned;
+            document.getElementById('currentRankResult').textContent =
+                data.rank_info.rank_name + ' ' + data.rank_info.rank_icon;
+
+            // Show badges
+            const badgesList = document.getElementById('badgesList');
+            if (data.rewards.badges && data.rewards.badges.length > 0) {
+                badgesList.innerHTML = data.rewards.badges.map(badge => `
+                    <div class="badge-item">
+                        <span>${badge.badge_icon}</span>
+                        <span>${badge.badge_name}</span>
+                    </div>
+                `).join('');
+            } else {
+                badgesList.innerHTML = '';
+            }
+        }
+
+        // Leaderboard
+        function switchLeaderboard(period) {
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab' + period.charAt(0).toUpperCase() + period.slice(1)).classList.add('active');
+
+            loadLeaderboard(period);
+        }
+
+        async function loadLeaderboard(period) {
+            const container = document.getElementById('leaderboardList');
+
+            try {
+                const response = await fetch(`/api/arena/leaderboard?period=${period}&limit=20`);
+                const data = await response.json();
+
+                if (data.success && data.data.top_players) {
+                    container.innerHTML = data.data.top_players.map((player, index) => `
+                        <div class="leaderboard-item">
+                            <div class="leaderboard-rank ${index === 0 ? 'gold' : (index === 1 ? 'silver' : (index === 2 ? 'bronze' : ''))}">${index + 1}</div>
+                            <div class="leaderboard-avatar">${player.user_avatar || '👤'}</div>
+                            <div class="leaderboard-name">${player.user_name}</div>
+                            <div class="leaderboard-points">${player.points}分</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">暫無排行數據</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">載入失敗</div>';
+            }
+        }
+
+        // History
+        function switchHistoryFilter(filter) {
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+
+            loadHistory(filter);
+        }
+
+        async function loadHistory(filter) {
+            const container = document.getElementById('historyList');
+
+            try {
+                const response = await fetch(`/api/arena/history?filter=${filter}&limit=20`);
+                const data = await response.json();
+
+                if (data.success && data.data.matches && data.data.matches.length > 0) {
+                    container.innerHTML = data.data.matches.map(match => `
+                        <div class="match-item">
+                            <div class="match-result ${match.result}">
+                                ${match.result === 'win' ? '✓' : (match.result === 'lose' ? '✗' : '＝')}
+                            </div>
+                            <div class="match-info">
+                                <div class="match-opponent">${match.opponent_name}</div>
+                                <div class="match-details">${match.category || '挑戰'} · ${match.user_correct}/${match.user_total}正確</div>
+                            </div>
+                            <div class="match-score">
+                                <div class="match-points ${match.result}">${match.points_earned > 0 ? '+' : ''}${match.points_earned}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">暫無對戰記錄</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">載入失敗</div>';
+            }
+        }
+    </script>
+</body>
+</html>
