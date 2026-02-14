@@ -207,6 +207,55 @@ def login():
 
     next_url = request.args.get('next', '/dashboard')
 
+    if request.method == 'POST':
+        # Handle email login
+        email = request.form.get('email')
+        next_url = request.form.get('next', '/dashboard')
+
+        if not email:
+            flash('Please enter your email', 'error')
+            return render_template('login.html', next_url=next_url)
+
+        # Get database functions
+        db = get_db_functions()
+        if not db:
+            flash('Database is not configured.', 'error')
+            return render_template('login.html', next_url=next_url)
+
+        # Check if user exists, create if not
+        user = db['get_user_by_email'](email)
+        if not user:
+            user = db['create_user'](
+                email=email,
+                name=email.split('@')[0],
+                user_type='email'
+            )
+
+        # Set session
+        session['logged_in'] = True
+        session['user_id'] = user['id']
+        session['email'] = user['email']
+        session['name'] = user.get('name')
+        session['picture'] = user.get('picture')
+        session['user_type'] = user['user_type']
+
+        # Check for child profile
+        profile = db['get_child_profile_by_user_id'](user['id'])
+        if profile:
+            session['profile_id'] = profile['id']
+            session['child_name'] = profile['child_name']
+            session['child_age'] = profile['child_age']
+            session['child_gender'] = profile.get('child_gender')
+            session['profile_complete'] = profile['profile_complete']
+
+        flash('Welcome back!', 'success')
+
+        # Redirect to child profile setup if profile is incomplete
+        if not session.get('profile_complete'):
+            return redirect(url_for('child_profile_step1'))
+
+        return redirect(next_url)
+
     return render_template('login.html', next_url=next_url)
 
 
