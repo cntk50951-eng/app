@@ -227,18 +227,28 @@ def generate_voice_follow_up(base_question, previous_answer, profile, question_h
 
 # ============ TTS 语音生成 ============
 
-def generate_voice_audio(text, voice='male-qn-qingse', speed=1.0):
+# 语音配置 - 根据语言选择
+VOICE_MAP = {
+    'cantonese': 'male-qn-qingse',      # 广东话
+    'mandarin': 'male-qn-qingse',       # 普通话
+    'english': 'male-qn-qingse',         # 英语
+}
+
+def generate_voice_audio(text, language='cantonese', speed=1.0):
     """
     生成语音面试的 TTS 音频（使用 MiniMax 异步 TTS API）。
 
     Args:
         text: 要转换的文字
-        voice: 语音名称 (male-qn-qingse, female-shaonv 等)
+        language: 语言类型 ('cantonese', 'mandarin', 'english')
         speed: 播放速度 (0.5-2.0)
 
     Returns:
         dict: {'audio_url': '音频URL', 'audio_data': base64编码的音频数据}
     """
+    # 根据语言选择voice
+    voice = VOICE_MAP.get(language, 'male-qn-qingse')
+
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API Key not configured")
         return {'audio_url': None, 'audio_data': None}
@@ -248,6 +258,8 @@ def generate_voice_audio(text, voice='male-qn-qingse', speed=1.0):
             'Authorization': f'Bearer {MINIMAX_API_KEY}',
             'Content-Type': 'application/json'
         }
+
+        print(f"🔧 Generating {language} audio with voice: {voice}")
 
         # 使用异步 TTS API
         payload = {

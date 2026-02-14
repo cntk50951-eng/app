@@ -2437,6 +2437,7 @@ def api_voice_tts():
     data = request.json or {}
     text = data.get('text', '')
     session_id = data.get('session_id')
+    language = data.get('language', 'cantonese')
 
     if not text:
         return jsonify({'error': 'Text is required'}), 400
@@ -2444,7 +2445,7 @@ def api_voice_tts():
     try:
         from services.voice_interview_service import generate_voice_audio
 
-        result = generate_voice_audio(text)
+        result = generate_voice_audio(text, language=language)
 
         return jsonify({
             'success': True,
