@@ -3993,28 +3993,6 @@ def api_like_question():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/experience/like', methods=['POST'])
-def api_like_experience():
-    """点赞经验API"""
-    try:
-        from services.school_service import like_experience
-
-        data = request.get_json() or {}
-        experience_id = data.get('experience_id')
-
-        if not experience_id:
-            return jsonify({'error': 'Experience ID required'}), 400
-
-        success = like_experience(experience_id)
-
-        return jsonify({
-            'success': success
-        })
-    except Exception as e:
-        print(f"Error liking experience: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
 if __name__ == '__main__':
     print("Starting AI Tutor application...")
     print(f"Database configured: {bool(DATABASE_URL)}")
