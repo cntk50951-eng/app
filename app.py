@@ -84,7 +84,7 @@ GOOGLE_SCOPES = [
 ]
 
 # Routes that don't require authentication
-PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path']
+PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/google', '/auth/google/callback', '/unlock-full-access', '/mock-interview', '/mock-interview/start', '/mock-interview/result', '/mock-interview/voice', '/school-advisor', '/school-advisor/analyze', '/capability-radar', '/question-bank', '/question-bank/practice', '/practice', '/practice/daily-challenge', '/practice/wrong-questions', '/practice/favorites', '/practice/recommended', '/practice/progress', '/interview-guide', '/reports', '/learning-path', '/parent-interview', '/parent-interview/voice', '/parent-interview/result', '/parent-interview/history']
 
 
 def login_required(f):
@@ -3316,6 +3316,364 @@ def api_create_encouragement_message():
         return jsonify({'id': message_id, 'message': '留言发送成功'})
     except Exception as e:
         print(f"Error creating message: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ Parent Interview Routes ============
+
+@app.route('/parent-interview')
+def parent_interview_page():
+    """家长面试首页/题库页面"""
+    from services.parent_interview_service import get_question_categories, get_school_types
+
+    logged_in = 'user_id' in session
+    user_id = session.get('user_id')
+
+    # 获取题库分类
+    categories = get_question_categories()
+
+    # 获取学校类型
+    school_types = get_school_types()
+
+    return render_template(
+        'parent-interview.html',
+        logged_in=logged_in,
+        categories=categories,
+        school_types=school_types
+    )
+
+
+@app.route('/parent-interview/voice')
+def parent_interview_voice_page():
+    """家长语音模拟面试页面"""
+    school_type = request.args.get('school_type', 'academic')
+
+    return render_template(
+        'parent-interview-voice.html',
+        school_type=school_type
+    )
+
+
+@app.route('/parent-interview/result')
+def parent_interview_result_page():
+    """家长面试报告页面"""
+    session_id = request.args.get('session_id', '')
+
+    return render_template(
+        'parent-interview-result.html',
+        session_id=session_id
+    )
+
+
+@app.route('/parent-interview/history')
+def parent_interview_history_page():
+    """家长面试历史记录页面"""
+    logged_in = 'user_id' in session
+
+    return render_template(
+        'parent-interview-history.html',
+        logged_in=logged_in
+    )
+
+
+# ============ Parent Interview API Endpoints ============
+
+@app.route('/api/parent-interview/questions', methods=['GET'])
+def api_parent_interview_questions():
+    """获取家长面试题库"""
+    category = request.args.get('category')
+    limit = int(request.args.get('limit', 10))
+
+    try:
+        from services.parent_interview_service import get_question_categories, get_questions_by_category
+
+        if category:
+            questions = get_questions_by_category(category, limit)
+            return jsonify({
+                'success': True,
+                'questions': questions
+            })
+        else:
+            categories = get_question_categories()
+            return jsonify({
+                'success': True,
+                'categories': categories
+            })
+
+    except Exception as e:
+        print(f"Error getting questions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/voice/start', methods=['POST'])
+def api_parent_interview_voice_start():
+    """启动家长语音面试"""
+    data = request.json or {}
+    school_type = data.get('school_type', 'academic')
+    num_questions = int(data.get('num_questions', 5))
+
+    try:
+        from services.parent_interview_service import parent_interview_session
+
+        # 创建会话
+        session = parent_interview_session.create_session(
+            user_id='anonymous',
+            school_type=school_type,
+            num_questions=num_questions
+        )
+
+        return jsonify({
+            'success': True,
+            'session_id': session['session_id'],
+            'questions': session['questions'],
+            'school_type': school_type
+        })
+
+    except Exception as e:
+        print(f"Error starting interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/voice/next', methods=['POST'])
+def api_parent_interview_voice_next():
+    """获取下一道面试问题"""
+    data = request.json or {}
+    session_id = data.get('session_id')
+
+    try:
+        from services.parent_interview_service import parent_interview_session
+
+        session = parent_interview_session.get_session(session_id)
+        if not session:
+            return jsonify({'error': '会话不存在'}), 404
+
+        current_index = session.get('current_index', 0)
+        questions = session.get('questions', [])
+
+        if current_index < len(questions):
+            question = questions[current_index]
+            return jsonify({
+                'success': True,
+                'question': question,
+                'current_index': current_index,
+                'total': len(questions)
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'finished': True,
+                'current_index': current_index,
+                'total': len(questions)
+            })
+
+    except Exception as e:
+        print(f"Error getting next question: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/voice/answer', methods=['POST'])
+def api_parent_interview_voice_answer():
+    """提交回答"""
+    data = request.json or {}
+    session_id = data.get('session_id')
+    question = data.get('question')
+    answer = data.get('answer')
+    follow_up_question = data.get('follow_up_question')
+    follow_up_answer = data.get('follow_up_answer')
+
+    if not session_id or not question or not answer:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        from services.parent_interview_service import parent_interview_session
+
+        session = parent_interview_session.get_session(session_id)
+        if not session:
+            return jsonify({'error': '会话不存在'}), 404
+
+        # 添加回答
+        answer_data = parent_interview_session.add_answer(
+            session_id,
+            question,
+            answer,
+            follow_up_question,
+            follow_up_answer
+        )
+
+        return jsonify({
+            'success': True,
+            'answer': answer_data
+        })
+
+    except Exception as e:
+        print(f"Error saving answer: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/voice/followup', methods=['POST'])
+def api_parent_interview_voice_followup():
+    """生成追问问题"""
+    data = request.json or {}
+    base_question = data.get('question')
+    previous_answer = data.get('answer')
+
+    if not base_question or not previous_answer:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        from services.parent_interview_service import generate_follow_up_question
+
+        follow_up = generate_follow_up_question(base_question, previous_answer)
+
+        return jsonify({
+            'success': True,
+            'follow_up': follow_up
+        })
+
+    except Exception as e:
+        print(f"Error generating follow-up: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/voice/finish', methods=['POST'])
+def api_parent_interview_voice_finish():
+    """完成面试"""
+    data = request.json or {}
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return jsonify({'error': '缺少会话ID'}), 400
+
+    try:
+        from services.parent_interview_service import parent_interview_session, generate_interview_report
+
+        session = parent_interview_session.finish_session(session_id)
+        if not session:
+            return jsonify({'error': '会话不存在'}), 404
+
+        # 生成报告
+        report = generate_interview_report(session_id)
+
+        # 生成消息
+        score = report.get('total_score', 0)
+        if score >= 85:
+            message = '表现非常出色！您的教育理念和育儿经验都很棒。'
+        elif score >= 70:
+            message = '回答不错！建议可以更具体一些会更好。'
+        elif score >= 50:
+            message = '回答还行，建议多举例说明您的观点。'
+        else:
+            message = '建议更详细地表达您的想法和做法。'
+
+        return jsonify({
+            'success': True,
+            'score': score,
+            'message': message,
+            'session_id': session_id
+        })
+
+    except Exception as e:
+        print(f"Error finishing interview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/feedback', methods=['POST'])
+def api_parent_interview_feedback():
+    """获取面试反馈"""
+    data = request.json or {}
+    question = data.get('question')
+    answer = data.get('answer')
+    school_type = data.get('school_type', 'academic')
+
+    if not question or not answer:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    try:
+        from services.parent_interview_service import generate_detailed_feedback
+
+        feedback = generate_detailed_feedback(question, answer, school_type)
+
+        return jsonify({
+            'success': True,
+            'feedback': feedback
+        })
+
+    except Exception as e:
+        print(f"Error generating feedback: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/report/<session_id>', methods=['GET'])
+def api_parent_interview_report(session_id):
+    """获取面试报告"""
+    try:
+        from services.parent_interview_service import generate_interview_report
+
+        report = generate_interview_report(session_id)
+
+        if not report:
+            return jsonify({'error': '报告不存在'}), 404
+
+        return jsonify({
+            'success': True,
+            'report': report
+        })
+
+    except Exception as e:
+        print(f"Error getting report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/history', methods=['GET'])
+def api_parent_interview_history():
+    """获取面试历史记录"""
+    try:
+        from services.parent_interview_service import parent_interview_session
+
+        sessions = parent_interview_session.get_all_sessions()
+
+        # 格式化历史记录
+        history = []
+        for session in sessions:
+            history.append({
+                'session_id': session.get('session_id'),
+                'school_type': session.get('school_type'),
+                'total_questions': len(session.get('questions', [])),
+                'answered_questions': len(session.get('answers', [])),
+                'total_score': session.get('total_score', 0),
+                'created_at': session.get('created_at'),
+                'status': session.get('status')
+            })
+
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+
+    except Exception as e:
+        print(f"Error getting history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/parent-interview/school-types', methods=['GET'])
+def api_parent_interview_school_types():
+    """获取学校类型"""
+    try:
+        from services.parent_interview_service import get_school_types
+
+        school_types = get_school_types()
+
+        return jsonify({
+            'success': True,
+            'school_types': school_types
+        })
+
+    except Exception as e:
+        print(f"Error getting school types: {e}")
         return jsonify({'error': str(e)}), 500
 
 

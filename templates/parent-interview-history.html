@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>历史记录 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --primary-50: #eef2ff;
+            --primary-100: #e0e7ff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+            --radius-xl: 1rem;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            min-height: 100vh;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: white;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1rem 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.2s ease;
+            color: white;
+            border: none;
+            font-size: 1.25rem;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1.5rem;
+        }
+
+        /* Stats Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Session List */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .session-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .session-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .session-date {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .session-score {
+            font-size: 1.25rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+        }
+
+        .session-score.high { background: #dcfce7; color: #16a34a; }
+        .session-score.medium { background: #fef3c7; color: #d97706; }
+        .session-score.low { background: #fef2f2; color: #dc2626; }
+
+        .session-info {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .session-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-icon {
+            width: 5rem;
+            height: 5rem;
+            margin: 0 auto 1rem;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Action Button */
+        .start-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid #e0e7ff;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <a href="/parent-interview" class="back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <span class="header-title">历史记录</span>
+            <a href="/parent-interview" class="back-btn">
+                <span class="material-symbols-outlined">home</span>
+            </a>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">加载中...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load history
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/parent-interview/history');
+                const data = await response.json();
+
+                if (data.success) {
+                    renderHistory(data.history);
+                } else {
+                    showError('加载失败，请重试');
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                showError('加载失败，请重试');
+            }
+        }
+
+        function renderHistory(history) {
+            const mainContent = document.getElementById('main-content');
+
+            if (!history || history.length === 0) {
+                mainContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <span class="material-symbols-outlined" style="font-size: 2.5rem; color: var(--text-muted);">history</span>
+                        </div>
+                        <h2 class="empty-title">暂无历史记录</h2>
+                        <p class="empty-desc">开始您的第一次家长面试练习吧！</p>
+                        <a href="/parent-interview" class="start-btn">
+                            <span class="material-symbols-outlined">play_arrow</span>
+                            开始面试
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Calculate stats
+            const totalSessions = history.length;
+            const totalScore = history.reduce((sum, s) => sum + (s.total_score || 0), 0);
+            const avgScore = totalSessions > 0 ? Math.round(totalScore / totalSessions) : 0;
+
+            // Get school type names
+            const schoolTypeNames = {
+                'academic': '学术型',
+                'holistic': '全人型',
+                'international': '国际型',
+                'traditional': '传统名校'
+            };
+
+            // Get score level
+            function getScoreLevel(score) {
+                if (score >= 70) return 'high';
+                if (score >= 50) return 'medium';
+                return 'low';
+            }
+
+            // Format date
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('zh-HK', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // Render sessions
+            let sessionsHtml = '';
+            history.forEach(session => {
+                const level = getScoreLevel(session.total_score);
+                sessionsHtml += `
+                    <div class="session-card" onclick="viewReport('${session.session_id}')">
+                        <div class="session-header">
+                            <span class="session-date">${formatDate(session.created_at)}</span>
+                            <span class="session-score ${level}">${session.total_score}分</span>
+                        </div>
+                        <div class="session-info">
+                            <div class="session-info-item">
+                                <span class="material-symbols-outlined" style="font-size: 1rem;">school</span>
+                                ${schoolTypeNames[session.school_type] || session.school_type}
+                            </div>
+                            <div class="session-info-item">
+                                <span class="material-symbols-outlined" style="font-size: 1rem;">help</span>
+                                ${session.answered_questions}/${session.total_questions} 题
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            mainContent.innerHTML = `
+                <!-- Stats Summary -->
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-number">${totalSessions}</div>
+                        <div class="stat-label">面试次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${avgScore}</div>
+                        <div class="stat-label">平均分</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${Math.max(...history.map(s => s.total_score || 0))}</div>
+                        <div class="stat-label">最高分</div>
+                    </div>
+                </div>
+
+                <!-- Session List -->
+                <div class="section-title">
+                    <span class="material-symbols-outlined">list</span>
+                    练习记录
+                </div>
+                <div class="session-list">
+                    ${sessionsHtml}
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <span class="material-symbols-outlined" style="font-size: 2.5rem; color: var(--error);">error</span>
+                    </div>
+                    <h2 class="empty-title">出错了</h2>
+                    <p class="empty-desc">${message}</p>
+                    <a href="/parent-interview" class="start-btn">
+                        <span class="material-symbols-outlined">home</span>
+                        返回首页
+                    </a>
+                </div>
+            `;
+        }
+
+        function viewReport(sessionId) {
+            window.location.href = `/parent-interview/result?session_id=${sessionId}`;
+        }
+
+        // Load history on page load
+        loadHistory();
+    </script>
+</body>
+</html>

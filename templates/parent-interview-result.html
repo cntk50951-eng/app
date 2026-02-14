@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>面试报告 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --primary-50: #eef2ff;
+            --primary-100: #e0e7ff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+            --radius-xl: 1rem;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            min-height: 100vh;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: white;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1rem 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.2s ease;
+            color: white;
+            border: none;
+            font-size: 1.25rem;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1.5rem;
+        }
+
+        /* Score Card */
+        .score-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .score-circle {
+            width: 8rem;
+            height: 8rem;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-circle-bg {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 8;
+        }
+
+        .score-circle-progress {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .score-label {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .score-message {
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        /* School Type Suggestion */
+        .suggestion-card {
+            background: #f0fdf4;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #bbf7d0;
+        }
+
+        .suggestion-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #16a34a;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .suggestion-text {
+            font-size: 0.9375rem;
+            color: #166534;
+            line-height: 1.5;
+        }
+
+        /* Category Scores */
+        .category-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .category-name {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .category-score {
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+        }
+
+        .category-score.high { background: #dcfce7; color: #16a34a; }
+        .category-score.medium { background: #fef3c7; color: #d97706; }
+        .category-score.low { background: #fef2f2; color: #dc2626; }
+
+        .category-progress {
+            height: 0.5rem;
+            background: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .category-progress-bar {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.5s ease-out;
+        }
+
+        .category-progress-bar.high { background: #22c55e; }
+        .category-progress-bar.medium { background: #f59e0b; }
+        .category-progress-bar.low { background: #ef4444; }
+
+        /* Answers Section */
+        .answers-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .answer-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .answer-question {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .answer-text {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .answer-feedback {
+            background: #f9fafb;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+        }
+
+        .answer-score {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .answer-evaluation {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Improvements Section */
+        .improvements-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .improvement-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .improvement-text {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .improvement-icon {
+            color: var(--warning);
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid #e0e7ff;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <a href="/parent-interview" class="back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <span class="header-title">面试报告</span>
+            <a href="/parent-interview" class="back-btn">
+                <span class="material-symbols-outlined">home</span>
+            </a>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">加载报告中...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        // Load report
+        async function loadReport() {
+            if (!sessionId) {
+                showError('缺少会话ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/parent-interview/report/${sessionId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderReport(data.report);
+                } else {
+                    showError('加载失败，请重试');
+                }
+            } catch (error) {
+                console.error('Error loading report:', error);
+                showError('加载失败，请重试');
+            }
+        }
+
+        function renderReport(report) {
+            const mainContent = document.getElementById('main-content');
+
+            const schoolTypeNames = {
+                'academic': '学术型',
+                'holistic': '全人型',
+                'international': '国际型',
+                'traditional': '传统名校'
+            };
+
+            const categoryNames = {
+                'philosophy': '教育理念',
+                'parenting': '育儿方式',
+                'school_choice': '选校原因',
+                'family': '家庭背景',
+                'child_understanding': '对孩子了解',
+                'cooperation': '家校配合',
+                'situation': '情境题'
+            };
+
+            // Get score level
+            function getScoreLevel(score) {
+                if (score >= 70) return 'high';
+                if (score >= 50) return 'medium';
+                return 'low';
+            }
+
+            // Calculate category stats HTML
+            let categoryStatsHtml = '';
+            const categoryStats = report.category_stats || {};
+
+            for (const [catId, stats] of Object.entries(categoryStats)) {
+                const level = getScoreLevel(stats.avg_score);
+                categoryStatsHtml += `
+                    <div class="category-card">
+                        <div class="category-header">
+                            <span class="category-name">${categoryNames[catId] || catId}</span>
+                            <span class="category-score ${level}">${stats.avg_score}分</span>
+                        </div>
+                        <div class="category-progress">
+                            <div class="category-progress-bar ${level}" style="width: ${stats.avg_score}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Get answers HTML
+            let answersHtml = '';
+            const answers = report.answers || [];
+
+            answers.forEach((answer, index) => {
+                const score = answer.evaluation?.score || 0;
+                const feedback = answer.evaluation?.feedback || '';
+                answersHtml += `
+                    <div class="answer-card">
+                        <div class="answer-question">问题 ${index + 1}：${answer.question}</div>
+                        <div class="answer-text">${answer.answer}</div>
+                        <div class="answer-feedback">
+                            <div class="answer-score">得分：${score}分</div>
+                            <div class="answer-evaluation">${feedback}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Get improvements HTML
+            let improvementsHtml = '';
+            const improvements = report.improvements || [];
+
+            if (improvements.length > 0) {
+                improvements.forEach(imp => {
+                    improvementsHtml += `
+                        <div class="improvement-card">
+                            <div class="improvement-text">
+                                <span class="material-symbols-outlined improvement-icon">lightbulb</span>
+                                <span>${imp}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Render full report
+            mainContent.innerHTML = `
+                <!-- Score Card -->
+                <div class="score-card">
+                    <div class="score-circle">
+                        <svg width="128" height="128" viewBox="0 0 128 128">
+                            <circle class="score-circle-bg" cx="64" cy="64" r="56"></circle>
+                            <circle class="score-circle-progress" cx="64" cy="64" r="56"
+                                stroke-dasharray="351.86"
+                                stroke-dashoffset="${351.86 - (351.86 * report.total_score / 100)}"></circle>
+                        </svg>
+                        <div class="score-value">${report.total_score}</div>
+                    </div>
+                    <div class="score-label">综合得分</div>
+                    <div class="score-message">${getScoreMessage(report.total_score)}</div>
+                </div>
+
+                <!-- School Type Suggestion -->
+                ${report.school_type_suggestion ? `
+                    <div class="suggestion-card">
+                        <div class="suggestion-title">
+                            <span class="material-symbols-outlined">school</span>
+                            ${schoolTypeNames[report.school_type] || report.school_type}学校建议
+                        </div>
+                        <div class="suggestion-text">${report.school_type_suggestion}</div>
+                    </div>
+                ` : ''}
+
+                <!-- Category Scores -->
+                ${categoryStatsHtml ? `
+                    <div class="category-section">
+                        <div class="section-title">
+                            <span class="material-symbols-outlined">analytics</span>
+                            各类别得分
+                        </div>
+                        <div class="category-list">
+                            ${categoryStatsHtml}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Improvements -->
+                ${improvementsHtml ? `
+                    <div class="improvements-section">
+                        <div class="section-title">
+                            <span class="material-symbols-outlined">tips_and_updates</span>
+                            改进建议
+                        </div>
+                        ${improvementsHtml}
+                    </div>
+                ` : ''}
+
+                <!-- Answers -->
+                <div class="answers-section">
+                    <div class="section-title">
+                        <span class="material-symbols-outlined">format_quote</span>
+                        问答详情
+                    </div>
+                    ${answersHtml}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="startNewInterview()">
+                        <span class="material-symbols-outlined">refresh</span>
+                        再次练习
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewHistory()">
+                        <span class="material-symbols-outlined">history</span>
+                        查看历史记录
+                    </button>
+                </div>
+            `;
+        }
+
+        function getScoreMessage(score) {
+            if (score >= 90) return '表现非常出色！您的教育理念和育儿经验都很棒。';
+            if (score >= 80) return '回答不错！继续加油！';
+            if (score >= 70) return '回答还行，建议多举例说明您的观点。';
+            if (score >= 60) return '建议更详细地表达您的想法和做法。';
+            return '再接再厉，多做准备会更好！';
+        }
+
+        function showError(message) {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--error);">error</span>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">${message}</p>
+                    <a href="/parent-interview" class="btn btn-primary" style="margin-top: 1rem; display: inline-flex;">
+                        返回首页
+                    </a>
+                </div>
+            `;
+        }
+
+        function startNewInterview() {
+            window.location.href = '/parent-interview';
+        }
+
+        function viewHistory() {
+            window.location.href = '/parent-interview/history';
+        }
+
+        // Load report on page load
+        loadReport();
+    </script>
+</body>
+</html>

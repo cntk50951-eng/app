@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI家长面试教练 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --primary-50: #eef2ff;
+            --primary-100: #e0e7ff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+            --radius-xl: 1rem;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            min-height: 100vh;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: white;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1rem 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.2s ease;
+            color: white;
+            border: none;
+            font-size: 1.25rem;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1.5rem;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero-avatar {
+            width: 5rem;
+            height: 5rem;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Quick Start */
+        .quick-start {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .school-type-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .school-type-card {
+            background: #f9fafb;
+            border: 2px solid transparent;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .school-type-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-type-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .school-type-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .school-type-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .school-type-examples {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .start-btn {
+            width: 100%;
+            margin-top: 1.25rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Categories Section */
+        .categories-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .category-icon.philosophy { background: #dbeafe; color: #2563eb; }
+        .category-icon.parenting { background: #dcfce7; color: #16a34a; }
+        .category-icon.school_choice { background: #fef3c7; color: #d97706; }
+        .category-icon.family { background: #fce7f3; color: #db2777; }
+        .category-icon.child_understanding { background: #e0e7ff; color: #6366f1; }
+        .category-icon.cooperation { background: #cffafe; color: #0891b2; }
+        .category-icon.situation { background: #f3e8ff; color: #9333ea; }
+
+        .category-info {
+            flex: 1;
+        }
+
+        .category-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .category-desc {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .category-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: #f3f4f6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* History Link */
+        .history-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: var(--radius-xl);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .history-link:hover {
+            background: #f3f4f6;
+            color: var(--primary);
+        }
+
+        /* Question Modal */
+        .question-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .question-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slide-up 0.3s ease-out;
+        }
+
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: none;
+            background: #f3f4f6;
+            cursor: pointer;
+        }
+
+        .question-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .question-item {
+            background: #f9fafb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .question-item:hover {
+            background: var(--primary-50);
+        }
+
+        .question-text {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .question-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <a href="/" class="back-btn">
+                <span class="material-symbols-outlined">home</span>
+            </a>
+            <span class="header-title">AI家长面试教练</span>
+            <div style="width: 2.5rem;"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-avatar">
+                    <span class="material-symbols-outlined" style="color: white;">family_restroom</span>
+                </div>
+                <h1 class="hero-title">家长面试准备</h1>
+                <p class="hero-subtitle">
+                    模拟真实学校面试场景<br>
+                    AI评估反馈，助力您的面试表现
+                </p>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">题库分类</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">面试题目</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">学校类型</div>
+                </div>
+            </div>
+
+            <!-- Quick Start -->
+            <div class="quick-start">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                    快速开始模拟面试
+                </div>
+
+                <div class="school-type-grid" id="school-type-grid">
+                    {% for school_type in school_types %}
+                    <div class="school-type-card" data-type="{{ school_type.id }}" onclick="selectSchoolType('{{ school_type.id }}')">
+                        <div class="school-type-icon">
+                            {% if school_type.id == 'academic' %}📚
+                            {% elif school_type.id == 'holistic' %}🌟
+                            {% elif school_type.id == 'international' %}🌍
+                            {% elif school_type.id == 'traditional' %}🏛️
+                            {% endif %}
+                        </div>
+                        <div class="school-type-name">{{ school_type.name }}</div>
+                        <div class="school-type-examples">{{ school_type.examples }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button class="start-btn" id="start-btn" onclick="startInterview()" disabled>
+                    <span class="material-symbols-outlined">mic</span>
+                    开始语音模拟面试
+                </button>
+            </div>
+
+            <!-- Categories Section -->
+            <div class="categories-section">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">library_books</span>
+                    题库分类
+                </div>
+
+                <div class="category-list" id="category-list">
+                    {% for category in categories %}
+                    <div class="category-card" onclick="showCategoryQuestions('{{ category.id }}', '{{ category.name }}')">
+                        <div class="category-icon {{ category.id }}">
+                            <span class="material-symbols-outlined">{{ category.icon }}</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-name">{{ category.name }}</div>
+                            <div class="category-desc">{{ category.description }}</div>
+                        </div>
+                        <div class="category-count">{{ category.question_count }}题</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- History Link -->
+            <a href="/parent-interview/history" class="history-link">
+                <span class="material-symbols-outlined">history</span>
+                查看历史记录
+            </a>
+        </main>
+    </div>
+
+    <!-- Question Modal -->
+    <div class="question-modal" id="question-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="modal-title">题目标题</span>
+                <button class="modal-close" onclick="closeModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="question-list" id="question-list">
+                <!-- Questions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ State ============
+        let selectedSchoolType = null;
+        let currentCategory = null;
+
+        // ============ School Type Selection ============
+        function selectSchoolType(type) {
+            selectedSchoolType = type;
+
+            // Update UI
+            document.querySelectorAll('.school-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-type="${type}"]`).classList.add('selected');
+
+            // Enable start button
+            document.getElementById('start-btn').disabled = false;
+        }
+
+        function startInterview() {
+            if (!selectedSchoolType) {
+                alert('请先选择目标学校类型');
+                return;
+            }
+
+            // Redirect to voice interview
+            window.location.href = `/parent-interview/voice?school_type=${selectedSchoolType}`;
+        }
+
+        // ============ Category Questions ============
+        async function showCategoryQuestions(categoryId, categoryName) {
+            document.getElementById('modal-title').textContent = categoryName;
+            document.getElementById('question-list').innerHTML = '<p style="text-align: center; padding: 1rem;">加载中...</p>';
+            document.getElementById('question-modal').classList.add('visible');
+
+            try {
+                const response = await fetch(`/api/parent-interview/questions?category=${categoryId}&limit=20`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const questionList = document.getElementById('question-list');
+                    questionList.innerHTML = '';
+
+                    data.questions.forEach(q => {
+                        const item = document.createElement('div');
+                        item.className = 'question-item';
+                        item.innerHTML = `
+                            <div class="question-text">${q.question}</div>
+                            <div class="question-hint">提示: ${q.hint || '无'}</div>
+                        `;
+                        questionList.appendChild(item);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                document.getElementById('question-list').innerHTML = '<p style="text-align: center; padding: 1rem; color: red;">加载失败，请重试</p>';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('question-modal').classList.remove('visible');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('question-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
