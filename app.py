@@ -5769,3 +5769,28 @@ def generate_sample_questions(category, count):
 print("Starting AI Tutor application...")
 print(f"Database configured: {bool(DATABASE_URL)}")
 app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+# ============ Debug Routes ============
+
+@app.route('/debug/tts')
+def debug_tts():
+    """Debug TTS configuration"""
+    import os
+    return jsonify({
+        'MINIMAX_API_KEY': 'set' if os.getenv('MINIMAX_API_KEY') else 'missing',
+        'MINIMAX_BASE_URL': os.getenv('MINIMAX_BASE_URL', 'not set'),
+        'MINIMAX_TTS_BASE_URL': os.getenv('MINIMAX_TTS_BASE_URL', 'not set')
+    })
+
+
+@app.route('/debug/tts/test')
+def debug_tts_test():
+    """Test TTS generation"""
+    from services.tts_service import call_tts_api
+    
+    result = call_tts_api('你好，测试语音', voice='male-qn-qingse')
+    return jsonify({
+        'success': result is not None,
+        'audio_size': len(result) if result else 0
+    })
