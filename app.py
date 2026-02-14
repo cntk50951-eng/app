@@ -250,8 +250,8 @@ def login():
 
         flash('Welcome back!', 'success')
 
-        # Redirect to child profile setup if profile is incomplete
-        if not session.get('profile_complete'):
+        # Redirect to child profile setup only if profile_complete is explicitly False
+        if session.get('profile_complete') is False:
             return redirect(url_for('child_profile_step1'))
 
         return redirect(next_url)
@@ -319,7 +319,7 @@ def signup():
         flash('Welcome back!' if profile else 'Account created successfully!', 'success')
 
         # Redirect to child profile setup if profile is incomplete
-        if not session.get('profile_complete'):
+        if session.get('profile_complete') is False:
             return redirect(url_for('child_profile_step1'))
 
         return redirect(next_url)
@@ -421,7 +421,7 @@ def auth_google_callback():
             flash(f'Welcome, {name}!', 'success')
 
             # Redirect to child profile setup if profile is incomplete
-            if not session.get('profile_complete'):
+            if session.get('profile_complete') is False:
                 return redirect(url_for('child_profile_step1'))
 
             # Redirect to intended URL or dashboard
