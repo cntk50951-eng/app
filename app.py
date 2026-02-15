@@ -6344,6 +6344,7 @@ app.run(host="0.0.0.0", port=5000, debug=True)
 
 
 # ============ Parent Coach Routes ============
+# 家长面试教练 - 帮助家长学习如何当面试陪练
 
 
 @app.route("/parent-coach")
