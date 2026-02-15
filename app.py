@@ -265,9 +265,10 @@ def require_login():
     if request.path in PUBLIC_ROUTES:
         return
 
-    # Allow dynamic public routes (prefix match for routes with parameters)
+    # Allow dynamic public routes and prefix matches
     for route in PUBLIC_ROUTES:
-        if "<" in route and request.path.startswith(route.rsplit("<", 1)[0]):
+        # Check prefix match for routes (especially those with parameters)
+        if request.path.startswith(route.rstrip("/")):
             return
 
     # Check if user is logged in
@@ -935,7 +936,27 @@ def generate_content():
 @app.route("/unlock-full-access")
 def unlock_full_access():
     """Paywall page for unlocking full access."""
-    return render_template("unlock-full-access.html")
+    user_id = session.get("user_id")
+
+    subscription_status = "trial"
+    trial_topics_used = 0
+
+    if user_id:
+        try:
+            db_funcs = get_db_functions()
+            if db_funcs and "get_user_by_id" in db_funcs:
+                user = db_funcs["get_user_by_id"](user_id)
+                if user:
+                    subscription_status = user.get("subscription_status", "trial")
+                    trial_topics_used = user.get("trial_topics_used", 0)
+        except Exception as e:
+            print(f"Error fetching user: {e}")
+
+    return render_template(
+        "unlock-full-access.html",
+        subscription_status=subscription_status,
+        trial_topics_used=trial_topics_used,
+    )
 
 
 @app.route("/profile/edit")

@@ -162,7 +162,7 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <p class="loading-text">緊係緊......緊係度緊係度生成緊係度度...</p>
+        <p class="loading-text">加载中...</p>
     </div>
 
     <div class="page-container" id="mainContent" style="display: none;">
@@ -430,7 +430,7 @@
             
             const btn = document.getElementById('regenerateBtn');
             btn.classList.add('loading');
-            btn.querySelector('span:last-child').textContent = '緊係度...';
+            btn.querySelector('span:last-child').textContent = '生成中...';
             
             loadContent(true).finally(() => {
                 btn.classList.remove('loading');
@@ -499,7 +499,7 @@
             } else if (data.audio_status && data.audio_status.cantonese === 'pending') {
                 // Audio is being generated
                 audioSection.style.display = 'block';
-                document.getElementById('audioLength').textContent = '緊係度生成緊係...';
+                document.getElementById('audioLength').textContent = '生成中...';
                 mandarinBadge.style.display = 'none';
             } else {
                 // Audio not available
@@ -640,7 +640,7 @@
             // Show loading
             const btn = document.getElementById('submitFeedbackBtn');
             const originalText = btn.textContent;
-            btn.textContent = '緊係度提交緊係...';
+            btn.textContent = '提交中...';
             btn.disabled = true;
 
             try {
