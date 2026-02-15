@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>面霸心理训练营 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+        }
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #7C4DFF 0%, #B388FF 100%);
+            color: white;
+        }
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 6rem;
+        }
+        .section {
+            padding: 1rem 1.5rem;
+        }
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .feature-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .feature-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .feature-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .feature-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Breathing Exercise Styles */
+        .breathing-container {
+            text-align: center;
+            padding: 2rem;
+        }
+        .breathing-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease;
+        }
+        .breathing-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+        }
+        .breathing-instruction {
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        .breathing-timer {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .breathing-progress {
+            height: 8px;
+            background: var(--background-light);
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+        .breathing-progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Affirmation Styles */
+        .affirmation-card {
+            background: linear-gradient(135deg, #7C4DFF 0%, #B388FF 100%);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            color: white;
+            text-align: center;
+            margin: 1rem;
+        }
+        .affirmation-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        .affirmation-btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-lg);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        
+        /* Pressure Test Styles */
+        .scenario-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .scenario-level {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+        .scenario-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        .scenario-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            padding: 1rem;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+        }
+        .tips-text {
+            font-size: 0.875rem;
+            color: var(--primary);
+            padding: 0.75rem;
+            background: var(--primary-50);
+            border-radius: var(--radius-lg);
+        }
+        
+        /* Course Styles */
+        .course-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+        .course-header {
+            padding: 1rem;
+            color: white;
+        }
+        .course-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .course-meta {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        .course-body {
+            padding: 1rem;
+        }
+        .course-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Emotion Analysis Styles */
+        .emotion-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: 0.9375rem;
+            resize: none;
+            margin-bottom: 1rem;
+        }
+        .emotion-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .analyze-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .emotion-result {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            background: var(--background-light);
+            border-radius: var(--radius-lg);
+        }
+        .emotion-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .emotion-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .advice-text {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-lg);
+        }
+        
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            gap: 0.5rem;
+            overflow-x: auto;
+        }
+        .tab-item {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            border-radius: var(--radius-lg);
+            transition: all 0.2s ease;
+        }
+        .tab-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Detail Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        .modal-close {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: var(--background-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="header">
+            <button class="back-btn" onclick="window.location.href='{{ url_for('dashboard') }}'">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div class="header-title">面霸心理训练营</div>
+            <div style="width: 2.5rem;"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="section">
+                <div class="affirmation-card" id="affirmation-card">
+                    <div class="affirmation-text" id="affirmation-text">点击获取鼓励的话</div>
+                    <button class="affirmation-btn" onclick="getAffirmation()">获取鼓励</button>
+                </div>
+            </div>
+            
+            <div class="tab-nav">
+                <div class="tab-item active" data-tab="breathing" onclick="switchTab('breathing')">🌬️ 放松呼吸</div>
+                <div class="tab-item" data-tab="affirmation" onclick="switchTab('affirmation')">💪 积极暗示</div>
+                <div class="tab-item" data-tab="pressure" onclick="switchTab('pressure')">🎯 压力测试</div>
+                <div class="tab-item" data-tab="courses" onclick="switchTab('courses')">📺 心理课程</div>
+                <div class="tab-item" data-tab="emotion" onclick="switchTab('emotion')">😊 情绪识别</div>
+            </div>
+            
+            <!-- Breathing Tab -->
+            <div class="tab-content active" id="tab-breathing">
+                <div class="section">
+                    <div id="breathing-list"></div>
+                </div>
+            </div>
+            
+            <!-- Affirmation Tab -->
+            <div class="tab-content" id="tab-affirmation">
+                <div class="section">
+                    <div class="scenario-card">
+                        <div class="scenario-title" style="margin-bottom: 1rem;">个性化心理暗示</div>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            告诉AI你的心情或情况，获得专属鼓励！
+                        </p>
+                        <textarea class="emotion-input" id="affirmation-context" rows="3" placeholder="例如：今天要面试了，我有点紧张..."></textarea>
+                        <button class="analyze-btn" onclick="generatePersonalAffirmation()">生成专属鼓励</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pressure Test Tab -->
+            <div class="tab-content" id="tab-pressure">
+                <div class="section">
+                    <div id="pressure-list"></div>
+                </div>
+            </div>
+            
+            <!-- Courses Tab -->
+            <div class="tab-content" id="tab-courses">
+                <div class="section">
+                    <div id="courses-list"></div>
+                </div>
+            </div>
+            
+            <!-- Emotion Analysis Tab -->
+            <div class="tab-content" id="tab-emotion">
+                <div class="section">
+                    <div class="scenario-card">
+                        <div class="scenario-title" style="margin-bottom: 1rem;">AI情绪识别</div>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            记录你答题时的状态，AI会分析你的情绪并给出调节建议
+                        </p>
+                        <textarea class="emotion-input" id="answer-text" rows="4" placeholder="描述你答题时的心情..."></textarea>
+                        <button class="analyze-btn" onclick="analyzeEmotion()">分析情绪</button>
+                        
+                        <div class="emotion-result" id="emotion-result" style="display: none;">
+                            <div class="emotion-label">检测到的情绪</div>
+                            <div class="emotion-value" id="detected-emotion"></div>
+                            <div class="emotion-label">调节建议</div>
+                            <div class="advice-text" id="emotion-advice"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breathing Modal -->
+    <div class="modal-overlay" id="breathing-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="breathing-modal-title">呼吸训练</div>
+                <div class="modal-close" onclick="closeBreathingModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </div>
+            </div>
+            <div class="breathing-container" id="breathing-container">
+                <div class="breathing-circle" id="breathing-circle">
+                    <span class="breathing-text" id="breathing-action">准备</span>
+                </div>
+                <div class="breathing-timer" id="breathing-timer">0</div>
+                <div class="breathing-instruction" id="breathing-instruction">点击开始</div>
+                <button class="analyze-btn" id="breathing-start-btn" onclick="startBreathing()">开始练习</button>
+                <div class="breathing-progress" id="breathing-progress" style="display: none;">
+                    <div class="breathing-progress-bar" id="breathing-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentExercise = null;
+        let breathingInterval = null;
+        let isBreathing = false;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBreathingExercises();
+            loadPressureTest();
+            loadCourses();
+            getAffirmation();
+        });
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        // Breathing Exercises
+        async function loadBreathingExercises() {
+            try {
+                const response = await fetch('/api/confidence-training/breathing');
+                const result = await response.json();
+                if (result.success) {
+                    renderBreathingList(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading breathing exercises:', error);
+            }
+        }
+        
+        function renderBreathingExercises(exercises) {
+            const container = document.getElementById('breathing-list');
+            container.innerHTML = exercises.map(ex => `
+                <div class="feature-card" onclick="openBreathingModal('${ex.id}')">
+                    <div class="feature-icon" style="background: ${ex.color}20; color: ${ex.color};">
+                        ${ex.emoji}
+                    </div>
+                    <div class="feature-title">${ex.name}</div>
+                    <div class="feature-desc">${ex.description}</div>
+                </div>
+            `).join('');
+        }
+        
+        async function openBreathingModal(exerciseId) {
+            try {
+                const response = await fetch(`/api/confidence-training/breathing/${exerciseId}`);
+                const result = await response.json();
+                if (result.success) {
+                    currentExercise = result.data;
+                    document.getElementById('breathing-modal-title').textContent = currentExercise.name;
+                    document.getElementById('breathing-modal').classList.add('active');
+                    resetBreathing();
+                }
+            } catch (error) {
+                console.error('Error loading breathing detail:', error);
+            }
+        }
+        
+        function closeBreathingModal() {
+            document.getElementById('breathing-modal').classList.remove('active');
+            stopBreathing();
+        }
+        
+        function resetBreathing() {
+            isBreathing = false;
+            clearInterval(breathingInterval);
+            document.getElementById('breathing-action').textContent = '准备';
+            document.getElementById('breathing-timer').textContent = '0';
+            document.getElementById('breathing-instruction').textContent = '点击开始';
+            document.getElementById('breathing-start-btn').textContent = '开始练习';
+            document.getElementById('breathing-start-btn').style.display = 'block';
+            document.getElementById('breathing-progress').style.display = 'none';
+            document.getElementById('breathing-circle').style.background = currentExercise.color;
+            document.getElementById('breathing-circle').style.transform = 'scale(1)';
+        }
+        
+        function startBreathing() {
+            if (isBreathing) {
+                stopBreathing();
+                return;
+            }
+            
+            isBreathing = true;
+            document.getElementById('breathing-start-btn').textContent = '停止';
+            document.getElementById('breathing-progress').style.display = 'block';
+            
+            let currentCycle = 0;
+            let currentStep = 0;
+            let stepTime = 0;
+            
+            breathingInterval = setInterval(() => {
+                const step = currentExercise.steps[currentStep];
+                stepTime++;
+                
+                document.getElementById('breathing-timer').textContent = stepTime;
+                document.getElementById('breathing-action').textContent = step.action;
+                document.getElementById('breathing-instruction').textContent = step.instruction;
+                
+                // Animate circle
+                const scale = step.action === '吸气' ? 1.3 : (step.action === '呼气' ? 1 : 1.15);
+                document.getElementById('breathing-circle').style.transform = `scale(${scale})`;
+                
+                // Update progress
+                const progress = (stepTime / step.duration) * 100;
+                document.getElementById('breathing-progress-bar').style.width = `${progress}%`;
+                
+                if (stepTime >= step.duration) {
+                    stepTime = 0;
+                    currentStep++;
+                    
+                    if (currentStep >= currentExercise.steps.length) {
+                        currentStep = 0;
+                        currentCycle++;
+                        
+                        if (currentCycle >= currentExercise.cycles) {
+                            stopBreathing();
+                            document.getElementById('breathing-action').textContent = '完成！';
+                            document.getElementById('breathing-instruction').textContent = '太棒了！你完成了练习！';
+                            document.getElementById('breathing-start-btn').textContent = '再次练习';
+                            isBreathing = false;
+                        }
+                    }
+                }
+            }, 1000);
+        }
+        
+        function stopBreathing() {
+            isBreathing = false;
+            clearInterval(breathingInterval);
+        }
+        
+        // Affirmation
+        async function getAffirmation() {
+            try {
+                const response = await fetch('/api/confidence-training/affirmation');
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('affirmation-text').textContent = result.data.affirmation;
+                }
+            } catch (error) {
+                console.error('Error getting affirmation:', error);
+            }
+        }
+        
+        async function generatePersonalAffirmation() {
+            const context = document.getElementById('affirmation-context').value;
+            if (!context.trim()) {
+                alert('请输入你的心情或情况');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/confidence-training/affirmation/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({context})
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('affirmation-text').textContent = result.data.affirmation;
+                }
+            } catch (error) {
+                console.error('Error generating affirmation:', error);
+            }
+        }
+        
+        // Pressure Test
+        async function loadPressureTest() {
+            try {
+                const response = await fetch('/api/confidence-training/pressure-test');
+                const result = await response.json();
+                if (result.success) {
+                    renderPressureTest(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading pressure test:', error);
+            }
+        }
+        
+        function renderPressureTest(levels) {
+            const container = document.getElementById('pressure-list');
+            const colors = ['#4CAF50', '#8BC34A', '#FFC107', '#FF9800', '#F44336'];
+            
+            container.innerHTML = levels.map(level => `
+                <div class="scenario-card" onclick="openPressureScenario(${level.level})">
+                    <div class="scenario-header">
+                        <div class="scenario-level" style="background: ${colors[level.level - 1]}">${level.level}</div>
+                        <div class="scenario-title">${level.title}</div>
+                    </div>
+                    <div class="scenario-text">${level.scenario}</div>
+                    <div class="tips-text">💡 ${level.pressure_tips}</div>
+                </div>
+            `).join('');
+        }
+        
+        async function openPressureScenario(level) {
+            try {
+                const response = await fetch(`/api/confidence-training/pressure-test/${level}`);
+                const result = await response.json();
+                if (result.success) {
+                    const scenario = result.data;
+                    alert(`【${scenario.title}】\n\n场景：${scenario.scenario}\n\n面试官可能会问：\n${scenario.questions.join('\n')}\n\n小贴士：${scenario.pressure_tips}`);
+                }
+            } catch (error) {
+                console.error('Error loading pressure scenario:', error);
+            }
+        }
+        
+        // Animation Courses
+        async function loadCourses() {
+            try {
+                const response = await fetch('/api/confidence-training/courses');
+                const result = await response.json();
+                if (result.success) {
+                    renderCourses(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+        
+        function renderCourses(courses) {
+            const container = document.getElementById('courses-list');
+            container.innerHTML = courses.map(course => `
+                <div class="course-card" onclick="openCourseDetail('${course.id}')">
+                    <div class="course-header" style="background: ${course.color};">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">${course.emoji}</div>
+                        <div class="course-title">${course.title}</div>
+                        <div class="course-meta">${Math.floor(course.duration / 60)}分钟</div>
+                    </div>
+                    <div class="course-body">
+                        <div class="course-desc">${course.description}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function openCourseDetail(courseId) {
+            try {
+                const response = await fetch(`/api/confidence-training/course/${courseId}`);
+                const result = await response.json();
+                if (result.success) {
+                    const course = result.data;
+                    let content = `【${course.title}】\n\n`;
+                    course.sections.forEach(section => {
+                        content += `\n${section.title}\n${section.content}\n`;
+                    });
+                    alert(content);
+                }
+            } catch (error) {
+                console.error('Error loading course detail:', error);
+            }
+        }
+        
+        // Emotion Analysis
+        async function analyzeEmotion() {
+            const answer = document.getElementById('answer-text').value;
+            if (!answer.trim()) {
+                alert('请输入你的答题状态描述');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/confidence-training/emotion/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: answer})
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('emotion-result').style.display = 'block';
+                    document.getElementById('detected-emotion').textContent = result.data.primary_emotion;
+                    document.getElementById('emotion-advice').textContent = result.data.advice;
+                }
+            } catch (error) {
+                console.error('Error analyzing emotion:', error);
+            }
+        }
+    </script>
+</body>
+</html>

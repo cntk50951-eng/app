@@ -173,6 +173,18 @@ PUBLIC_ROUTES = [
     "/api/parent-coach/questions",
     "/api/parent-coach/session",
     "/api/parent-coach/mistakes",
+    "/confidence-training",
+    "/api/confidence-training/summary",
+    "/api/confidence-training/breathing",
+    "/api/confidence-training/breathing/<exercise_id>",
+    "/api/confidence-training/affirmation",
+    "/api/confidence-training/affirmation/generate",
+    "/api/confidence-training/pressure-test",
+    "/api/confidence-training/pressure-test/<int:level>",
+    "/api/confidence-training/courses",
+    "/api/confidence-training/course/<course_id>",
+    "/api/confidence-training/emotion/analyze",
+    "/api/confidence-training/emotion/analyze-answer",
 ]
 
 
@@ -5361,6 +5373,185 @@ def api_energy_station_companion_chat():
         return jsonify(result)
     except Exception as e:
         print(f"Error in companion chat: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ==================== Confidence Training Routes ====================
+
+
+@app.route("/confidence-training")
+def confidence_training():
+    """面霸心理训练营主页"""
+    return render_template("confidence-training.html")
+
+
+@app.route("/api/confidence-training/summary", methods=["GET"])
+def api_confidence_training_summary():
+    """获取心理训练营内容摘要"""
+    try:
+        from services.confidence_training_service import get_confidence_training_summary
+
+        return jsonify(get_confidence_training_summary())
+    except Exception as e:
+        print(f"Error getting confidence training summary: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/breathing", methods=["GET"])
+def api_confidence_training_breathing():
+    """获取所有呼吸训练列表"""
+    try:
+        from services.confidence_training_service import get_breathing_exercises
+
+        return jsonify(get_breathing_exercises())
+    except Exception as e:
+        print(f"Error getting breathing exercises: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/breathing/<exercise_id>", methods=["GET"])
+def api_confidence_training_breathing_detail(exercise_id):
+    """获取呼吸训练详细内容"""
+    try:
+        from services.confidence_training_service import get_breathing_exercise_detail
+
+        return jsonify(get_breathing_exercise_detail(exercise_id))
+    except Exception as e:
+        print(f"Error getting breathing exercise detail: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/affirmation", methods=["GET"])
+def api_confidence_training_affirmation():
+    """获取随机积极心理暗示"""
+    try:
+        from services.confidence_training_service import get_random_affirmation
+
+        return jsonify(get_random_affirmation())
+    except Exception as e:
+        print(f"Error getting affirmation: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/affirmation/generate", methods=["POST"])
+def api_confidence_training_affirmation_generate():
+    """生成个性化心理暗示"""
+    try:
+        from services.confidence_training_service import (
+            generate_personalized_affirmation,
+        )
+        import asyncio
+
+        data = request.get_json() or {}
+        user_context = data.get("context")
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                generate_personalized_affirmation(user_context)
+            )
+        finally:
+            loop.close()
+
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error generating affirmation: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/pressure-test", methods=["GET"])
+def api_confidence_training_pressure_test_levels():
+    """获取压力测试所有级别"""
+    try:
+        from services.confidence_training_service import get_pressure_test_levels
+
+        return jsonify(get_pressure_test_levels())
+    except Exception as e:
+        print(f"Error getting pressure test levels: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/pressure-test/<int:level>", methods=["GET"])
+def api_confidence_training_pressure_test_scenario(level):
+    """获取特定级别的压力测试场景"""
+    try:
+        from services.confidence_training_service import get_pressure_test_scenario
+
+        return jsonify(get_pressure_test_scenario(level))
+    except Exception as e:
+        print(f"Error getting pressure test scenario: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/courses", methods=["GET"])
+def api_confidence_training_courses():
+    """获取所有心理准备动画课程"""
+    try:
+        from services.confidence_training_service import get_animation_courses
+
+        return jsonify(get_animation_courses())
+    except Exception as e:
+        print(f"Error getting animation courses: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/course/<course_id>", methods=["GET"])
+def api_confidence_training_course_detail(course_id):
+    """获取动画课程详细内容"""
+    try:
+        from services.confidence_training_service import get_animation_course_detail
+
+        return jsonify(get_animation_course_detail(course_id))
+    except Exception as e:
+        print(f"Error getting course detail: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/emotion/analyze", methods=["POST"])
+def api_confidence_training_emotion_analyze():
+    """分析用户情绪"""
+    try:
+        from services.confidence_training_service import analyze_emotion
+
+        data = request.get_json() or {}
+        user_message = data.get("message", "")
+
+        if not user_message:
+            return jsonify({"success": False, "error": "Message is required"}), 400
+
+        return jsonify(analyze_emotion(user_message))
+    except Exception as e:
+        print(f"Error analyzing emotion: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/confidence-training/emotion/analyze-answer", methods=["POST"])
+def api_confidence_training_emotion_analyze_answer():
+    """分析答题时的情绪状态"""
+    try:
+        from services.confidence_training_service import analyze_answer_emotion
+        import asyncio
+
+        data = request.get_json() or {}
+        answer_text = data.get("answer", "")
+        question_text = data.get("question")
+
+        if not answer_text:
+            return jsonify({"success": False, "error": "Answer is required"}), 400
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                analyze_answer_emotion(answer_text, question_text)
+            )
+        finally:
+            loop.close()
+
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error analyzing answer emotion: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
