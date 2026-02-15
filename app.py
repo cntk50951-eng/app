@@ -261,9 +261,14 @@ def load_user_session(user_id):
 @app.before_request
 def require_login():
     """Check if user is logged in for protected routes."""
-    # Allow public routes
+    # Allow public routes (exact match)
     if request.path in PUBLIC_ROUTES:
         return
+
+    # Allow dynamic public routes (prefix match for routes with parameters)
+    for route in PUBLIC_ROUTES:
+        if "<" in route and request.path.startswith(route.rsplit("<", 1)[0]):
+            return
 
     # Check if user is logged in
     if not session.get("logged_in"):
