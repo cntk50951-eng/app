@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>家长面试教练 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --primary-50: #eef2ff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+            --radius-xl: 1rem;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            min-height: 100vh;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: white;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1rem 1rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+        }
+
+        .back-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.2s ease;
+            color: white;
+            border: none;
+            font-size: 1.25rem;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .main-content {
+            padding: 1.5rem;
+            padding-bottom: 5rem;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: var(--radius-xl);
+        }
+
+        .hero-avatar {
+            width: 4.5rem;
+            height: 4.5rem;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .hero-title {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.75rem;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .question-category {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .question-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .question-level {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .mistake-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .mistake-name {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--error);
+            margin-bottom: 0.25rem;
+        }
+
+        .mistake-desc {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .practice-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+            margin-top: 1rem;
+        }
+
+        .practice-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .coaching-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .coaching-modal.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slide-up 0.3s ease-out;
+        }
+
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: none;
+            background: #f3f4f6;
+            cursor: pointer;
+        }
+
+        .demo-box {
+            background: #f0fdf4;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--success);
+        }
+
+        .demo-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .demo-content {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .bad-example {
+            background: #fef2f2;
+            border-left-color: var(--error);
+        }
+
+        .bad-example .demo-title {
+            color: var(--error);
+        }
+
+        .practice-area {
+            margin: 1rem 0;
+        }
+
+        .practice-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .practice-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            font-size: 0.9375rem;
+            resize: none;
+            font-family: inherit;
+            min-height: 100px;
+        }
+
+        .practice-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .feedback-box {
+            background: #f0f9ff;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .feedback-box.visible {
+            display: block;
+        }
+
+        .feedback-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .mistake-warning {
+            background: #fef3c7;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .mistake-warning-title {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--warning);
+            margin-bottom: 0.25rem;
+        }
+
+        .mistake-warning-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+        }
+
+        .step-dot.active {
+            background: var(--primary);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 0.875rem;
+            background: white;
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 0.875rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tip-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .tip-content {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--primary-50);
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+        }
+
+        .category-header-name {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .category-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .questions-in-category {
+            display: none;
+            padding-left: 0.5rem;
+        }
+
+        .questions-in-category.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="header">
+            <a href="/" class="back-btn">
+                <span class="material-symbols-outlined">home</span>
+            </a>
+            <span class="header-title">家长面试教练</span>
+            <div style="width: 2.5rem;"></div>
+        </header>
+
+        <main class="main-content">
+            <div class="hero-section">
+                <div class="hero-avatar">
+                    <span class="material-symbols-outlined" style="color: white;">psychology</span>
+                </div>
+                <h1 class="hero-title">学习引导技巧</h1>
+                <p class="hero-subtitle">
+                    AI示范正确的引导方式<br>
+                    家长实战演练，AI实时点评
+                </p>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">school</span>
+                    选择题目练习
+                </div>
+
+                {% for category, questions in categories.items() %}
+                <div class="category-header" onclick="toggleCategory('{{ category }}')">
+                    <span class="category-header-name">{{ category }}</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="category-count">{{ questions|length }}题</span>
+                        <span class="material-symbols-outlined" id="icon-{{ category }}">expand_more</span>
+                    </div>
+                </div>
+                <div class="questions-in-category" id="category-{{ category }}">
+                    {% for q in questions %}
+                    <div class="question-card" onclick="startPractice('{{ q.id }}', '{{ q.question }}', '{{ q.category }}')">
+                        <div class="question-category">{{ q.category }}</div>
+                        <div class="question-text">{{ q.question }}</div>
+                        <div class="question-level">难度: {{ q.child_level }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">warning</span>
+                    常见误区提醒
+                </div>
+
+                {% for mistake in mistakes %}
+                <div class="mistake-card">
+                    <div class="mistake-name">{{ mistake.name }}</div>
+                    <div class="mistake-desc">{{ mistake.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+
+    <div class="coaching-modal" id="coaching-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="modal-title">面试教练</span>
+                <button class="modal-close" onclick="closeModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step-dot active" id="step1"></div>
+                <div class="step-dot" id="step2"></div>
+                <div class="step-dot" id="step3"></div>
+            </div>
+
+            <div class="step-content active" id="step-content-1">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--primary);">auto_awesome</span>
+                    <h3 style="margin-top: 0.5rem; color: var(--text-primary);">AI 示范</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">学习正确的引导方式</p>
+                </div>
+
+                <div id="demo-content"></div>
+            </div>
+
+            <div class="step-content" id="step-content-2">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--success);">record_voice_over</span>
+                    <h3 style="margin-top: 0.5rem; color: var(--text-primary);">家长演练</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">请模仿上面的示范进行练习</p>
+                </div>
+
+                <div class="practice-area">
+                    <label class="practice-label">请输入您会说的话：</label>
+                    <textarea class="practice-input" id="practice-input" placeholder="例如：宝贝，老师想知道你叫什么名字呀？你可以告诉老师吗？"></textarea>
+                </div>
+
+                <div class="feedback-box" id="feedback-box">
+                    <div class="feedback-score" id="feedback-score">0分</div>
+                    <div class="feedback-text" id="feedback-text"></div>
+                    <div id="mistake-warnings"></div>
+                </div>
+            </div>
+
+            <div class="step-content" id="step-content-3">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--primary);">tips_and_updates</span>
+                    <h3 style="margin-top: 0.5rem; color: var(--text-primary);">AI 点评</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">专业的改进建议</p>
+                </div>
+
+                <div class="feedback-box visible" id="final-feedback">
+                    <div class="feedback-score" id="final-score">0分</div>
+                    <div class="feedback-text" id="final-text"></div>
+                    <div id="final-warnings"></div>
+                </div>
+            </div>
+
+            <div class="action-btns">
+                <button class="btn-secondary" id="prev-btn" onclick="prevStep()" style="display: none;">上一步</button>
+                <button class="btn-primary" id="next-btn" onclick="nextStep()">开始练习</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let currentQuestion = null;
+        let sessionId = null;
+
+        function toggleCategory(category) {
+            const el = document.getElementById('category-' + category);
+            const icon = document.getElementById('icon-' + category);
+            el.classList.toggle('visible');
+            icon.textContent = el.classList.contains('visible') ? 'expand_less' : 'expand_more';
+        }
+
+        async function startPractice(questionId, question, category) {
+            currentQuestion = { id: questionId, question, category };
+            currentStep = 1;
+            
+            document.getElementById('modal-title').textContent = '练习: ' + question;
+            document.getElementById('feedback-box').classList.remove('visible');
+            document.getElementById('feedback-input').value = '';
+            
+            await loadDemo(questionId);
+            
+            document.getElementById('coaching-modal').classList.add('visible');
+            showStep(1);
+        }
+
+        async function loadDemo(questionId) {
+            try {
+                const response = await fetch(`/api/parent-coach/questions?id=${questionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const q = data.question;
+                    const demoContent = document.getElementById('demo-content');
+                    
+                    let demoHtml = '';
+                    
+                    if (q.ai示范) {
+                        demoHtml += `
+                            <div class="demo-box">
+                                <div class="demo-title">
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                    正确的引导方式
+                                </div>
+                                ${q.ai示范.话术 ? `<p><strong>话术：</strong>${q.ai示范.话术}</p>` : ''}
+                                ${q.ai示范.时机 ? `<p><strong>时机：</strong>${q.ai示范.时机}</p>` : ''}
+                                ${q.ai示范.语气 ? `<p><strong>语气：</strong>${q.ai示范.语气}</p>` : ''}
+                                ${q.ai示范.要点 ? `<p><strong>要点：</strong>${q.ai示范.要点}</p>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    if (q.bad_example) {
+                        demoHtml += `
+                            <div class="demo-box bad-example">
+                                <div class="demo-title">
+                                    <span class="material-symbols-outlined">cancel</span>
+                                    错误示范（请避免）
+                                </div>
+                                <p>${q.bad_example}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    demoContent.innerHTML = demoHtml;
+                }
+            } catch (error) {
+                console.error('Error loading demo:', error);
+            }
+        }
+
+        function showStep(step) {
+            currentStep = step;
+            
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`step${i}`).classList.toggle('active', i === step);
+                document.getElementById(`step-content-${i}`).classList.toggle('active', i === step);
+            }
+            
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            prevBtn.style.display = step > 1 ? 'block' : 'none';
+            
+            if (step === 1) {
+                nextBtn.textContent = '开始练习';
+            } else if (step === 2) {
+                nextBtn.textContent = '提交评估';
+            } else {
+                nextBtn.textContent = '再练一次';
+            }
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                showStep(2);
+            } else if (currentStep === 2) {
+                submitPractice();
+            } else {
+                resetPractice();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        async function submitPractice() {
+            const parentWords = document.getElementById('practice-input').value.trim();
+            
+            if (!parentWords) {
+                alert('请输入您会说的话语');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/parent-coach/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_id: currentQuestion.id })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    sessionId = data.session_id;
+                }
+                
+                const evalResponse = await fetch('/api/parent-coach/practice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, parent_words: parentWords })
+                });
+                
+                const evalData = await evalResponse.json();
+                
+                if (evalData.success) {
+                    const evaluation = evalData.evaluation;
+                    
+                    document.getElementById('feedback-score').textContent = evaluation.score + '分';
+                    document.getElementById('feedback-score').style.color = evaluation.score >= 70 ? 'var(--success)' : (evaluation.score >= 50 ? 'var(--warning)' : 'var(--error)');
+                    document.getElementById('feedback-text').textContent = evaluation.feedback || '感谢您的练习！';
+                    
+                    let warningsHtml = '';
+                    if (evaluation.detected_mistakes && evaluation.detected_mistakes.length > 0) {
+                        warningsHtml = '<div class="mistake-warning"><div class="mistake-warning-title">⚠️ 发现问题</div>';
+                        evaluation.detected_mistakes.forEach(m => {
+                            warningsHtml += `<div class="mistake-warning-text">• ${m.name}: ${m.suggestion}</div>`;
+                        });
+                        warningsHtml += '</div>';
+                    }
+                    document.getElementById('mistake-warnings').innerHTML = warningsHtml;
+                    
+                    document.getElementById('feedback-box').classList.add('visible');
+                    
+                    document.getElementById('final-score').textContent = evaluation.score + '分';
+                    document.getElementById('final-score').style.color = evaluation.score >= 70 ? 'var(--success)' : (evaluation.score >= 50 ? 'var(--warning)' : 'var(--error)');
+                    document.getElementById('final-text').textContent = evaluation.feedback || '感谢您的练习！';
+                    document.getElementById('final-warnings').innerHTML = warningsHtml;
+                }
+                
+                showStep(3);
+            } catch (error) {
+                console.error('Error submitting practice:', error);
+                alert('提交失败，请重试');
+            }
+        }
+
+        function resetPractice() {
+            document.getElementById('practice-input').value = '';
+            document.getElementById('feedback-box').classList.remove('visible');
+            showStep(1);
+        }
+
+        function closeModal() {
+            document.getElementById('coaching-modal').classList.remove('visible');
+        }
+
+        document.getElementById('coaching-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

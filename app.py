@@ -169,6 +169,10 @@ PUBLIC_ROUTES = [
     "/api/energy-station/parent-lesson/<lesson_id>",
     "/api/energy-station/companion/persona",
     "/api/energy-station/companion/chat",
+    "/parent-coach",
+    "/api/parent-coach/questions",
+    "/api/parent-coach/session",
+    "/api/parent-coach/mistakes",
 ]
 
 
@@ -6337,6 +6341,121 @@ def generate_sample_questions(category, count):
 print("Starting AI Tutor application...")
 print(f"Database configured: {bool(DATABASE_URL)}")
 app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+# ============ Parent Coach Routes ============
+
+
+@app.route("/parent-coach")
+def parent_coach():
+    """家长面试教练主页"""
+    from services.parent_coach_service import get_all_categories, get_mistakes_summary
+
+    categories = get_all_categories()
+    mistakes = get_mistakes_summary()
+
+    return render_template(
+        "parent-coach.html",
+        active_page="parent-coach",
+        categories=categories,
+        mistakes=mistakes,
+    )
+
+
+@app.route("/api/parent-coach/questions")
+def api_parent_coach_questions():
+    """获取教练题目列表"""
+    from services.parent_coach_service import get_coach_questions, get_question_by_id
+
+    question_id = request.args.get("id")
+
+    if question_id:
+        question = get_question_by_id(question_id)
+        if question:
+            return jsonify({"success": True, "question": question})
+        return jsonify({"error": "题目不存在"}), 404
+
+    questions = get_coach_questions()
+    return jsonify({"success": True, "questions": questions})
+
+
+@app.route("/api/parent-coach/session", methods=["POST"])
+def api_parent_coach_session():
+    """创建教练会话"""
+    from services.parent_coach_service import parent_coach_session
+
+    data = request.get_json()
+    user_id = session.get("user_id", "anonymous")
+    question_id = data.get("question_id")
+
+    session_data = parent_coach_session.create_session(user_id, question_id)
+
+    return jsonify(
+        {
+            "success": True,
+            "session_id": session_data["session_id"],
+            "question": session_data["selected_question"],
+        }
+    )
+
+
+@app.route("/api/parent-coach/session/<session_id>", methods=["GET"])
+def api_parent_coach_session_get(session_id):
+    """获取教练会话"""
+    from services.parent_coach_service import parent_coach_session
+
+    session_data = parent_coach_session.get_session(session_id)
+
+    if not session_data:
+        return jsonify({"error": "会话不存在"}), 404
+
+    return jsonify({"success": True, "session": session_data})
+
+
+@app.route("/api/parent-coach/practice", methods=["POST"])
+def api_parent_coach_practice():
+    """提交练习并获取反馈"""
+    from services.parent_coach_service import parent_coach_session
+
+    data = request.get_json()
+    session_id = data.get("session_id")
+    parent_words = data.get("parent_words")
+
+    if not session_id or not parent_words:
+        return jsonify({"error": "缺少必要参数"}), 400
+
+    session_data = parent_coach_session.get_session(session_id)
+    if not session_data:
+        return jsonify({"error": "会话不存在"}), 404
+
+    result = parent_coach_session.record_practice(session_id, parent_words)
+
+    return jsonify({"success": True, "evaluation": result["evaluation"]})
+
+
+@app.route("/api/parent-coach/finish", methods=["POST"])
+def api_parent_coach_finish():
+    """完成教练会话"""
+    from services.parent_coach_service import parent_coach_session
+
+    data = request.get_json()
+    session_id = data.get("session_id")
+
+    result = parent_coach_session.finish_session(session_id)
+
+    if not result:
+        return jsonify({"error": "会话不存在"}), 404
+
+    return jsonify({"success": True, "session": result})
+
+
+@app.route("/api/parent-coach/mistakes")
+def api_parent_coach_mistakes():
+    """获取常见误区"""
+    from services.parent_coach_service import get_mistakes_summary
+
+    mistakes = get_mistakes_summary()
+    return jsonify({"success": True, "mistakes": mistakes})
 
 
 # ============ Debug Routes ============
