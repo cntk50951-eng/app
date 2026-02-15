@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>面試能量站 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #7C4DFF;
+            --primary-dark: #651FFF;
+            --primary-light: #E8E0FF;
+            --secondary: #FF7043;
+            --accent: #FFD54F;
+            --background: #F5F7FA;
+            --card-bg: #FFFFFF;
+            --text-primary: #1A1A1A;
+            --text-secondary: #666666;
+            --energy-gradient: linear-gradient(135deg, #7C4DFF 0%, #B388FF 50%, #FF7043 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1rem;
+            background: var(--energy-gradient);
+            color: white;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .hero-section {
+            background: var(--energy-gradient);
+            padding: 2rem 1rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .hero-emoji {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            padding: 1.5rem 1rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .feature-card.active {
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 0.75rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .feature-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .lesson-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .lesson-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .lesson-emoji {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .lesson-info {
+            flex: 1;
+        }
+
+        .lesson-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .lesson-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .lesson-duration {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .energy-pack-card {
+            background: linear-gradient(135deg, var(--primary) 0%, #9C27B0 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .energy-pack-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(124, 77, 255, 0.4);
+        }
+
+        .energy-pack-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .energy-pack-emoji {
+            font-size: 2rem;
+        }
+
+        .energy-pack-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .energy-pack-message {
+            font-size: 0.85rem;
+            opacity: 0.95;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .energy-pack-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+        }
+
+        .companion-section {
+            background: linear-gradient(180deg, #FFF8E1 0%, #FFFFFF 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .companion-avatar {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .companion-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .companion-persona {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .companion-greeting {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .companion-greeting::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid white;
+        }
+
+        .chat-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chat-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .tab-nav {
+            display: flex;
+            background: #F0F0F0;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.6rem;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .parent-lesson-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .parent-lesson-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .parent-lesson-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .parent-lesson-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        /* Chat Modal */
+        .chat-modal .modal-content {
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 1rem;
+        }
+
+        .chat-companion-emoji {
+            font-size: 2.5rem;
+        }
+
+        .chat-companion-info {
+            flex: 1;
+        }
+
+        .chat-companion-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chat-companion-status {
+            font-size: 0.75rem;
+            color: var(--secondary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .chat-message-emoji {
+            font-size: 1.5rem;
+        }
+
+        .chat-message-content {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .chat-message.user .chat-message-content {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.companion .chat-message-content {
+            background: #F5F5F5;
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #eee;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+        }
+
+        .chat-send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .chat-send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .lesson-detail-content {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .detail-section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-section p {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .detail-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .detail-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .detail-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .practice-box {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .practice-box-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #2E7D32;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .practice-box p {
+            font-size: 0.8rem;
+            color: #1B5E20;
+        }
+
+        .encouragement-box {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .encouragement-box p {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #F57F17;
+        }
+
+        .parent-lesson-detail {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .points-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .points-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .practice-section {
+            background: #FFF3E0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .practice-section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #E65100;
+            margin-bottom: 0.5rem;
+        }
+
+        .character-select {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .character-option {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #eee;
+            transition: all 0.2s;
+        }
+
+        .character-option:hover {
+            border-color: var(--primary-light);
+            transform: scale(1.1);
+        }
+
+        .character-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <div class="header">
+            <button class="back-btn" onclick="goBack()">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <span class="header-title">面試能量站</span>
+            <div style="width: 36px;"></div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-emoji">💪</div>
+            <div class="hero-title">面試能量站</div>
+            <div class="hero-subtitle">心理準備好，面試沒煩惱！</div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="section">
+            <div class="feature-grid">
+                <div class="feature-card active" onclick="switchTab('micro-lessons')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #4CAF50, #81C784);">🎬</div>
+                    <div class="feature-title">心理微課</div>
+                    <div class="feature-desc">3-5分鐘動畫視頻</div>
+                </div>
+                <div class="feature-card" onclick="switchTab('companion')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #7C4DFF, #B388FF);">🤗</div>
+                    <div class="feature-title">AI心理導師</div>
+                    <div class="feature-desc">24小時陪伴傾訴</div>
+                </div>
+                <div class="feature-card" onclick="switchTab('energy-pack')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #FF7043, #FFAB91);">⚡</div>
+                    <div class="feature-title">考前能量包</div>
+                    <div class="feature-desc">面試當天正能量</div>
+                </div>
+                <div class="feature-card" onclick="switchTab('parent-lessons')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #2196F3, #64B5F6);">👨‍👩‍👧</div>
+                    <div class="feature-title">家長心理課</div>
+                    <div class="feature-desc">給家長的建議</div>
+                </div>
+            </div>
+
+            <!-- Micro Lessons Tab -->
+            <div class="tab-content active" id="micro-lessons-tab">
+                <div class="section-title">
+                    <span>🎬</span> 面試心理微課
+                </div>
+                <div id="micro-lessons-list">
+                    <div class="empty-state">
+                        <div class="empty-state-emoji">⏳</div>
+                        <p>加載中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Companion Tab -->
+            <div class="tab-content" id="companion-tab">
+                <div class="section-title">
+                    <span>🤗</span> AI心理陪伴導師
+                </div>
+                <div class="companion-section" id="companion-section">
+                    <div class="companion-avatar" id="companion-avatar">🦖</div>
+                    <div class="companion-name" id="companion-name">小勇士</div>
+                    <div class="companion-persona" id="companion-persona">勇敢、活潑、充滿正能量</div>
+                    <div class="companion-greeting" id="companion-greeting">
+                        嗨！我是小勇士！今天有什麼心事想跟我說嗎？
+                    </div>
+                    <button class="chat-btn" onclick="openChatModal()">
+                        <span class="material-symbols-outlined">chat</span>
+                        開始聊天
+                    </button>
+                </div>
+                <div class="character-select" style="margin-top: 1rem;">
+                    <div class="character-option selected" data-type="dinosaur" onclick="selectCharacter(this)">🦖</div>
+                    <div class="character-option" data-type="rabbit" onclick="selectCharacter(this)">🐰</div>
+                    <div class="character-option" data-type="bear" onclick="selectCharacter(this)">🐻</div>
+                </div>
+            </div>
+
+            <!-- Energy Pack Tab -->
+            <div class="tab-content" id="energy-pack-tab">
+                <div class="section-title">
+                    <span>⚡</span> 考前能量包
+                </div>
+                <div id="energy-pack-container">
+                    <div class="empty-state">
+                        <div class="empty-state-emoji">⏳</div>
+                        <p>加載中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parent Lessons Tab -->
+            <div class="tab-content" id="parent-lessons-tab">
+                <div class="section-title">
+                    <span>👨‍👩‍👧</span> 家長心理課
+                </div>
+                <div id="parent-lessons-list">
+                    <div class="empty-state">
+                        <div class="empty-state-emoji">⏳</div>
+                        <p>加載中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="modal-overlay chat-modal" id="chatModal">
+        <div class="modal-content">
+            <div class="chat-header">
+                <span class="chat-companion-emoji" id="chat-companion-emoji">🦖</span>
+                <div class="chat-companion-info">
+                    <div class="chat-companion-name" id="chat-companion-name">小勇士</div>
+                    <div class="chat-companion-status">在線 · 永遠支持你</div>
+                </div>
+                <button class="modal-close" onclick="closeChatModal()">&times;</button>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-message companion">
+                    <span class="chat-message-emoji">🦖</span>
+                    <div class="chat-message-content" id="welcome-message">
+                        嗨！看到你我好開心！有什麼心事想跟我說嗎？
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chat-input" placeholder="輸入你想說的話..." onkeypress="handleChatKeyPress(event)">
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()">
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="detail-modal-title">標題</span>
+                <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div id="detail-modal-content">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentTab = 'micro-lessons';
+        let currentCharacter = 'dinosaur';
+        let conversationHistory = [];
+
+        // Character data
+        const characterData = {
+            dinosaur: { name: '小勇士', emoji: '🦖', personality: '勇敢、活潑、充滿正能量' },
+            rabbit: { name: '小乖乖', emoji: '🐰', personality: '溫柔、貼心、善解人意' },
+            bear: { name: '小棕熊', emoji: '🐻', personality: '穩重、可靠、給人安全感' }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMicroLessons();
+            loadEnergyPack();
+            loadParentLessons();
+        });
+
+        function goBack() {
+            window.location.href = '/dashboard';
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Update feature cards
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Update tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function selectCharacter(element) {
+            document.querySelectorAll('.character-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            currentCharacter = element.dataset.type;
+            updateCompanionDisplay();
+        }
+
+        function updateCompanionDisplay() {
+            const char = characterData[currentCharacter];
+            document.getElementById('companion-avatar').textContent = char.emoji;
+            document.getElementById('companion-name').textContent = char.name;
+            document.getElementById('companion-persona').textContent = char.personality;
+        }
+
+        // Load Micro Lessons
+        async function loadMicroLessons() {
+            try {
+                const response = await fetch('/api/energy-station/micro-lessons');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderMicroLessons(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading micro lessons:', error);
+            }
+        }
+
+        function renderMicroLessons(lessons) {
+            const container = document.getElementById('micro-lessons-list');
+            container.innerHTML = lessons.map(lesson => `
+                <div class="lesson-card" onclick="showLessonDetail('${lesson.id}')">
+                    <div class="lesson-emoji" style="background: ${lesson.color}20;">${lesson.emoji}</div>
+                    <div class="lesson-info">
+                        <div class="lesson-title">${lesson.title}</div>
+                        <div class="lesson-desc">${lesson.description}</div>
+                        <div class="lesson-duration">⏱ ${lesson.duration / 60}分鐘 · ${getDifficultyText(lesson.difficulty)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getDifficultyText(difficulty) {
+            const map = { easy: '簡單', medium: '中等', hard: '較難' };
+            return map[difficulty] || '簡單';
+        }
+
+        async function showLessonDetail(lessonId) {
+            try {
+                const response = await fetch(`/api/energy-station/micro-lesson/${lessonId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const lesson = data.data;
+                    document.getElementById('detail-modal-title').textContent = `${lesson.emoji} ${lesson.title}`;
+                    
+                    const content = `
+                        <div class="lesson-detail-content">
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">${lesson.description}</p>
+                            
+                            <div class="detail-section">
+                                <div class="detail-section-title">📖 課程內容</div>
+                                <p>${lesson.content.intro}</p>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <div class="detail-section-title">💡 重點提示</div>
+                                <ul class="detail-list">
+                                    ${lesson.content.main_points.map(point => `<li>${point}</li>`).join('')}
+                                </ul>
+                            </div>
+                            
+                            <div class="practice-box">
+                                <div class="practice-box-title">🎯 練習時間</div>
+                                <p>${lesson.content.practice}</p>
+                            </div>
+                            
+                            <div class="encouragement-box">
+                                <p>${lesson.content.encouragement}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('detail-modal-content').innerHTML = content;
+                    document.getElementById('detailModal').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error loading lesson detail:', error);
+            }
+        }
+
+        // Load Energy Pack
+        async function loadEnergyPack() {
+            try {
+                const response = await fetch('/api/energy-station/energy-pack');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderEnergyPack(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading energy pack:', error);
+            }
+        }
+
+        function renderEnergyPack(pack) {
+            const container = document.getElementById('energy-pack-container');
+            container.innerHTML = `
+                <div class="energy-pack-card" onclick="showEnergyPackDetail()">
+                    <div class="energy-pack-header">
+                        <span class="energy-pack-emoji">${pack.emoji}</span>
+                        <span class="energy-pack-title">${pack.title}</span>
+                    </div>
+                    <div class="energy-pack-message">${pack.message}</div>
+                    <div class="energy-pack-action">
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">touch_app</span>
+                        點擊接收能量
+                    </div>
+                </div>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem;">
+                    💡 每天早晨記得回來領取今日能量包！
+                </p>
+            `;
+        }
+
+        function showEnergyPackDetail() {
+            const container = document.getElementById('energy-pack-container');
+            container.innerHTML += `
+                <div style="background: white; border-radius: 12px; padding: 1rem; margin-top: 1rem; text-align: center; animation: fadeIn 0.3s;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">✨</div>
+                    <div style="font-weight: 600; color: var(--primary);">能量已接收！</div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                        記住，你是最棒的！加油！
+                    </p>
+                </div>
+            `;
+        }
+
+        // Load Parent Lessons
+        async function loadParentLessons() {
+            try {
+                const response = await fetch('/api/energy-station/parent-lessons');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderParentLessons(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading parent lessons:', error);
+            }
+        }
+
+        function renderParentLessons(lessons) {
+            const container = document.getElementById('parent-lessons-list');
+            container.innerHTML = lessons.map(lesson => `
+                <div class="parent-lesson-card" onclick="showParentLessonDetail('${lesson.id}')">
+                    <div class="parent-lesson-title">
+                        <span>${lesson.emoji}</span>
+                        ${lesson.title}
+                    </div>
+                    <div class="parent-lesson-desc">${lesson.description}</div>
+                </div>
+            `).join('');
+        }
+
+        async function showParentLessonDetail(lessonId) {
+            try {
+                const response = await fetch(`/api/energy-station/parent-lesson/${lessonId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const lesson = data.data;
+                    document.getElementById('detail-modal-title').textContent = `${lesson.emoji} ${lesson.title}`;
+                    
+                    const content = `
+                        <div class="parent-lesson-detail">
+                            <div class="points-section">
+                                <div class="points-title">📋 核心要點</div>
+                                <ul class="detail-list">
+                                    ${lesson.content.points.map(point => `<li>${point}</li>`).join('')}
+                                </ul>
+                            </div>
+                            
+                            <div class="practice-section">
+                                <div class="practice-section-title">💪 實踐建議</div>
+                                <ul class="detail-list">
+                                    ${lesson.content.practices.map(practice => `<li>${practice}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('detail-modal-content').innerHTML = content;
+                    document.getElementById('detailModal').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error loading parent lesson detail:', error);
+            }
+        }
+
+        // Chat Functions
+        function openChatModal() {
+            const char = characterData[currentCharacter];
+            document.getElementById('chat-companion-emoji').textContent = char.emoji;
+            document.getElementById('chat-companion-name').textContent = char.name;
+            document.getElementById('chatModal').classList.add('active');
+        }
+
+        function closeChatModal() {
+            document.getElementById('chatModal').classList.remove('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Disable send button
+            const sendBtn = document.getElementById('chat-send-btn');
+            sendBtn.disabled = true;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Add to conversation history
+            conversationHistory.push({ role: 'user', content: message });
+            
+            try {
+                const response = await fetch('/api/energy-station/companion/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        character_type: currentCharacter,
+                        history: conversationHistory
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const char = characterData[currentCharacter];
+                    addMessage(data.data.response, 'companion', char.emoji);
+                    conversationHistory.push({ role: 'assistant', content: data.data.response });
+                } else {
+                    addMessage('對不起，發生了一點錯誤。請再試一次！', 'companion');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('對不起，發生了一點錯誤。請再試一次！', 'companion');
+            } finally {
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        function addMessage(text, sender, emoji = null) {
+            const container = document.getElementById('chat-messages');
+            const char = characterData[currentCharacter];
+            
+            const messageHTML = `
+                <div class="chat-message ${sender}">
+                    <span class="chat-message-emoji">${sender === 'user' ? '👤' : (emoji || char.emoji)}</span>
+                    <div class="chat-message-content">${text}</div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', messageHTML);
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
