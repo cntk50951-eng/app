@@ -341,6 +341,167 @@
             font-weight: 600;
         }
 
+        /* Interviewer Style Section */
+        .style-section {
+            margin-top: 2rem;
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .style-card {
+            position: relative;
+            padding: 1rem 0.5rem;
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .style-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+        }
+
+        .style-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .style-card.selected::after {
+            content: '';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: var(--primary);
+            border-radius: 50%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+            background-size: 1rem;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .style-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+
+        .style-avatar {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .style-card.friendly .style-avatar {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .style-card.strict .style-avatar {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .style-card.lively .style-avatar {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .style-name {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .style-desc {
+            font-size: 0.625rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        /* Stage Fright Section */
+        .fright-section {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: var(--radius-xl);
+            border: 1px solid #fcd34d;
+        }
+
+        .fright-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.75rem;
+        }
+
+        .fright-grid {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .fright-level {
+            flex: 1;
+            padding: 0.5rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .fright-level:hover {
+            border-color: #f59e0b;
+        }
+
+        .fright-level.selected {
+            border-color: #d97706;
+            background: #fffbeb;
+        }
+
+        .fright-level input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .fright-level-num {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #92400e;
+        }
+
+        .fright-level-name {
+            font-size: 0.625rem;
+            color: #92400e;
+            margin-top: 0.25rem;
+        }
+
         /* Start Button */
         .start-section {
             margin-top: 2rem;
@@ -608,6 +769,76 @@
                 </div>
             </div>
 
+            <!-- Interviewer Style Selection -->
+            <div class="style-section">
+                <h3 class="section-title">
+                    <span class="material-symbols-outlined">person</span>
+                    选择AI面试官风格
+                </h3>
+                <div class="style-grid">
+                    <label class="style-card friendly selected" id="style-friendly">
+                        <input type="radio" name="interviewer_style" value="friendly" checked>
+                        <div class="style-avatar">
+                            <span class="material-symbols-outlined">sentiment_satisfied</span>
+                        </div>
+                        <div class="style-name">亲和型</div>
+                        <div class="style-desc">温和友善<br>鼓励式提问</div>
+                    </label>
+                    <label class="style-card strict" id="style-strict">
+                        <input type="radio" name="interviewer_style" value="strict">
+                        <div class="style-avatar">
+                            <span class="material-symbols-outlined">sentiment_strict</span>
+                        </div>
+                        <div class="style-name">严格型</div>
+                        <div class="style-desc">严谨提问<br>标准较高</div>
+                    </label>
+                    <label class="style-card lively" id="style-lively">
+                        <input type="radio" name="interviewer_style" value="lively">
+                        <div class="style-avatar">
+                            <span class="material-symbols-outlined">sentiment_very_satisfied</span>
+                        </div>
+                        <div class="style-name">活泼型</div>
+                        <div class="style-desc">轻松有趣<br>互动性强</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Stage Fright Training -->
+            <div class="fright-section">
+                <div class="fright-title">
+                    <span class="material-symbols-outlined">psychology</span>
+                    怯场模式训练（可选）
+                </div>
+                <p style="font-size: 0.75rem; color: #92400e; margin-bottom: 0.75rem;">逐步增加面试压力，帮助孩子脱敏</p>
+                <div class="fright-grid">
+                    <label class="fright-level selected" id="level-1">
+                        <input type="radio" name="stage_fright_level" value="1" checked>
+                        <div class="fright-level-num">1</div>
+                        <div class="fright-level-name">初阶</div>
+                    </label>
+                    <label class="fright-level" id="level-2">
+                        <input type="radio" name="stage_fright_level" value="2">
+                        <div class="fright-level-num">2</div>
+                        <div class="fright-level-name">中阶</div>
+                    </label>
+                    <label class="fright-level" id="level-3">
+                        <input type="radio" name="stage_fright_level" value="3">
+                        <div class="fright-level-num">3</div>
+                        <div class="fright-level-name">高阶</div>
+                    </label>
+                    <label class="fright-level" id="level-4">
+                        <input type="radio" name="stage_fright_level" value="4">
+                        <div class="fright-level-num">4</div>
+                        <div class="fright-level-name">挑战</div>
+                    </label>
+                    <label class="fright-level" id="level-5">
+                        <input type="radio" name="stage_fright_level" value="5">
+                        <div class="fright-level-num">5</div>
+                        <div class="fright-level-name">脱敏</div>
+                    </label>
+                </div>
+            </div>
+
             <!-- School Type Selection -->
             <div class="school-section">
                 <h3 class="section-title">
@@ -682,6 +913,24 @@
     </div>
 
     <script>
+        // Interviewer style selection
+        const styleCards = document.querySelectorAll('.style-card');
+        styleCards.forEach(card => {
+            card.addEventListener('click', () => {
+                styleCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
+        });
+
+        // Stage fright level selection
+        const frightLevels = document.querySelectorAll('.fright-level');
+        frightLevels.forEach(level => {
+            level.addEventListener('click', () => {
+                frightLevels.forEach(l => l.classList.remove('selected'));
+                level.classList.add('selected');
+            });
+        });
+
         // Interview mode selection
         const modeCards = document.querySelectorAll('.mode-card');
         modeCards.forEach(card => {
@@ -775,15 +1024,25 @@
             const schoolRadio = document.querySelector('input[name="school_type"]:checked');
             const schoolType = schoolRadio ? schoolRadio.value : 'holistic';
 
+            // Get selected interviewer style
+            const styleRadio = document.querySelector('input[name="interviewer_style"]:checked');
+            const interviewerStyle = styleRadio ? styleRadio.value : 'friendly';
+
+            // Get selected stage fright level
+            const frightRadio = document.querySelector('input[name="stage_fright_level"]:checked');
+            const stageFrightLevel = frightRadio ? frightRadio.value : '1';
+
             // Save to session
             sessionStorage.setItem('interview_school_type', schoolType);
             sessionStorage.setItem('interview_mode', interviewMode);
+            sessionStorage.setItem('interviewer_style', interviewerStyle);
+            sessionStorage.setItem('stage_fright_level', stageFrightLevel);
 
             // Navigate to appropriate page based on mode
             if (interviewMode === 'voice') {
-                window.location.href = `/mock-interview/voice?school_type=${schoolType}`;
+                window.location.href = `/mock-interview/voice?school_type=${schoolType}&style=${interviewerStyle}&fright=${stageFrightLevel}`;
             } else {
-                window.location.href = `/mock-interview/start?school_type=${schoolType}`;
+                window.location.href = `/mock-interview/start?school_type=${schoolType}&style=${interviewerStyle}&fright=${stageFrightLevel}`;
             }
         }
 

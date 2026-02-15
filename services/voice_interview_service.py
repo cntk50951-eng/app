@@ -20,16 +20,17 @@ import requests
 
 # ============ 配置 ============
 
-MINIMAX_API_KEY = os.getenv('MINIMAX_API_KEY', '')
+MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
 # 标准API (用于text/chat, audio/asr) - 需要/v1后缀
-MINIMAX_BASE_URL = os.getenv('MINIMAX_BASE_URL', 'https://api.minimax.chat/v1')
+MINIMAX_BASE_URL = os.getenv("MINIMAX_BASE_URL", "https://api.minimax.chat/v1")
 # TTS专用API (不带/v1后缀)
-MINIMAX_TTS_BASE_URL = os.getenv('MINIMAX_TTS_BASE_URL', 'https://api.minimax.chat')
+MINIMAX_TTS_BASE_URL = os.getenv("MINIMAX_TTS_BASE_URL", "https://api.minimax.chat")
 
 
 # ============ 语音识别 (ASR) ============
 
-def call_asr_api(audio_data, language=' Cantonese'):
+
+def call_asr_api(audio_data, language=" Cantonese"):
     """
     调用 MiniMax ASR API 进行语音识别。
 
@@ -42,43 +43,42 @@ def call_asr_api(audio_data, language=' Cantonese'):
     """
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API Key not configured")
-        return {'text': '', 'success': False, 'error': 'API key not configured'}
+        return {"text": "", "success": False, "error": "API key not configured"}
 
     try:
         headers = {
-            'Authorization': f'Bearer {MINIMAX_API_KEY}',
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
         }
 
         # 准备 multipart 请求
         files = {
-            'file': ('audio.wav', audio_data, 'audio/wav'),
-            'model': (None, 'speech-01-turbo'),
-            'language': (None, language),
+            "file": ("audio.wav", audio_data, "audio/wav"),
+            "model": (None, "speech-01-turbo"),
+            "language": (None, language),
         }
 
         url = f"{MINIMAX_BASE_URL}/v1/audio/asr"
 
         print(f"📡 Calling MiniMax ASR API...")
 
-        response = requests.post(
-            url,
-            files=files,
-            headers=headers,
-            timeout=30
-        )
+        response = requests.post(url, files=files, headers=headers, timeout=30)
 
         if response.status_code == 200:
             result = response.json()
-            text = result.get('text', '')
+            text = result.get("text", "")
             print(f"✅ ASR success: {text[:50]}...")
-            return {'text': text, 'success': True}
+            return {"text": text, "success": True}
         else:
             print(f"❌ ASR API error: {response.status_code}")
-            return {'text': '', 'success': False, 'error': f'API error: {response.status_code}'}
+            return {
+                "text": "",
+                "success": False,
+                "error": f"API error: {response.status_code}",
+            }
 
     except Exception as e:
         print(f"❌ ASR API exception: {e}")
-        return {'text': '', 'success': False, 'error': str(e)}
+        return {"text": "", "success": False, "error": str(e)}
 
 
 def recognize_speech(audio_data, use_web_speech=False):
@@ -96,24 +96,25 @@ def recognize_speech(audio_data, use_web_speech=False):
     """
     if use_web_speech:
         # 前端使用 Web Speech API，不需要服务端处理
-        return {'text': '', 'success': True, 'use_web_speech': True}
+        return {"text": "", "success": True, "use_web_speech": True}
 
     # 尝试使用 MiniMax ASR
-    result = call_asr_api(audio_data, language='Cantonese')
+    result = call_asr_api(audio_data, language="Cantonese")
 
-    if result['success'] and result['text']:
+    if result["success"] and result["text"]:
         return result
 
     # 如果 ASR 失败，返回提示让用户手动输入
     return {
-        'text': '',
-        'success': False,
-        'error': result.get('error', 'ASR failed'),
-        'fallback': True
+        "text": "",
+        "success": False,
+        "error": result.get("error", "ASR failed"),
+        "fallback": True,
     }
 
 
 # ============ AI 追问生成 ============
+
 
 def call_minimax_chat(system_prompt, user_prompt):
     """调用 MiniMax 聊天 API。"""
@@ -122,28 +123,23 @@ def call_minimax_chat(system_prompt, user_prompt):
 
     try:
         headers = {
-            'Authorization': f'Bearer {MINIMAX_API_KEY}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
+            "Content-Type": "application/json",
         }
 
         payload = {
             "model": "abab6.5-chat",
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             "temperature": 0.7,
-            "max_tokens": 150
+            "max_tokens": 150,
         }
 
         url = f"{MINIMAX_BASE_URL}/v1/text/chatcompletion_v2"
 
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
 
         if response.status_code == 200:
             return response.json()
@@ -156,7 +152,9 @@ def call_minimax_chat(system_prompt, user_prompt):
         return None
 
 
-def generate_voice_follow_up(base_question, previous_answer, profile, question_history=None):
+def generate_voice_follow_up(
+    base_question, previous_answer, profile, question_history=None
+):
     """
     生成语音面试的追问问题。
 
@@ -169,8 +167,8 @@ def generate_voice_follow_up(base_question, previous_answer, profile, question_h
     Returns:
         dict: {'follow_up': '追问问题', 'needs_follow_up': bool}
     """
-    child_name = profile.get('child_name', '小朋友')
-    child_age = profile.get('child_age', '5岁')
+    child_name = profile.get("child_name", "小朋友")
+    child_age = profile.get("child_age", "5岁")
 
     # 判断是否需要追问
     answer_length = len(previous_answer) if previous_answer else 0
@@ -191,50 +189,42 @@ def generate_voice_follow_up(base_question, previous_answer, profile, question_h
 
         result = call_minimax_chat(system_prompt, user_prompt)
 
-        if result and 'choices' in result:
-            follow_up = result['choices'][0]['message']['content']
+        if result and "choices" in result:
+            follow_up = result["choices"][0]["message"]["content"]
             # 清理回答
             follow_up = follow_up.strip()
             # 移除可能的引号
-            if follow_up.startswith('「') and follow_up.endswith('」'):
+            if follow_up.startswith("「") and follow_up.endswith("」"):
                 follow_up = follow_up[1:-1]
             if follow_up.startswith('"') and follow_up.endswith('"'):
                 follow_up = follow_up[1:-1]
 
-            return {
-                'follow_up': follow_up,
-                'needs_follow_up': True
-            }
+            return {"follow_up": follow_up, "needs_follow_up": True}
 
         # API 失败时使用默认追问
         default_follow_ups = [
-            '可以话多啲俾老师知吗？',
-            '点解咁讲呀？',
-            '然后呢？',
-            '你最钟意边个部分呀？',
+            "可以话多啲俾老师知吗？",
+            "点解咁讲呀？",
+            "然后呢？",
+            "你最钟意边个部分呀？",
         ]
-        return {
-            'follow_up': random.choice(default_follow_ups),
-            'needs_follow_up': True
-        }
+        return {"follow_up": random.choice(default_follow_ups), "needs_follow_up": True}
 
     # 回答较长，不需要追问
-    return {
-        'follow_up': '',
-        'needs_follow_up': False
-    }
+    return {"follow_up": "", "needs_follow_up": False}
 
 
 # ============ TTS 语音生成 ============
 
 # 语音配置 - 根据语言选择
 VOICE_MAP = {
-    'cantonese': 'male-qn-qingse',      # 广东话
-    'mandarin': 'male-qn-qingse',       # 普通话
-    'english': 'male-qn-qingse',         # 英语
+    "cantonese": "male-qn-qingse",  # 广东话
+    "mandarin": "male-qn-qingse",  # 普通话
+    "english": "male-qn-qingse",  # 英语
 }
 
-def generate_voice_audio(text, language='cantonese', speed=1.0):
+
+def generate_voice_audio(text, language="cantonese", speed=1.0):
     """
     生成语音面试的 TTS 音频（使用 MiniMax 异步 TTS API）。
 
@@ -247,63 +237,57 @@ def generate_voice_audio(text, language='cantonese', speed=1.0):
         dict: {'audio_url': '音频URL', 'audio_data': base64编码的音频数据}
     """
     # 根据语言选择voice和language_boost
-    voice = VOICE_MAP.get(language, 'male-qn-qingse')
+    voice = VOICE_MAP.get(language, "male-qn-qingse")
     language_boost = None
-    if language == 'cantonese':
-        language_boost = 'Chinese'
-    elif language == 'english':
-        language_boost = 'English'
+    if language == "cantonese":
+        language_boost = "Chinese"
+    elif language == "english":
+        language_boost = "English"
 
     if not MINIMAX_API_KEY:
         print("⚠️ MiniMax API Key not configured")
-        return {'audio_url': None, 'audio_data': None}
+        return {"audio_url": None, "audio_data": None}
 
     try:
         headers = {
-            'Authorization': f'Bearer {MINIMAX_API_KEY}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
+            "Content-Type": "application/json",
         }
 
-        print(f"🔧 Generating {language} audio with voice: {voice}, language_boost: {language_boost}")
+        print(
+            f"🔧 Generating {language} audio with voice: {voice}, language_boost: {language_boost}"
+        )
 
         # 使用异步 TTS API
         payload = {
             "model": "speech-2.6-hd",
             "text": text,
             "language_boost": language_boost,
-            "voice_setting": {
-                "voice_id": voice,
-                "speed": speed
-            },
+            "voice_setting": {"voice_id": voice, "speed": speed},
             "audio_setting": {
                 "sample_rate": 32000,
                 "bitrate": 128000,
                 "format": "mp3",
-                "channel": 1
-            }
+                "channel": 1,
+            },
         }
 
         url = f"{MINIMAX_TTS_BASE_URL}/v1/t2a_async_v2"
 
         print(f"📡 Creating MiniMax TTS async task with voice: {voice}...")
 
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
 
         if response.status_code != 200:
             print(f"❌ TTS API error: {response.status_code} - {response.text[:200]}")
-            return {'audio_url': None, 'audio_data': None}
+            return {"audio_url": None, "audio_data": None}
 
         result = response.json()
-        file_id = result.get('file_id')
+        file_id = result.get("file_id")
 
         if not file_id:
             print(f"⚠️ TTS API 未返回 file_id: {result}")
-            return {'audio_url': None, 'audio_data': None}
+            return {"audio_url": None, "audio_data": None}
 
         # 轮询等待音频生成完成
         max_retries = 10
@@ -313,12 +297,12 @@ def generate_voice_audio(text, language='cantonese', speed=1.0):
             file_resp = requests.get(
                 f"{MINIMAX_TTS_BASE_URL}/v1/files/retrieve?file_id={file_id}",
                 headers=headers,
-                timeout=30
+                timeout=30,
             )
 
             if file_resp.status_code == 200:
                 file_result = file_resp.json()
-                download_url = file_result.get('file', {}).get('download_url')
+                download_url = file_result.get("file", {}).get("download_url")
 
                 if download_url:
                     # 下载音频
@@ -331,23 +315,26 @@ def generate_voice_audio(text, language='cantonese', speed=1.0):
                         audio_url = upload_audio_to_storage(audio_data)
 
                         return {
-                            'audio_url': audio_url,
-                            'audio_data': base64.b64encode(audio_data).decode('utf-8') if audio_url is None else None
+                            "audio_url": audio_url,
+                            "audio_data": base64.b64encode(audio_data).decode("utf-8")
+                            if audio_url is None
+                            else None,
                         }
 
         print(f"❌ TTS 轮询超时")
-        return {'audio_url': None, 'audio_data': None}
+        return {"audio_url": None, "audio_data": None}
 
     except Exception as e:
         print(f"❌ TTS API exception: {e}")
-        return {'audio_url': None, 'audio_data': None}
+        return {"audio_url": None, "audio_data": None}
 
 
 def upload_audio_to_storage(audio_data):
     """上传音频到存储并返回 URL。"""
     try:
         from services.tts_service import upload_to_r2
-        return upload_to_r2(audio_data, 'audio/mp3')
+
+        return upload_to_r2(audio_data, "audio/mp3")
     except Exception as e:
         print(f"❌ Audio upload error: {e}")
         return None
@@ -359,7 +346,14 @@ def upload_audio_to_storage(audio_data):
 voice_interview_sessions = {}
 
 
-def create_voice_session(user_id, school_type, profile, num_questions=5):
+def create_voice_session(
+    user_id,
+    school_type,
+    profile,
+    num_questions=5,
+    interviewer_style="friendly",
+    stage_fright_level=1,
+):
     """
     创建语音面试会话。
 
@@ -368,34 +362,48 @@ def create_voice_session(user_id, school_type, profile, num_questions=5):
         school_type: 学校类型
         profile: 用户画像
         num_questions: 问题数量
+        interviewer_style: 面试官风格
+        stage_fright_level: 怯场模式级别
 
     Returns:
         dict: 会话数据
     """
     from services.mock_interview_service import (
         generate_mock_interview_questions,
-        SCHOOL_TYPES
+        SCHOOL_TYPES,
+        INTERVIEWER_STYLES,
+        STAGE_FRIGHT_LEVELS,
     )
 
     # 生成问题
     questions = generate_mock_interview_questions(profile, school_type, num_questions)
 
+    # 获取面试官风格和怯场级别配置
+    style_config = INTERVIEWER_STYLES.get(
+        interviewer_style, INTERVIEWER_STYLES["friendly"]
+    )
+    fright_config = STAGE_FRIGHT_LEVELS.get(stage_fright_level, STAGE_FRIGHT_LEVELS[1])
+
     # 创建会话
     session_id = f"voice_{uuid.uuid4().hex[:12]}"
 
     session_data = {
-        'session_id': session_id,
-        'user_id': user_id,
-        'school_type': school_type,
-        'school_type_name': SCHOOL_TYPES.get(school_type, {}).get('name', '语音面试'),
-        'profile': profile,
-        'questions': questions,
-        'current_question_index': 0,
-        'answers': [],
-        'follow_ups': [],
-        'status': 'started',  # started, in_progress, completed
-        'created_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-        'started_at': time.time()
+        "session_id": session_id,
+        "user_id": user_id,
+        "school_type": school_type,
+        "school_type_name": SCHOOL_TYPES.get(school_type, {}).get("name", "语音面试"),
+        "interviewer_style": interviewer_style,
+        "interviewer_style_name": style_config.get("name", "亲和型"),
+        "stage_fright_level": stage_fright_level,
+        "stage_fright_name": fright_config.get("name", "初阶"),
+        "profile": profile,
+        "questions": questions,
+        "current_question_index": 0,
+        "answers": [],
+        "follow_ups": [],
+        "status": "started",  # started, in_progress, completed
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "started_at": time.time(),
     }
 
     # 存储会话
@@ -428,9 +436,9 @@ def save_voice_answer(user_id, session_id, answer_data):
     """保存用户回答。"""
     session = get_voice_session(user_id, session_id)
     if session:
-        answers = session.get('answers', [])
+        answers = session.get("answers", [])
         answers.append(answer_data)
-        session['answers'] = answers
+        session["answers"] = answers
         return True
     return False
 
@@ -439,9 +447,9 @@ def complete_voice_session(user_id, session_id):
     """完成语音面试会话。"""
     session = get_voice_session(user_id, session_id)
     if session:
-        session['status'] = 'completed'
-        session['completed_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
-        session['duration'] = time.time() - session.get('started_at', time.time())
+        session["status"] = "completed"
+        session["completed_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        session["duration"] = time.time() - session.get("started_at", time.time())
         return session
     return None
 
@@ -454,27 +462,30 @@ def get_voice_interview_history(user_id, limit=10):
     sessions = voice_interview_sessions[user_id].values()
     # 按时间倒序
     sorted_sessions = sorted(
-        [s for s in sessions if s.get('status') == 'completed'],
-        key=lambda x: x.get('completed_at', ''),
-        reverse=True
+        [s for s in sessions if s.get("status") == "completed"],
+        key=lambda x: x.get("completed_at", ""),
+        reverse=True,
     )
 
     history = []
     for session in sorted_sessions[:limit]:
-        history.append({
-            'session_id': session.get('session_id'),
-            'school_type_name': session.get('school_type_name', '语音面试'),
-            'score': session.get('score', 0),
-            'num_questions': len(session.get('questions', [])),
-            'num_answers': len(session.get('answers', [])),
-            'created_at': session.get('created_at', ''),
-            'completed_at': session.get('completed_at', '')
-        })
+        history.append(
+            {
+                "session_id": session.get("session_id"),
+                "school_type_name": session.get("school_type_name", "语音面试"),
+                "score": session.get("score", 0),
+                "num_questions": len(session.get("questions", [])),
+                "num_answers": len(session.get("answers", [])),
+                "created_at": session.get("created_at", ""),
+                "completed_at": session.get("completed_at", ""),
+            }
+        )
 
     return history
 
 
 # ============ 评估函数 ============
+
 
 def evaluate_voice_answer(question, answer, profile, school_type):
     """
@@ -490,6 +501,7 @@ def evaluate_voice_answer(question, answer, profile, school_type):
         dict: 评估结果
     """
     from services.mock_interview_service import evaluate_answer
+
     return evaluate_answer(question, answer, profile, school_type)
 
 
@@ -503,42 +515,64 @@ def generate_voice_report(user_id, session_id):
     evaluations = []
     total_score = 0
 
-    for answer_data in session.get('answers', []):
-        question = answer_data.get('question', '')
-        answer = answer_data.get('answer', '')
+    for answer_data in session.get("answers", []):
+        question = answer_data.get("question", "")
+        answer = answer_data.get("answer", "")
 
         if question and answer:
             evaluation = evaluate_voice_answer(
                 question,
                 answer,
-                session.get('profile', {}),
-                session.get('school_type', 'holistic')
+                session.get("profile", {}),
+                session.get("school_type", "holistic"),
             )
-            evaluations.append({
-                'question': question,
-                'answer': answer,
-                'follow_up': answer_data.get('follow_up', ''),
-                'follow_up_answer': answer_data.get('follow_up_answer', ''),
-                'evaluation': evaluation
-            })
-            total_score += evaluation.get('score', 0)
+            evaluations.append(
+                {
+                    "question": question,
+                    "answer": answer,
+                    "follow_up": answer_data.get("follow_up", ""),
+                    "follow_up_answer": answer_data.get("follow_up_answer", ""),
+                    "evaluation": evaluation,
+                }
+            )
+            total_score += evaluation.get("score", 0)
 
     # 计算平均分
     avg_score = total_score // len(evaluations) if evaluations else 0
 
+    # 获取 AI 评估报告
+    ai_evaluation = None
+    try:
+        from services.mock_interview_service import generate_ai_evaluation_report
+
+        ai_evaluation = generate_ai_evaluation_report(session)
+        if ai_evaluation and ai_evaluation.get("overall_score"):
+            avg_score = ai_evaluation["overall_score"]
+    except Exception as e:
+        print(f"⚠️ AI evaluation failed: {e}")
+
     # 更新会话
-    session['score'] = avg_score
-    session['evaluations'] = evaluations
+    session["score"] = avg_score
+    session["evaluations"] = evaluations
+    session["ai_evaluation"] = ai_evaluation
 
     return {
-        'session_id': session_id,
-        'school_type': session.get('school_type'),
-        'school_type_name': session.get('school_type_name'),
-        'score': avg_score,
-        'total_questions': len(session.get('questions', [])),
-        'total_answers': len(session.get('answers', [])),
-        'evaluations': evaluations,
-        'duration': session.get('duration', 0),
-        'created_at': session.get('created_at'),
-        'completed_at': session.get('completed_at')
+        "session_id": session_id,
+        "school_type": session.get("school_type"),
+        "school_type_name": session.get("school_type_name"),
+        "interviewer_style": session.get("interviewer_style", "friendly"),
+        "interviewer_style_name": session.get("interviewer_style_name", "亲和型"),
+        "stage_fright_level": session.get("stage_fright_level", 1),
+        "stage_fright_name": session.get("stage_fright_name", "初阶"),
+        "score": avg_score,
+        "total_questions": len(session.get("questions", [])),
+        "total_answers": len(session.get("answers", [])),
+        "evaluations": evaluations,
+        "ai_evaluation": ai_evaluation,
+        "duration": session.get("duration", 0),
+        "created_at": session.get("created_at"),
+        "completed_at": session.get("completed_at"),
     }
+
+
+# ============ 辅助函数 ============

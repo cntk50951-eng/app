@@ -654,6 +654,47 @@
             color: #dc2626;
             font-size: 0.875rem;
         }
+
+        /* Dynamic Avatar Styles */
+        .interviewer-avatar.friendly {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .interviewer-avatar.strict {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .interviewer-avatar.lively {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        /* Stage Fright Indicator */
+        .fright-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0,0,0,0.1);
+            border-radius: 999px;
+            font-size: 0.625rem;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .fright-indicator.visible {
+            opacity: 1;
+        }
+
+        .fright-indicator.level-2,
+        .fright-indicator.level-3,
+        .fright-indicator.level-4,
+        .fright-indicator.level-5 {
+            background: rgba(239, 68, 68, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -673,6 +714,10 @@
                     <div class="progress-dot"></div>
                     <div class="progress-dot"></div>
                 </div>
+            </div>
+            <div class="fright-indicator" id="fright-indicator">
+                <span class="material-symbols-outlined" style="font-size: 0.875rem;">psychology</span>
+                <span id="fright-text">怯场模式</span>
             </div>
         </header>
 
@@ -797,12 +842,39 @@
         let questions = [];
         let sessionId = null;
         let schoolType = 'holistic';
+        let interviewerStyle = 'friendly';
+        let stageFrightLevel = 1;
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
         let recognition = null;
         let currentAnswer = '';
         let followUpMode = false;
+
+        // Interviewer style configurations
+        const STYLE_CONFIG = {
+            'friendly': {
+                name: '亲和型',
+                colorClass: 'friendly',
+                icon: 'sentiment_satisfied',
+                praiseWords: ['劲劲劲！你叻晒！', '好好呀！', '叻叻！', '你答得好好！'],
+                defaultFollowUp: '可以话多啲俾老师知吗？'
+            },
+            'strict': {
+                name: '严格型',
+                colorClass: 'strict',
+                icon: 'sentiment_strict',
+                praiseWords: ['几好呀，继续努力', '有进步', '讲得不错', '几清晰'],
+                defaultFollowUp: '可唔可以讲多啲细节？'
+            },
+            'lively': {
+                name: '活泼型',
+                colorClass: 'lively',
+                icon: 'sentiment_very_satisfied',
+                praiseWords: ['哇！你好叻呀！', '正呀！', '你好劲啊！', '叻晒！'],
+                defaultFollowUp: '仲有咩想分享呢？'
+            }
+        };
 
         // ============ Initialization ============
         async function initVoiceInterview() {
@@ -811,6 +883,18 @@
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 schoolType = urlParams.get('school_type') || sessionStorage.getItem('interview_school_type') || 'holistic';
+                interviewerStyle = urlParams.get('style') || sessionStorage.getItem('interviewer_style') || 'friendly';
+                stageFrightLevel = parseInt(urlParams.get('fright') || sessionStorage.getItem('stage_fright_level') || '1');
+
+                // Apply interviewer style to avatar
+                applyInterviewerStyle();
+
+                // Show stage fright indicator if enabled
+                if (stageFrightLevel > 1) {
+                    const frightIndicator = document.getElementById('fright-indicator');
+                    frightIndicator.classList.add('visible', `level-${stageFrightLevel}`);
+                    document.getElementById('fright-text').textContent = `压力${stageFrightLevel}`;
+                }
 
                 // Start voice interview
                 const response = await fetch('/api/mock-interview/voice/start', {
@@ -818,7 +902,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         school_type: schoolType,
-                        num_questions: 5
+                        num_questions: 5,
+                        interviewer_style: interviewerStyle,
+                        stage_fright_level: stageFrightLevel
                     })
                 });
 
@@ -844,6 +930,25 @@
                 console.error('Error initializing interview:', error);
                 showLoading('出错了', '请刷新页面重试');
             }
+        }
+
+        function applyInterviewerStyle() {
+            const avatar = document.getElementById('interviewer-avatar');
+            const config = STYLE_CONFIG[interviewerStyle] || STYLE_CONFIG['friendly'];
+
+            // Remove all style classes
+            avatar.classList.remove('friendly', 'strict', 'lively');
+            // Add current style class
+            avatar.classList.add(config.colorClass);
+
+            // Update avatar icon
+            const iconEl = avatar.querySelector('.material-symbols-outlined');
+            if (iconEl) {
+                iconEl.textContent = config.icon;
+            }
+
+            // Update header title with style name
+            document.querySelector('.header-title').textContent = `AI ${config.name}面试`;
         }
 
         // ============ Recording Functions ============

@@ -420,6 +420,20 @@
                 </div>
                 <div class="info-row">
                     <div class="info-label">
+                        <span class="material-symbols-outlined" style="font-size: 1.25rem;">person</span>
+                        面试官风格
+                    </div>
+                    <div class="info-value" id="interviewer-style">-</div>
+                </div>
+                <div class="info-row" id="fright-row" style="display: none;">
+                    <div class="info-label">
+                        <span class="material-symbols-outlined" style="font-size: 1.25rem;">psychology</span>
+                        怯场模式
+                    </div>
+                    <div class="info-value" id="fright-level">-</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">
                         <span class="material-symbols-outlined" style="font-size: 1.25rem;">help</span>
                         问题数量
                     </div>
@@ -440,6 +454,9 @@
                     <span class="material-symbols-outlined">rate_review</span>
                     问题分析
                 </h3>
+                <div id="ai-evaluation" style="display: none;">
+                    <!-- AI Evaluation will be loaded here -->
+                </div>
                 <div id="questions-list">
                     <!-- Questions will be loaded here -->
                 </div>
@@ -528,12 +545,90 @@
 
             // Update info
             document.getElementById('school-type').textContent = session.school_type_name || '-';
+            document.getElementById('interviewer-style').textContent = session.interviewer_style_name || '亲和型';
+            
+            // Show/hide stage fright level
+            const frightRow = document.getElementById('fright-row');
+            if (session.stage_fright_level && session.stage_fright_level > 1) {
+                frightRow.style.display = 'flex';
+                document.getElementById('fright-level').textContent = `${session.stage_fright_name || '初阶'} (Level ${session.stage_fright_level})`;
+            } else {
+                frightRow.style.display = 'none';
+            }
+            
             document.getElementById('question-count').textContent = (session.evaluations || []).length || '-';
             document.getElementById('completed-time').textContent = session.created_at || '-';
 
             // Display questions
             const questionsList = document.getElementById('questions-list');
             const evaluations = session.evaluations || [];
+            const aiEval = session.ai_evaluation;
+
+            // Display AI evaluation if available
+            const aiEvalSection = document.getElementById('ai-evaluation');
+            if (aiEval) {
+                aiEvalSection.style.display = 'block';
+                
+                const strengths = aiEval.strengths || [];
+                const improvements = aiEval.improvements || [];
+                const suggestions = aiEval.suggestions || [];
+                
+                let aiEvalHtml = `
+                    <div class="question-card" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border: none;">
+                        <div class="question-header">
+                            <div class="question-category" style="background: #6366f1; color: white;">
+                                <span class="material-symbols-outlined" style="font-size: 0.875rem;">auto_awesome</span>
+                                AI 智能评估
+                            </div>
+                        </div>
+                        <div class="question-text" style="font-size: 1rem;">${aiEval.overall_summary || '继续努力！'}</div>
+                `;
+                
+                if (strengths.length > 0) {
+                    aiEvalHtml += `
+                        <div class="feedback-section" style="background: #f0fdf4; border-color: #bbf7d0;">
+                            <div class="feedback-title" style="color: #16a34a;">
+                                <span class="material-symbols-outlined" style="font-size: 0.875rem;">thumb_up</span>
+                                优势亮点
+                            </div>
+                            <div class="strengths-list">
+                                ${strengths.map(s => `<div class="strength-item"><span class="material-symbols-outlined" style="font-size: 0.875rem;">check_circle</span>${s}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (improvements.length > 0) {
+                    aiEvalHtml += `
+                        <div class="feedback-section" style="background: #fef3c7; border-color: #fcd34d; margin-top: 0.75rem;">
+                            <div class="feedback-title" style="color: #d97706;">
+                                <span class="material-symbols-outlined" style="font-size: 0.875rem;">trending_up</span>
+                                改进建议
+                            </div>
+                            <div class="strengths-list">
+                                ${improvements.map(s => `<div class="strength-item"><span class="material-symbols-outlined" style="font-size: 0.875rem;">arrow_forward</span>${s}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (suggestions.length > 0) {
+                    aiEvalHtml += `
+                        <div class="feedback-section" style="background: #f0f9ff; border-color: #bae6fd; margin-top: 0.75rem;">
+                            <div class="feedback-title" style="color: #0284c7;">
+                                <span class="material-symbols-outlined" style="font-size: 0.875rem;">lightbulb</span>
+                                练习建议
+                            </div>
+                            <div class="strengths-list">
+                                ${suggestions.map(s => `<div class="strength-item"><span class="material-symbols-outlined" style="font-size: 0.875rem;">star</span>${s}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                aiEvalHtml += `</div>`;
+                aiEvalSection.innerHTML = aiEvalHtml;
+            }
 
             if (evaluations.length === 0) {
                 questionsList.innerHTML = '<p style="text-align: center; color: var(--text-muted);">暂无问题数据</p>';

@@ -2230,6 +2230,8 @@ def api_mock_interview_start():
     data = request.json or {}
     school_type = data.get("school_type", "holistic")
     num_questions = data.get("num_questions", 5)
+    interviewer_style = data.get("interviewer_style", "friendly")
+    stage_fright_level = data.get("stage_fright_level", 1)
 
     user_id = session.get("user_id")
 
@@ -2247,11 +2249,21 @@ def api_mock_interview_start():
             generate_mock_interview_questions,
             save_interview_session,
             SCHOOL_TYPES,
+            INTERVIEWER_STYLES,
+            STAGE_FRIGHT_LEVELS,
         )
 
         # Generate questions
         questions = generate_mock_interview_questions(
             profile, school_type, num_questions
+        )
+
+        # Get interviewer style and stage fright config
+        style_config = INTERVIEWER_STYLES.get(
+            interviewer_style, INTERVIEWER_STYLES["friendly"]
+        )
+        fright_config = STAGE_FRIGHT_LEVELS.get(
+            stage_fright_level, STAGE_FRIGHT_LEVELS[1]
         )
 
         # Save session
@@ -2260,6 +2272,10 @@ def api_mock_interview_start():
             "school_type_name": SCHOOL_TYPES.get(school_type, {}).get(
                 "name", "模拟面试"
             ),
+            "interviewer_style": interviewer_style,
+            "interviewer_style_name": style_config.get("name", "亲和型"),
+            "stage_fright_level": stage_fright_level,
+            "stage_fright_name": fright_config.get("name", "初阶"),
             "questions": questions,
             "answers": [],
             "user_id": user_id,
@@ -2268,7 +2284,13 @@ def api_mock_interview_start():
         session_id = save_interview_session(user_id, session_data)
 
         return jsonify(
-            {"success": True, "session_id": session_id, "questions": questions}
+            {
+                "success": True,
+                "session_id": session_id,
+                "questions": questions,
+                "interviewer_style": interviewer_style,
+                "stage_fright_level": stage_fright_level,
+            }
         )
 
     except Exception as e:
@@ -2476,6 +2498,8 @@ def api_voice_interview_start():
     data = request.json or {}
     school_type = data.get("school_type", "holistic")
     num_questions = data.get("num_questions", 5)
+    interviewer_style = data.get("interviewer_style", "friendly")
+    stage_fright_level = data.get("stage_fright_level", 1)
 
     user_id = session.get("user_id")
 
@@ -2495,11 +2519,17 @@ def api_voice_interview_start():
             user_id, school_type, profile, num_questions
         )
 
+        # Store interviewer style and stage fright level in session
+        session_data["interviewer_style"] = interviewer_style
+        session_data["stage_fright_level"] = stage_fright_level
+
         return jsonify(
             {
                 "success": True,
                 "session_id": session_data["session_id"],
                 "questions": session_data["questions"],
+                "interviewer_style": interviewer_style,
+                "stage_fright_level": stage_fright_level,
             }
         )
 

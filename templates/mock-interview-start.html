@@ -513,6 +513,8 @@
                 // Get school type from URL params or session
                 const urlParams = new URLSearchParams(window.location.search);
                 schoolType = urlParams.get('school_type') || sessionStorage.getItem('interview_school_type') || 'holistic';
+                const interviewerStyle = urlParams.get('style') || sessionStorage.getItem('interviewer_style') || 'friendly';
+                const stageFrightLevel = urlParams.get('fright') || sessionStorage.getItem('stage_fright_level') || '1';
 
                 // Start interview
                 const response = await fetch('/api/mock-interview/start', {
@@ -522,7 +524,9 @@
                     },
                     body: JSON.stringify({
                         school_type: schoolType,
-                        num_questions: 5
+                        num_questions: 5,
+                        interviewer_style: interviewerStyle,
+                        stage_fright_level: parseInt(stageFrightLevel)
                     })
                 });
 
