@@ -185,6 +185,11 @@ PUBLIC_ROUTES = [
     "/api/confidence-training/course/<course_id>",
     "/api/confidence-training/emotion/analyze",
     "/api/confidence-training/emotion/analyze-answer",
+    "/growth-profile",
+    "/growth-profile/generate-pdf",
+    "/api/growth-profile",
+    "/api/growth-profile/pdf",
+    "/api/growth-profile/feedback",
 ]
 
 
@@ -6676,3 +6681,147 @@ def debug_tts_test():
     return jsonify(
         {"success": result is not None, "audio_size": len(result) if result else 0}
     )
+
+
+# ============ Growth Profile Routes (面霸成长档案) ============
+
+
+@app.route("/growth-profile")
+@login_required
+def growth_profile_page():
+    """面霸成长档案主页"""
+    user_id = session.get("user_id")
+
+    profile_data = {
+        "child_name": session.get("child_name"),
+        "child_age": session.get("child_age"),
+        "child_gender": session.get("child_gender"),
+        "interests": session.get("child_interests", []),
+        "target_schools": session.get("target_schools", []),
+    }
+
+    return render_template(
+        "growth-profile.html",
+        profile=profile_data,
+        user_id=user_id,
+    )
+
+
+@app.route("/growth-profile/generate-pdf")
+@login_required
+def generate_growth_profile_pdf():
+    """生成成长档案PDF"""
+    user_id = session.get("user_id")
+
+    profile_data = {
+        "child_name": session.get("child_name"),
+        "child_age": session.get("child_age"),
+        "child_gender": session.get("child_gender"),
+        "interests": session.get("child_interests", []),
+        "target_schools": session.get("target_schools", []),
+    }
+
+    try:
+        from services.growth_profile_pdf import (
+            generate_growth_profile_pdf as generate_pdf,
+        )
+
+        pdf_content = generate_pdf(user_id, profile_data)
+
+        from flask import send_file, make_response
+        import io
+
+        response = make_response(pdf_content)
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename=growth_profile_{user_id}.pdf"
+        )
+
+        return response
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        flash("PDF生成失败，请稍后重试", "error")
+        return redirect(url_for("growth_profile_page"))
+
+
+@app.route("/api/growth-profile", methods=["GET"])
+@login_required
+def api_growth_profile():
+    """获取成长档案API"""
+    user_id = session.get("user_id")
+
+    profile_data = {
+        "child_name": session.get("child_name"),
+        "child_age": session.get("child_age"),
+        "child_gender": session.get("child_gender"),
+        "interests": session.get("child_interests", []),
+        "target_schools": session.get("target_schools", []),
+    }
+
+    try:
+        from services.growth_profile_service import get_growth_profile
+
+        growth_profile = get_growth_profile(user_id, profile_data)
+
+        return jsonify({"success": True, "profile": growth_profile})
+    except Exception as e:
+        print(f"Error getting growth profile: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/growth-profile/pdf", methods=["POST"])
+@login_required
+def api_growth_profile_pdf():
+    """生成并返回PDF API"""
+    user_id = session.get("user_id")
+
+    profile_data = {
+        "child_name": session.get("child_name"),
+        "child_age": session.get("child_age"),
+        "child_gender": session.get("child_gender"),
+        "interests": session.get("child_interests", []),
+        "target_schools": session.get("target_schools", []),
+    }
+
+    try:
+        from services.growth_profile_pdf import generate_growth_profile_pdf
+
+        pdf_content = generate_growth_profile_pdf(user_id, profile_data)
+
+        import base64
+
+        pdf_base64 = base64.b64encode(pdf_content).decode("utf-8")
+
+        return jsonify({"success": True, "pdf": pdf_base64, "message": "PDF生成成功"})
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/growth-profile/feedback", methods=["POST"])
+@login_required
+def api_growth_profile_feedback():
+    """获取个性化成长评语"""
+    user_id = session.get("user_id")
+
+    profile_data = {
+        "child_name": session.get("child_name"),
+        "child_age": session.get("child_age"),
+        "child_gender": session.get("child_gender"),
+        "interests": session.get("child_interests", []),
+        "target_schools": session.get("target_schools", []),
+    }
+
+    try:
+        from services.growth_profile_service import (
+            get_growth_profile,
+            generate_personalized_feedback,
+        )
+
+        growth_profile = get_growth_profile(user_id, profile_data)
+        feedback = generate_personalized_feedback(growth_profile)
+
+        return jsonify({"success": True, "feedback": feedback})
+    except Exception as e:
+        print(f"Error generating feedback: {e}")
+        return jsonify({"error": str(e)}), 500
