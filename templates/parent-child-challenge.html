@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>亲子共面挑战 - AI Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --primary: #1E94F6;
+            --primary-dark: #1565C0;
+            --secondary: #8B5CF6;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF444E;
+            --background-light: #F8FAFC;
+            --card-white: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --bronze: #CD7F32;
+            --silver: #C0C0C0;
+            --gold: #FFD700;
+            --diamond: #B9F2FF;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+            background: var(--background-light);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--background-light);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 5rem;
+        }
+
+        /* Challenge Type Cards */
+        .challenge-types {
+            padding: 1.5rem;
+        }
+
+        .challenge-type-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .challenge-type-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .challenge-type-card:active {
+            transform: translateY(0);
+        }
+
+        .challenge-type-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .challenge-type-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: var(--primary-50);
+        }
+
+        .challenge-type-info {
+            flex: 1;
+        }
+
+        .challenge-type-name {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .challenge-type-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .challenge-type-arrow {
+            color: var(--text-secondary);
+        }
+
+        /* Chemistry Level Colors */
+        .chemistry-bronze { background: linear-gradient(135deg, var(--bronze), #8B4513); }
+        .chemistry-silver { background: linear-gradient(135deg, var(--silver), #A0A0A0); }
+        .chemistry-gold { background: linear-gradient(135deg, var(--gold), #FFA500); }
+        .chemistry-diamond { background: linear-gradient(135deg, var(--diamond), #89CFF0); }
+
+        /* Challenge Recording Page */
+        .challenge-recording {
+            padding: 1.5rem;
+        }
+
+        .question-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .question-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .question-challenge-type {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .recording-section {
+            margin-bottom: 2rem;
+        }
+
+        .recording-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .recording-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: var(--primary-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .recording-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .recording-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .record-button {
+            width: 5rem;
+            height: 5rem;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(30, 148, 246, 0.3);
+        }
+
+        .record-button:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .record-button.recording {
+            background: var(--error);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .record-button .material-symbols-outlined {
+            font-size: 2rem;
+        }
+
+        .recording-timer {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .recording-status {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .answer-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: 0.9375rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .answer-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .next-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1.5rem;
+        }
+
+        .next-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .next-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        /* Result Page */
+        .result-page {
+            padding: 1.5rem;
+        }
+
+        .chemistry-score-card {
+            background: linear-gradient(135deg, var(--gold), #FFA500);
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chemistry-score-card.bronze {
+            background: linear-gradient(135deg, var(--bronze), #8B4513);
+        }
+
+        .chemistry-score-card.silver {
+            background: linear-gradient(135deg, var(--silver), #A0A0A0);
+        }
+
+        .chemistry-score-card.diamond {
+            background: linear-gradient(135deg, var(--diamond), #89CFF0);
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-value {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .score-level {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .score-breakdown {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .breakdown-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .breakdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .breakdown-label {
+            width: 5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .breakdown-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--background-light);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .breakdown-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .breakdown-value {
+            width: 3rem;
+            text-align: right;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .ai-analysis-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .ai-analysis-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .ai-analysis-content {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .parent-feedback-card {
+            background: #FEF3C7;
+            border: 1px solid #FDE68A;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .parent-feedback-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #92400E;
+            margin-bottom: 1rem;
+        }
+
+        .parent-feedback-content {
+            font-size: 0.9375rem;
+            color: #78350F;
+            line-height: 1.6;
+        }
+
+        .strengths-improvements {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .strengths-card, .improvements-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .strengths-card .card-title {
+            color: var(--success);
+        }
+
+        .improvements-card .card-title {
+            color: var(--warning);
+        }
+
+        .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .list-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .badge-earned {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            border: 1px solid #FCD34D;
+        }
+
+        .badge-earned-icon {
+            width: 3rem;
+            height: 3rem;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+
+        .badge-earned-info {
+            flex: 1;
+        }
+
+        .badge-earned-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #92400E;
+        }
+
+        .badge-earned-desc {
+            font-size: 0.75rem;
+            color: #78350F;
+        }
+
+        /* Leaderboard */
+        .leaderboard-section {
+            padding: 1.5rem;
+        }
+
+        .leaderboard-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .leaderboard-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+        }
+
+        .leaderboard-rank {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .rank-1 { background: linear-gradient(135deg, var(--gold), #FFA500); color: white; }
+        .rank-2 { background: linear-gradient(135deg, var(--silver), #A0A0A0); color: white; }
+        .rank-3 { background: linear-gradient(135deg, var(--bronze), #8B4513); color: white; }
+        .rank-other { background: var(--background-light); color: var(--text-secondary); }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .leaderboard-score {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .leaderboard-chemistry {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover {
+            background: var(--background-light);
+        }
+
+        /* Badges Grid */
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .badge-item {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-item-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-item-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .badge-item-locked {
+            opacity: 0.4;
+            filter: grayscale(100%);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.625rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.5rem;
+        }
+
+        .nav-item.filled .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="back-btn" onclick="window.history.back()">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </div>
+            <h1 class="header-title">亲子共面挑战</h1>
+            <div style="width: 36px;"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Challenge Type Selection -->
+            <div id="challenge-types-view" class="challenge-types">
+                <div class="challenge-type-card" onclick="startChallenge('self_introduction')">
+                    <div class="challenge-type-header">
+                        <div class="challenge-type-icon">👤</div>
+                        <div class="challenge-type-info">
+                            <div class="challenge-type-name">自我介绍</div>
+                            <div class="challenge-type-description">家长和孩子分别介绍自己</div>
+                        </div>
+                        <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="challenge-type-card" onclick="startChallenge('family')">
+                    <div class="challenge-type-header">
+                        <div class="challenge-type-icon" style="background: #FEF3C7; color: #F59E0B;">👨‍👩‍👧</div>
+                        <div class="challenge-type-info">
+                            <div class="challenge-type-name">家庭介绍</div>
+                            <div class="challenge-type-description">描述家庭成员和家庭活动</div>
+                        </div>
+                        <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="challenge-type-card" onclick="startChallenge('interests')">
+                    <div class="challenge-type-header">
+                        <div class="challenge-type-icon" style="background: #DCFCE7; color: #16A34A;">⭐</div>
+                        <div class="challenge-type-info">
+                            <div class="challenge-type-name">兴趣爱好</div>
+                            <div class="challenge-type-description">分享各自的兴趣爱好</div>
+                        </div>
+                        <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="challenge-type-card" onclick="startChallenge('dreams')">
+                    <div class="challenge-type-header">
+                        <div class="challenge-type-icon" style="background: #F3E8FF; color: #9333EA;">🌟</div>
+                        <div class="challenge-type-info">
+                            <div class="challenge-type-name">梦想未来</div>
+                            <div class="challenge-type-description">谈谈未来的梦想和期望</div>
+                        </div>
+                        <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="challenge-type-card" onclick="startChallenge('values')">
+                    <div class="challenge-type-header">
+                        <div class="challenge-type-icon" style="background: #FFE4E6; color: #E11D48;">💡</div>
+                        <div class="challenge-type-info">
+                            <div class="challenge-type-name">价值观</div>
+                            <div class="challenge-type-description">讨论重要的价值观和品格</div>
+                        </div>
+                        <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">快速入口</h3>
+                    <div class="challenge-type-card" onclick="switchTab('leaderboard')">
+                        <div class="challenge-type-header">
+                            <div class="challenge-type-icon" style="background: var(--primary-50); color: var(--primary);">🏆</div>
+                            <div class="challenge-type-info">
+                                <div class="challenge-type-name">亲子 PK 榜单</div>
+                                <div class="challenge-type-description">查看家庭协作成绩排名</div>
+                            </div>
+                            <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <div class="challenge-type-card" onclick="switchTab('badges')">
+                        <div class="challenge-type-header">
+                            <div class="challenge-type-icon" style="background: #FEF3C7; color: #F59E0B;">🎖️</div>
+                            <div class="challenge-type-info">
+                                <div class="challenge-type-name">合作勋章</div>
+                                <div class="challenge-type-description">查看已获得的勋章</div>
+                            </div>
+                            <span class="material-symbols-outlined challenge-type-arrow">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Challenge Recording View -->
+            <div id="challenge-recording-view" class="challenge-recording" style="display: none;">
+                <div class="question-card">
+                    <div class="question-icon" id="recording-question-icon">👤</div>
+                    <div class="question-text" id="recording-question-text">请介绍一下你自己</div>
+                    <div class="question-challenge-type" id="recording-challenge-type">自我介绍</div>
+                </div>
+
+                <!-- Parent Recording -->
+                <div class="recording-section">
+                    <div class="recording-header">
+                        <div class="recording-avatar">👨‍🦱</div>
+                        <div class="recording-title">家长答案</div>
+                    </div>
+                    <div class="recording-controls">
+                        <textarea id="parent-answer" class="answer-textarea" placeholder="请输入或录制您的答案..."></textarea>
+                        <button id="parent-record-btn" class="record-button" onclick="toggleRecording('parent')">
+                            <span class="material-symbols-outlined">mic</span>
+                        </button>
+                        <div class="recording-timer" id="parent-timer">00:00</div>
+                        <div class="recording-status" id="parent-status">点击麦克风开始录制</div>
+                    </div>
+                </div>
+
+                <!-- Child Recording -->
+                <div class="recording-section">
+                    <div class="recording-header">
+                        <div class="recording-avatar">👦</div>
+                        <div class="recording-title">孩子答案</div>
+                    </div>
+                    <div class="recording-controls">
+                        <textarea id="child-answer" class="answer-textarea" placeholder="请输入或录制孩子的答案..."></textarea>
+                        <button id="child-record-btn" class="record-button" onclick="toggleRecording('child')">
+                            <span class="material-symbols-outlined">mic</span>
+                        </button>
+                        <div class="recording-timer" id="child-timer">00:00</div>
+                        <div class="recording-status" id="child-status">点击麦克风开始录制</div>
+                    </div>
+                </div>
+
+                <button class="next-btn" onclick="submitChallenge()">
+                    提交答案，查看默契度
+                </button>
+            </div>
+
+            <!-- Result View -->
+            <div id="challenge-result-view" class="result-page" style="display: none;">
+                <div class="chemistry-score-card chemistry-gold" id="chemistry-score-card">
+                    <div class="score-label">默契度评分</div>
+                    <div class="score-value" id="chemistry-score-value">86</div>
+                    <div class="score-level" id="chemistry-level-name">金牌</div>
+                </div>
+
+                <div class="score-breakdown">
+                    <div class="breakdown-title">详细评分</div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">相似度</div>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" id="similarity-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="similarity-value">0%</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">协作度</div>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" id="cooperation-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="cooperation-value">0%</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">沟通质量</div>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" id="communication-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="communication-value">0%</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">创意表现</div>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" id="creativity-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="breakdown-value" id="creativity-value">0%</div>
+                    </div>
+                </div>
+
+                <div class="ai-analysis-card">
+                    <div class="ai-analysis-title">
+                        <span class="material-symbols-outlined" style="color: var(--primary);">psychology</span>
+                        AI 对比分析
+                    </div>
+                    <div class="ai-analysis-content" id="ai-analysis-content">
+                        加载中...
+                    </div>
+                </div>
+
+                <div class="parent-feedback-card">
+                    <div class="parent-feedback-title">
+                        <span class="material-symbols-outlined">lightbulb</span>
+                        家长优化建议
+                    </div>
+                    <div class="parent-feedback-content" id="parent-feedback-content">
+                        加载中...
+                    </div>
+                </div>
+
+                <div class="strengths-improvements">
+                    <div class="strengths-card">
+                        <div class="card-title">✨ 优势</div>
+                        <div id="strengths-list">
+                            <div class="list-item">• 加载中...</div>
+                        </div>
+                    </div>
+                    <div class="improvements-card">
+                        <div class="card-title">💡 改进建议</div>
+                        <div id="improvements-list">
+                            <div class="list-item">• 加载中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="badges-earned-container"></div>
+
+                <button class="next-btn" onclick="switchTab('challenges')">
+                    继续挑战
+                </button>
+            </div>
+
+            <!-- Leaderboard View -->
+            <div id="leaderboard-view" class="leaderboard-section" style="display: none;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">🏆 亲子 PK 榜单</h3>
+                <div id="leaderboard-list">
+                    <!-- Leaderboard items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Badges View -->
+            <div id="badges-view" class="badges-grid" style="display: none;">
+                <div class="badge-item">
+                    <div class="badge-item-icon">🤝</div>
+                    <div class="badge-item-name">第一次合作</div>
+                </div>
+                <div class="badge-item">
+                    <div class="badge-item-icon">👫</div>
+                    <div class="badge-item-name">协作小能手</div>
+                </div>
+                <div class="badge-item">
+                    <div class="badge-item-icon">💯</div>
+                    <div class="badge-item-name">完美搭档</div>
+                </div>
+                <div class="badge-item badge-item-locked">
+                    <div class="badge-item-icon">💬</div>
+                    <div class="badge-item-name">沟通小达人</div>
+                </div>
+                <div class="badge-item badge-item-locked">
+                    <div class="badge-item-icon">📖</div>
+                    <div class="badge-item-name">故事大师</div>
+                </div>
+                <div class="badge-item badge-item-locked">
+                    <div class="badge-item-icon">🏆</div>
+                    <div class="badge-item-name">週冠军</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('challenges')" id="nav-challenges">
+                <span class="material-symbols-outlined">diversity_3</span>
+                <span>挑战</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('leaderboard')" id="nav-leaderboard">
+                <span class="material-symbols-outlined">leaderboard</span>
+                <span>榜单</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('badges')" id="nav-badges">
+                <span class="material-symbols-outlined">workspace_premium</span>
+                <span>勋章</span>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        let currentChallenge = null;
+        let currentChallengeType = null;
+        let parentRecording = false;
+        let childRecording = false;
+        let parentTimerInterval = null;
+        let childTimerInterval = null;
+        let parentSeconds = 0;
+        let childSeconds = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLeaderboard();
+            loadBadges();
+        });
+
+        // Switch tabs
+        function switchTab(tab) {
+            // Hide all views
+            document.getElementById('challenge-types-view').style.display = 'none';
+            document.getElementById('challenge-recording-view').style.display = 'none';
+            document.getElementById('challenge-result-view').style.display = 'none';
+            document.getElementById('leaderboard-view').style.display = 'none';
+            document.getElementById('badges-view').style.display = 'none';
+
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+            if (tab === 'challenges') {
+                document.getElementById('challenge-types-view').style.display = 'block';
+                document.getElementById('nav-challenges').classList.add('active');
+            } else if (tab === 'leaderboard') {
+                document.getElementById('leaderboard-view').style.display = 'block';
+                document.getElementById('nav-leaderboard').classList.add('active');
+                loadLeaderboard();
+            } else if (tab === 'badges') {
+                document.getElementById('badges-view').style.display = 'block';
+                document.getElementById('nav-badges').classList.add('active');
+                loadBadges();
+            }
+        }
+
+        // Start challenge
+        async function startChallenge(challengeType) {
+            try {
+                const response = await fetch('/api/parent-child-challenge/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challenge_type: challengeType })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentChallenge = data.challenge;
+                    currentChallengeType = challengeType;
+
+                    // Update UI
+                    const challengeTypeInfo = getChallengeTypeInfo(challengeType);
+                    document.getElementById('recording-question-icon').textContent = challengeTypeInfo.icon;
+                    document.getElementById('recording-question-text').textContent = data.challenge.question;
+                    document.getElementById('recording-challenge-type').textContent = challengeTypeInfo.name;
+
+                    // Clear previous answers
+                    document.getElementById('parent-answer').value = '';
+                    document.getElementById('child-answer').value = '';
+
+                    // Switch to recording view
+                    document.getElementById('challenge-types-view').style.display = 'none';
+                    document.getElementById('challenge-recording-view').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error starting challenge:', error);
+                alert('启动挑战失败，请重试');
+            }
+        }
+
+        // Get challenge type info
+        function getChallengeTypeInfo(type) {
+            const types = {
+                'self_introduction': { name: '自我介绍', icon: '👤' },
+                'family': { name: '家庭介绍', icon: '👨‍👩‍👧' },
+                'interests': { name: '兴趣爱好', icon: '⭐' },
+                'dreams': { name: '梦想未来', icon: '🌟' },
+                'values': { name: '价值观', icon: '💡' }
+            };
+            return types[type] || types['self_introduction'];
+        }
+
+        // Toggle recording
+        function toggleRecording(userType) {
+            const btn = document.getElementById(`${userType}-record-btn`);
+            const timer = document.getElementById(`${userType}-timer`);
+            const status = document.getElementById(`${userType}-status`);
+
+            if (userType === 'parent') {
+                if (parentRecording) {
+                    // Stop recording
+                    parentRecording = false;
+                    clearInterval(parentTimerInterval);
+                    btn.classList.remove('recording');
+                    status.textContent = '录制完成';
+                } else {
+                    // Start recording
+                    parentRecording = true;
+                    parentSeconds = 0;
+                    btn.classList.add('recording');
+                    status.textContent = '正在录制...';
+                    parentTimerInterval = setInterval(() => {
+                        parentSeconds++;
+                        timer.textContent = formatTime(parentSeconds);
+                    }, 1000);
+                }
+            } else {
+                if (childRecording) {
+                    // Stop recording
+                    childRecording = false;
+                    clearInterval(childTimerInterval);
+                    btn.classList.remove('recording');
+                    status.textContent = '录制完成';
+                } else {
+                    // Start recording
+                    childRecording = true;
+                    childSeconds = 0;
+                    btn.classList.add('recording');
+                    status.textContent = '正在录制...';
+                    childTimerInterval = setInterval(() => {
+                        childSeconds++;
+                        timer.textContent = formatTime(childSeconds);
+                    }, 1000);
+                }
+            }
+        }
+
+        // Format time
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Submit challenge
+        async function submitChallenge() {
+            const parentAnswer = document.getElementById('parent-answer').value.trim();
+            const childAnswer = document.getElementById('child-answer').value.trim();
+
+            if (!parentAnswer || !childAnswer) {
+                alert('请输入或录制家长和孩子的答案');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/parent-child-challenge/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        challenge_id: currentChallenge.id,
+                        parent_answer: parentAnswer,
+                        child_answer: childAnswer
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(data);
+                }
+            } catch (error) {
+                console.error('Error submitting challenge:', error);
+                alert('提交失败，请重试');
+            }
+        }
+
+        // Show result
+        function showResult(data) {
+            const score = data.score;
+
+            // Update score card
+            const scoreCard = document.getElementById('chemistry-score-card');
+            scoreCard.className = `chemistry-score-card chemistry-${score.chemistry_level}`;
+            document.getElementById('chemistry-score-value').textContent = Math.round(score.chemistry_score);
+            document.getElementById('chemistry-level-name').textContent = score.chemistry_level_name;
+
+            // Update breakdown
+            document.getElementById('similarity-bar').style.width = `${score.similarity_score}%`;
+            document.getElementById('similarity-value').textContent = `${Math.round(score.similarity_score)}%`;
+            document.getElementById('cooperation-bar').style.width = `${score.cooperation_score}%`;
+            document.getElementById('cooperation-value').textContent = `${Math.round(score.cooperation_score)}%`;
+            document.getElementById('communication-bar').style.width = `${score.communication_score}%`;
+            document.getElementById('communication-value').textContent = `${Math.round(score.communication_score)}%`;
+            document.getElementById('creativity-bar').style.width = `${score.creativity_score}%`;
+            document.getElementById('creativity-value').textContent = `${Math.round(score.creativity_score)}%`;
+
+            // Update AI analysis
+            document.getElementById('ai-analysis-content').textContent = score.ai_analysis;
+            document.getElementById('parent-feedback-content').textContent = score.parent_feedback;
+
+            // Update strengths
+            const strengthsList = document.getElementById('strengths-list');
+            strengthsList.innerHTML = score.strengths.map(s => `<div class="list-item">✓ ${s}</div>`).join('');
+
+            // Update improvements
+            const improvementsList = document.getElementById('improvements-list');
+            improvementsList.innerHTML = score.improvements.map(i => `<div class="list-item">• ${i}</div>`).join('');
+
+            // Show badges earned
+            const badgesContainer = document.getElementById('badges-earned-container');
+            if (data.badges_earned && data.badges_earned.length > 0) {
+                badgesContainer.innerHTML = data.badges_earned.map(badge => `
+                    <div class="badge-earned">
+                        <div class="badge-earned-icon">${badge.icon_emoji}</div>
+                        <div class="badge-earned-info">
+                            <div class="badge-earned-name">🎉 ${badge.name_zh}</div>
+                            <div class="badge-earned-desc">${badge.description}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                badgesContainer.innerHTML = '';
+            }
+
+            // Switch to result view
+            document.getElementById('challenge-recording-view').style.display = 'none';
+            document.getElementById('challenge-result-view').style.display = 'block';
+        }
+
+        // Load leaderboard
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/parent-child-challenge/leaderboard');
+                if (response.ok) {
+                    const data = await response.json();
+                    const list = document.getElementById('leaderboard-list');
+                    list.innerHTML = data.leaderboard.map((entry, index) => `
+                        <div class="leaderboard-card">
+                            <div class="leaderboard-header">
+                                <div class="leaderboard-rank rank-${index < 3 ? index + 1 : 'other'}">${index + 1}</div>
+                                <div class="leaderboard-info">
+                                    <div class="leaderboard-name">${entry.child_name}</div>
+                                    <div class="leaderboard-score">${entry.completed_challenges} 次挑战</div>
+                                </div>
+                                <div class="leaderboard-chemistry">${Math.round(entry.average_chemistry_score)}分</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        // Load badges
+        async function loadBadges() {
+            try {
+                const response = await fetch('/api/parent-child-challenge/badges');
+                if (response.ok) {
+                    const data = await response.json();
+                    // Update badges display
+                    console.log('Badges:', data);
+                }
+            } catch (error) {
+                console.error('Error loading badges:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试小达人 - 登录</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #3B82F6 50%, #06B6D4 100%);
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 10% 90%, rgba(255,255,255,0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(255,255,255,0.08) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        .floating {
+            position: absolute;
+            font-size: 32px;
+            opacity: 0.5;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .float-1 { top: 15%; left: 10%; animation-delay: 0s; }
+        .float-2 { top: 25%; right: 12%; animation-delay: 1s; }
+        .float-3 { bottom: 20%; left: 15%; animation-delay: 2s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 40px 28px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .back-btn:hover { opacity: 1; }
+
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .header h1 {
+            color: var(--white);
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            background: var(--input-bg);
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 16px 18px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .input-wrapper input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .country-code {
+            padding: 16px;
+            color: var(--white);
+            font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-row .input-wrapper {
+            flex: 1;
+        }
+
+        .verify-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--white);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .verify-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 28px 0;
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .divider span {
+            padding: 0 16px;
+        }
+
+        .wechat-btn {
+            width: 100%;
+            padding: 16px;
+            background: #07C160;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(7, 193, 96, 0.3);
+        }
+
+        .wechat-btn:hover {
+            background: #06AE56;
+            transform: translateY(-2px);
+        }
+
+        .terms {
+            margin-top: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .terms input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--white);
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .terms label {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .terms a {
+            color: var(--white);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="floating float-1">✨</div>
+    <div class="floating float-2">🌟</div>
+    <div class="floating float-3">⭐</div>
+
+    <div class="container">
+        <div class="glass-card">
+            <button class="back-btn">←</button>
+
+            <div class="header">
+                <h1>欢迎回来</h1>
+                <p>登录账号开始使用</p>
+            </div>
+
+            <div class="input-group">
+                <label>手机号</label>
+                <div class="input-wrapper">
+                    <div class="input-row">
+                        <span class="country-code">🇨🇳 +86</span>
+                        <input type="tel" placeholder="请输入手机号">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>验证码</label>
+                <div class="input-wrapper">
+                    <input type="text" placeholder="请输入验证码" maxlength="6">
+                    <button class="verify-btn">获取验证码</button>
+                </div>
+            </div>
+
+            <button class="btn-primary" style="
+                width: 100%;
+                padding: 18px;
+                background: white;
+                color: #7C3AED;
+                border: none;
+                border-radius: 14px;
+                font-size: 17px;
+                font-weight: 700;
+                cursor: pointer;
+                margin-top: 8px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            ">登录</button>
+
+            <div class="divider">
+                <span>或</span>
+            </div>
+
+            <button class="wechat-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9.5 4C5.36 4 2 6.69 2 10c0 1.89 1.08 3.56 2.78 4.66L4 17l2.5-1.5c.89.31 1.87.5 2.91.5.34 0 .67-.02 1-.05a5.98 5.98 0 0 1 4.5 2.55c1.7-1.1 2.78-2.77 2.78-4.66 0-3.31-3.36-6-7.5-6zm4.5 9.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-3.5 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                </svg>
+                微信一键登录
+            </button>
+
+            <div class="terms">
+                <input type="checkbox" id="terms" checked>
+                <label for="terms">我已阅读并同意 <a href="#">《服务条款》</a> 和 <a href="#">《隐私政策》</a></label>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

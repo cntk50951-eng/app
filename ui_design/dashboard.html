@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试小达人 - 首页</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #F8FAFC;
+            --white: #ffffff;
+            --text-dark: #1E293B;
+            --text-gray: #64748B;
+            --accent-purple: #8B5CF6;
+            --accent-orange: #F59E0B;
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-pink: #EC4899;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: var(--bg-light);
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+            padding: 60px 24px 40px;
+            border-radius: 0 0 32px 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .notification-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notification-btn::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            background: #F43F5E;
+            border-radius: 50%;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .profile-grade {
+            font-size: 14px;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .edit-profile-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-light);
+            border: none;
+            border-radius: 12px;
+            color: var(--text-gray);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            padding: 24px;
+            margin-top: -20px;
+        }
+
+        .progress-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .progress-value {
+            font-size: 14px;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .progress-ring-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .progress-ring {
+            width: 100px;
+            height: 100px;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 10;
+        }
+
+        .progress-ring .bg {
+            stroke: #E2E8F0;
+        }
+
+        .progress-ring .progress {
+            stroke: url(#progressGradient);
+            stroke-linecap: round;
+            stroke-dasharray: 251;
+            stroke-dashoffset: 50;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .progress-stats {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* Quick Actions */
+        .section {
+            padding: 0 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 24px 20px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .action-card:active {
+            transform: translateY(0);
+        }
+
+        .action-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 14px;
+        }
+
+        .action-card.orange .action-icon {
+            background: linear-gradient(135deg, #FEF3C7 0%, #F59E0B 100%);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }
+
+        .action-card.green .action-icon {
+            background: linear-gradient(135deg, #D1FAE5 0%, #10B981 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .action-card.blue .action-icon {
+            background: linear-gradient(135deg, #DBEAFE 0%, #3B82F6 100%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+
+        .action-card.purple .action-icon {
+            background: linear-gradient(135deg, #EDE9FE 0%, #8B5CF6 100%);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+        }
+
+        .action-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .action-desc {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        /* Recent Activity */
+        .activity-list {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .activity-icon.practice {
+            background: #DBEAFE;
+        }
+
+        .activity-icon.lesson {
+            background: #D1FAE5;
+        }
+
+        .activity-info {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .activity-score {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .activity-score.excellent {
+            background: #D1FAE5;
+            color: #059669;
+        }
+
+        .activity-score.good {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 12px 24px 28px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 16px;
+        }
+
+        .nav-item.active {
+            color: #8B5CF6;
+        }
+
+        .nav-item.active .nav-icon {
+            background: #EDE9FE;
+        }
+
+        .nav-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: #F8FAFC;
+            transition: all 0.2s;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94A3B8;
+        }
+
+        .nav-item.active .nav-label {
+            color: #8B5CF6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="logo">
+                <div class="logo-icon">🎓</div>
+                <span class="logo-text">面试小达人</span>
+            </div>
+            <button class="notification-btn">🔔</button>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="avatar">👦</div>
+            <div class="profile-info">
+                <div class="profile-name">小明</div>
+                <div class="profile-grade">🎓 大班</div>
+            </div>
+            <button class="edit-profile-btn">✏️</button>
+        </div>
+    </header>
+
+    <!-- Progress Section -->
+    <div class="progress-section">
+        <div class="progress-card">
+            <div class="progress-header">
+                <span class="progress-title">学习进度</span>
+                <span class="progress-value">已完成 8/10 节课程</span>
+            </div>
+            <div class="progress-ring-container">
+                <div class="progress-ring">
+                    <svg width="100" height="100">
+                        <defs>
+                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#8B5CF6"/>
+                                <stop offset="100%" stop-color="#6366F1"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="bg" cx="50" cy="50" r="40"/>
+                        <circle class="progress" cx="50" cy="50" r="40"/>
+                    </svg>
+                    <div class="progress-ring-text">
+                        <div class="progress-number">80%</div>
+                        <div class="progress-label">进度</div>
+                    </div>
+                </div>
+                <div class="progress-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">模拟面试</span>
+                        <span class="stat-value">12 次</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">累计练习</span>
+                        <span class="stat-value">45 分钟</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">连续学习</span>
+                        <span class="stat-value">7 天</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section">
+        <h2 class="section-title">快捷功能</h2>
+        <div class="action-grid">
+            <div class="action-card orange">
+                <div class="action-icon">🎤</div>
+                <div class="action-title">模拟面试</div>
+                <div class="action-desc">AI智能面试练习</div>
+            </div>
+            <div class="action-card green">
+                <div class="action-icon">📚</div>
+                <div class="action-title">面试技巧</div>
+                <div class="action-desc">独家秘笈分享</div>
+            </div>
+            <div class="action-card blue">
+                <div class="action-icon">📈</div>
+                <div class="action-title">成长记录</div>
+                <div class="action-desc">查看进步轨迹</div>
+            </div>
+            <div class="action-card purple">
+                <div class="action-icon">👨‍🏫</div>
+                <div class="action-title">家长课堂</div>
+                <div class="action-desc">育儿知识干货</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="section">
+        <h2 class="section-title">最近动态</h2>
+        <div class="activity-list">
+            <div class="activity-item">
+                <div class="activity-icon practice">🎤</div>
+                <div class="activity-info">
+                    <div class="activity-title">模拟面试 - 自我介绍</div>
+                    <div class="activity-time">今天 14:30</div>
+                </div>
+                <span class="activity-score excellent">优秀</span>
+            </div>
+            <div class="activity-item">
+                <div class="activity-icon lesson">📖</div>
+                <div class="activity-info">
+                    <div class="activity-title">课时学习 - 语言表达</div>
+                    <div class="activity-time">今天 10:15</div>
+                </div>
+                <span class="activity-score good">良好</span>
+            </div>
+            <div class="activity-item">
+                <div class="activity-icon practice">💬</div>
+                <div class="activity-info">
+                    <div class="activity-title">模拟面试 - 问答环节</div>
+                    <div class="activity-time">昨天 16:20</div>
+                </div>
+                <span class="activity-score excellent">优秀</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active">
+            <div class="nav-icon">🏠</div>
+            <span class="nav-label">首页</span>
+        </button>
+        <button class="nav-item">
+            <div class="nav-icon">📚</div>
+            <span class="nav-label">课程</span>
+        </button>
+        <button class="nav-item">
+            <div class="nav-icon">🎯</div>
+            <span class="nav-label">练习</span>
+        </button>
+        <button class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span class="nav-label">我的</span>
+        </button>
+    </nav>
+</body>
+</html>

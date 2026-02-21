@@ -190,6 +190,11 @@ PUBLIC_ROUTES = [
     "/api/growth-profile",
     "/api/growth-profile/pdf",
     "/api/growth-profile/feedback",
+    "/parent-child-challenge",
+    "/api/parent-child-challenge/start",
+    "/api/parent-child-challenge/submit",
+    "/api/parent-child-challenge/leaderboard",
+    "/api/parent-child-challenge/badges",
 ]
 
 
@@ -6824,4 +6829,151 @@ def api_growth_profile_feedback():
         return jsonify({"success": True, "feedback": feedback})
     except Exception as e:
         print(f"Error generating feedback: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============ Parent-Child Challenge Routes ============
+
+
+@app.route("/parent-child-challenge")
+@login_required
+def parent_child_challenge():
+    """亲子共面挑战页面"""
+    return render_template("parent-child-challenge.html")
+
+
+@app.route("/api/parent-child-challenge/start", methods=["POST"])
+@login_required
+def api_parent_child_challenge_start():
+    """开始新的挑战"""
+    user_id = session.get("user_id")
+    data = request.json
+    challenge_type = data.get("challenge_type")
+
+    if not challenge_type:
+        return jsonify({"error": "挑战类型不能为空"}), 400
+
+    try:
+        from services.parent_child_challenge_service import create_challenge
+
+        child_name = session.get("child_name", "小朋友")
+        challenge = create_challenge(user_id, child_name, challenge_type)
+
+        return jsonify({"success": True, "challenge": challenge})
+    except Exception as e:
+        print(f"Error starting challenge: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/parent-child-challenge/submit", methods=["POST"])
+@login_required
+def api_parent_child_challenge_submit():
+    """提交挑战答案并获取评分"""
+    user_id = session.get("user_id")
+    data = request.json
+    challenge_id = data.get("challenge_id")
+    parent_answer = data.get("parent_answer")
+    child_answer = data.get("child_answer")
+
+    if not challenge_id or not parent_answer or not child_answer:
+        return jsonify({"error": "请填写完整答案"}), 400
+
+    try:
+        from services.parent_child_challenge_service import (
+            update_challenge_answer,
+            complete_challenge,
+            analyze_chemistry,
+            save_challenge_score,
+        )
+        from services.parent_child_challenge_service import CHALLENGE_LEVELS
+
+        # 更新家长答案
+        update_challenge_answer(challenge_id, "parent", parent_answer)
+
+        # 更新孩子答案
+        update_challenge_answer(challenge_id, "child", child_answer)
+
+        # 完成挑战
+        challenge = complete_challenge(challenge_id)
+
+        # 获取挑战详情
+        from services.parent_child_challenge_service import get_challenge
+
+        challenge = get_challenge(challenge_id)
+
+        # AI 分析默契度
+        analysis = analyze_chemistry(
+            parent_answer,
+            child_answer,
+            challenge["challenge_type"],
+            challenge["question"],
+        )
+
+        # 保存评分
+        score_result = save_challenge_score(challenge_id, user_id, analysis)
+
+        # 准备返回数据
+        chemistry_level = analysis.get("chemistry_score", 0)
+        if chemistry_level >= 90:
+            chemistry_level_name = "钻石"
+        elif chemistry_level >= 75:
+            chemistry_level_name = "金牌"
+        elif chemistry_level >= 60:
+            chemistry_level_name = "银牌"
+        else:
+            chemistry_level_name = "铜牌"
+
+        score_data = {
+            "chemistry_score": analysis.get("chemistry_score", 0),
+            "chemistry_level": analysis.get("chemistry_level", "bronze"),
+            "chemistry_level_name": chemistry_level_name,
+            "similarity_score": analysis.get("similarity_score", 0),
+            "cooperation_score": analysis.get("cooperation_score", 0),
+            "communication_score": analysis.get("communication_score", 0),
+            "creativity_score": analysis.get("creativity_score", 0),
+            "ai_analysis": analysis.get("ai_analysis", ""),
+            "parent_feedback": analysis.get("parent_feedback", ""),
+            "strengths": analysis.get("strengths", []),
+            "improvements": analysis.get("improvements", []),
+        }
+
+        return jsonify(
+            {
+                "success": True,
+                "score": score_data,
+                "badges_earned": score_result.get("badges_earned", []),
+            }
+        )
+    except Exception as e:
+        print(f"Error submitting challenge: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/parent-child-challenge/leaderboard", methods=["GET"])
+@login_required
+def api_parent_child_challenge_leaderboard():
+    """获取排行榜"""
+    try:
+        from services.parent_child_challenge_service import get_leaderboard
+
+        leaderboard = get_leaderboard(period_type="all_time", limit=50)
+        return jsonify({"success": True, "leaderboard": leaderboard})
+    except Exception as e:
+        print(f"Error getting leaderboard: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/parent-child-challenge/badges", methods=["GET"])
+@login_required
+def api_parent_child_challenge_badges():
+    """获取用户勋章"""
+    user_id = session.get("user_id")
+
+    try:
+        from services.parent_child_challenge_service import get_user_badges
+
+        badges = get_user_badges(user_id)
+        return jsonify({"success": True, "badges": badges})
+    except Exception as e:
+        print(f"Error getting badges: {e}")
         return jsonify({"error": str(e)}), 500
