@@ -6703,6 +6703,10 @@ def debug_tts_test():
 # ============ Growth Profile Routes (面霸成长档案) ============
 
 
+# Endpoint alias for template compatibility
+settings_page = settings
+
+
 @app.route("/growth-profile")
 @login_required
 def growth_profile_page():
