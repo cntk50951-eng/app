@@ -571,7 +571,12 @@ def child_profile_step1():
     user_id = session.get("user_id")
     profile = db["get_child_profile_by_user_id"](user_id) if db else None
 
-    # Pre-fill data if profile exists
+    # If user already has a complete profile, redirect to dashboard
+    if profile and profile.get("profile_complete"):
+        flash("Profile already completed", "info")
+        return redirect(url_for("dashboard"))
+
+    # Pre-fill data if profile exists but not complete
     initial_data = {}
     if profile:
         initial_data = {
@@ -795,6 +800,13 @@ def settings():
         subscription_status=subscription_status,
         trial_topics_used=trial_topics_used,
     )
+
+
+@app.route("/settings-page")
+@login_required
+def settings_page():
+    """Alias for settings page."""
+    return redirect(url_for("settings"))
 
 
 @app.route("/lesson")
