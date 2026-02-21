@@ -778,12 +778,20 @@
 
             <!-- AI Mock Interview Quick Access -->
             <div style="padding: 1rem 1.5rem 0;">
-                <div class="topic-card" onclick="window.location.href='{{ url_for('mock_interview') }}'"
-                     style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; color: white;">
+                <div class="topic-card" onclick="window.location.href='/mock-interview'"
+                     style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border: none; color: white;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 3rem; height: 3rem; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                             <span class="material-symbols-outlined" style="font-size: 1.5rem;">psychology</span>
                         </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">模拟面试</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">AI 个性化面试</div>
+                        </div>
+                        <span class="material-symbols-outlined" style="font-size: 1.5rem; opacity: 0.7;">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
                         <div style="flex: 1;">
                             <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">AI 模拟面试</div>
                             <div style="font-size: 0.75rem; opacity: 0.9;">体验真实面试场景</div>
@@ -795,15 +803,15 @@
 
             <!-- Learning Path Quick Access -->
             <div style="padding: 1rem 1.5rem 0;">
-                <div class="topic-card" onclick="window.location.href='{{ url_for('learning_path_page') }}'"
-                     style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                <div class="topic-card" onclick="window.location.href='/learning-path'"
+                     style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); border: none; color: white;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 3rem; height: 3rem; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                             <span class="material-symbols-outlined" style="font-size: 1.5rem;">route</span>
                         </div>
                         <div style="flex: 1;">
-                            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">智能学习路径</div>
-                            <div style="font-size: 0.75rem; opacity: 0.9;">个性化学习方案</div>
+                            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">学习路径</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">个性化学习计划</div>
                         </div>
                         <span class="material-symbols-outlined" style="font-size: 1.5rem; opacity: 0.7;">arrow_forward</span>
                     </div>
@@ -812,15 +820,15 @@
 
             <!-- Energy Station Quick Access -->
             <div style="padding: 1rem 1.5rem 0;">
-                <div class="topic-card" onclick="window.location.href='{{ url_for('energy_station') }}'"
-                     style="background: linear-gradient(135deg, #7C4DFF 0%, #B388FF 100%); border: none; color: white;">
+                <div class="topic-card" onclick="window.location.href='/energy-station'"
+                     style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border: none; color: white;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 3rem; height: 3rem; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span class="material-symbols-outlined" style="font-size: 1.5rem;">favorite</span>
+                            <span class="material-symbols-outlined" style="font-size: 1.5rem;">bolt</span>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">面试能量站</div>
-                            <div style="font-size: 0.75rem; opacity: 0.9;">心理建设·AI陪伴</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">心理微课·AI 导师</div>
                         </div>
                         <span class="material-symbols-outlined" style="font-size: 1.5rem; opacity: 0.7;">arrow_forward</span>
                     </div>
@@ -829,7 +837,7 @@
 
             <!-- Confidence Training Quick Access -->
             <div style="padding: 1rem 1.5rem 0;">
-                <div class="topic-card" onclick="window.location.href='{{ url_for('confidence_training') }}'"
+                <div class="topic-card" onclick="window.location.href='/confidence-training'"
                      style="background: linear-gradient(135deg, #FF6B6B 0%, #FFB88C 100%); border: none; color: white;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 3rem; height: 3rem; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -846,7 +854,7 @@
 
             <!-- Growth Profile Quick Access -->
             <div style="padding: 1rem 1.5rem 0;">
-                <div class="topic-card" onclick="window.location.href='{{ url_for('growth_profile_page') }}'"
+                <div class="topic-card" onclick="window.location.href='/growth-profile'"
                      style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border: none; color: white;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 3rem; height: 3rem; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -863,7 +871,7 @@
 
             <!-- Parent-Child Challenge Quick Access -->
             <div style="padding: 1rem 1.5rem 0;">
-                <div class="topic-card" onclick="window.location.href='{{ url_for('parent_child_challenge') }}'"
+                <div class="topic-card" onclick="window.location.href='/parent-child-challenge'"
                      style="background: linear-gradient(135deg, #F59E0B 0%, #DC2626 100%); border: none; color: white;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 3rem; height: 3rem; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -1005,24 +1013,24 @@
                 <span class="material-symbols-outlined filled">dashboard</span>
                 <span>首頁</span>
             </div>
-            <div class="nav-item" onclick="window.location.href='{{ url_for('parent_community') }}'">
+            <div class="nav-item" onclick="window.location.href='/parent-community'">
                 <span class="material-symbols-outlined">forum</span>
                 <span>家長</span>
             </div>
-            <div class="nav-item" onclick="window.location.href='{{ url_for('lesson', topic_id='self-introduction') }}'">
+            <div class="nav-item" onclick="window.location.href='/lesson/self-introduction'">
                 <span class="material-symbols-outlined">school</span>
                 <span>練習</span>
             </div>
             <div class="nav-center">
-                <button class="nav-center-btn" onclick="window.location.href='{{ url_for('parent_notes') }}'">
+                <button class="nav-center-btn" onclick="window.location.href='/parent-notes'">
                     <span class="material-symbols-outlined">note_add</span>
                 </button>
             </div>
-            <div class="nav-item" onclick="window.location.href='{{ url_for('unlock_full_access') }}'">
+            <div class="nav-item" onclick="window.location.href='/unlock-full-access'">
                 <span class="material-symbols-outlined">bar_chart</span>
                 <span>報告</span>
             </div>
-            <a href="{{ url_for('profile_edit') }}" class="nav-item">
+            <a href="/profile/edit" class="nav-item">
                 <span class="material-symbols-outlined">person</span>
                 <span>檔案</span>
             </a>
